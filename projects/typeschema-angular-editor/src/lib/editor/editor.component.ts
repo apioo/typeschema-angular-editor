@@ -5,11 +5,10 @@ import {Observable, of, OperatorFunction} from 'rxjs';
 import {Document} from '../model/Document';
 import {Message} from '../model/Message';
 import {Include, Property, SchemaTransformerService, Type} from '../schema-transformer.service';
-import {Document_Collection} from '../model/Document_Collection';
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 
 @Component({
-  selector: 'app-editor',
+  selector: 'typeschema-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css']
 })
