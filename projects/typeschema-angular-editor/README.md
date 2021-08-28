@@ -1,24 +1,8 @@
 # TypeschemaAngularEditor
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.0.
+This package provides an Angular Editor Component which provides a visual
+editor to create a TypeSchema. It also integrates with the [typehub.cloud](https://typehub.cloud/)
+API so that the user can integrate remote schemas registered at the cloud.
+The following screenshot shows an example of the editor:
 
-## Code scaffolding
-
-Run `ng generate component component-name --project typeschema-angular-editor` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project typeschema-angular-editor`.
-> Note: Don't forget to add `--project typeschema-angular-editor` or else it will be added to the default project in your `angular.json` file. 
-
-## Build
-
-Run `ng build typeschema-angular-editor` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Publishing
-
-After building your library with `ng build typeschema-angular-editor`, go to the dist folder `cd dist/typeschema-angular-editor` and run `npm publish`.
-
-## Running unit tests
-
-Run `ng test typeschema-angular-editor` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+![Preview](../../assets/preview.png)
