@@ -17,4 +17,4 @@ import {FormsModule} from "@angular/forms";
     EditorComponent
   ]
 })
-export class TypeschemaAngularEditorModule { }
+export class TypeschemaEditorModule { }
