@@ -1,6 +1,16 @@
 {
-  "name": "typeschema-angular-editor",
-  "version": "0.0.1",
+  "name": "ngx-typeschema-editor",
+  "version": "0.1.1",
+  "description": "Editor to create a TypeSchema specification",
+  "keywords": [
+    "TypeSchema",
+    "Schema",
+    "Editor",
+    "Specification"
+  ],
+  "author": "Christoph Kappestein",
+  "license": "MIT",
+  "homepage": "https://typehub.cloud/",
   "peerDependencies": {
     "@angular/common": "^12.2.0",
     "@angular/core": "^12.2.0"
