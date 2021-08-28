@@ -4,9 +4,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build typeschema-angular-editor",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "publish": "cd dist/typeschema-angular-editor && npm publish"
   },
   "dependencies": {
     "@angular/animations": "~12.2.0",
