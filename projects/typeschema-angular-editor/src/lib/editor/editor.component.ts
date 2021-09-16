@@ -16,6 +16,7 @@ export class EditorComponent implements OnInit {
 
   @Input() imports: Array<Include> = [];
   @Input() types: Array<Type> = [];
+  @Input() importEnabled: boolean = true;
 
   @Output() saveEvent = new EventEmitter<object>();
   @Output() previewEvent = new EventEmitter<object>();

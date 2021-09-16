@@ -9,9 +9,9 @@
   <div class="row">
     <div class="col-sm">
       <div class="btn-group" role="group">
-        <a class="btn btn-primary" (click)="save()">Save</a>
+        <a class="btn btn-primary" (click)="save()" *ngIf="saveEvent.length > 0">Save</a>
         <a class="btn btn-success" (click)="openType(typeModal)">New Type</a>
-        <a class="btn btn-light" (click)="openInclude(includeModal)">Include</a>
+        <a class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</a>
         <a class="btn btn-light" (click)="openImport(importModal)">Import</a>
         <a class="btn btn-light" (click)="openExport(exportModal)">Export</a>
       </div>
