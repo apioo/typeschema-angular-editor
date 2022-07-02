@@ -1,6 +1,6 @@
 {
   "name": "ngx-typeschema-editor",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Editor to create a TypeSchema specification",
   "keywords": [
     "TypeSchema",
