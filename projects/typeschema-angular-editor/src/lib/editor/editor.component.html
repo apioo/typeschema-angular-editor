@@ -3,14 +3,14 @@
 <ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
 
 <div class="btn-group" role="group">
-  <button type="button" class="btn btn-primary" (click)="save()" *ngIf="saveEvent.length > 0">Save</button>
+  <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
   <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
   <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
   <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
   <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
 </div>
 
-<div class="editor-type" *ngIf="imports.length > 0">
+<div class="editor-type" *ngIf="specification.imports.length > 0">
   <h3 class="editor-type-name">Imports</h3>
   <table class="table editor-type-properties">
     <colgroup>
@@ -26,7 +26,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let include of imports; index as includeIndex">
+    <tr *ngFor="let include of specification.imports; index as includeIndex">
       <td>{{ include.alias }}</td>
       <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.userName }} / {{ include.document.name }}</span></td>
       <td>
@@ -39,7 +39,7 @@
   </table>
 </div>
 
-<div *ngFor="let type of types; index as typeIndex" class="card editor-type">
+<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
@@ -147,11 +147,11 @@
         <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent">
           <option>No parent</option>
           <optgroup label="self">
-            <ng-container *ngFor="let parentType of types">
+            <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of imports">
+          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
             <ng-container *ngFor="let parentType of include.types">
               <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
@@ -171,11 +171,11 @@
             <option ngValue="T">Generic</option>
           </optgroup>
           <optgroup label="self">
-            <ng-container *ngFor="let parentType of types">
+            <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of imports">
+          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
             <ng-container *ngFor="let parentType of include.types">
               <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
@@ -189,11 +189,11 @@
         <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.ref">
           <option>No reference</option>
           <optgroup label="self">
-            <ng-container *ngFor="let parentType of types">
+            <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of imports">
+          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
             <ng-container *ngFor="let parentType of include.types">
               <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
@@ -207,11 +207,11 @@
         <select id="typeTemplate" name="typeTemplate" class="form-select" [(ngModel)]="type.template">
           <option>No template</option>
           <optgroup label="self">
-            <ng-container *ngFor="let parentType of types">
+            <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of imports">
+          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
             <ng-container *ngFor="let parentType of include.types">
               <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
@@ -317,9 +317,9 @@
             <option ngValue="T">Generic</option>
           </optgroup>
           <optgroup label="self">
-            <option *ngFor="let refType of types" [ngValue]="refType.name">{{ refType.name }}</option>
+            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
           </optgroup>
-          <optgroup label="{{ include.alias }}" *ngFor="let include of imports">
+          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
             <ng-container *ngFor="let parentType of include.types">
               <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
