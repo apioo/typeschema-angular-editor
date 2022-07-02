@@ -93,6 +93,10 @@ export class EditorComponent implements OnInit {
     this.preview.emit(this.specification);
   }
 
+  setRoot(typeIndex: number) {
+    this.specification.root = typeIndex;
+  }
+
   upType(typeIndex: number): void {
     const type = this.specification.types.splice(typeIndex, 1)[0];
     if (!type) {
@@ -395,4 +399,5 @@ export class EditorComponent implements OnInit {
 export interface Specification {
   imports: Array<Include>
   types: Array<Type>
+  root?: number
 }

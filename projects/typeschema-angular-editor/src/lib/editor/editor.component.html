@@ -39,7 +39,7 @@
   </table>
 </div>
 
-<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type">
+<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type" [ngClass]="{'border-primary': specification.root === typeIndex}">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
@@ -109,6 +109,7 @@
       <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
       <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)">Edit</button>
       <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)">Remove</button>
+      <button *ngIf="specification.root !== typeIndex" type="button" class="btn btn-secondary" (click)="setRoot(typeIndex)">Primary</button>
     </div>
   </div>
 </div>
