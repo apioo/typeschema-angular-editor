@@ -1,111 +1,114 @@
 
-<div class="container-fluid editor">
-  <div class="row" *ngIf="response">
-    <div class="col-12">
-      <ngb-alert type="danger" *ngIf="!response.success">{{ response.message }}</ngb-alert>
-      <ngb-alert type="success" *ngIf="response.success">{{ response.message }}</ngb-alert>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-sm">
-      <div class="btn-group" role="group">
-        <a class="btn btn-primary" (click)="save()" *ngIf="saveEvent.length > 0">Save</a>
-        <a class="btn btn-success" (click)="openType(typeModal)">New Type</a>
-        <a class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</a>
-        <a class="btn btn-light" (click)="openImport(importModal)">Import</a>
-        <a class="btn btn-light" (click)="openExport(exportModal)">Export</a>
-      </div>
+<ngb-alert type="danger" *ngIf="response && response.success === false">{{ response.message }}</ngb-alert>
+<ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
 
-      <div class="editor-type" *ngIf="imports.length > 0">
-        <h3 class="editor-type-name">Imports</h3>
-        <table class="table editor-type-properties">
+<div class="btn-group" role="group">
+  <button type="button" class="btn btn-primary" (click)="save()" *ngIf="saveEvent.length > 0">Save</button>
+  <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
+  <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
+  <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
+  <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
+</div>
+
+<div class="editor-type" *ngIf="imports.length > 0">
+  <h3 class="editor-type-name">Imports</h3>
+  <table class="table editor-type-properties">
+    <colgroup>
+      <col width="150">
+      <col width="*">
+      <col width="50">
+    </colgroup>
+    <thead>
+    <tr>
+      <th>Alias</th>
+      <th>Document</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let include of imports; index as includeIndex">
+      <td>{{ include.alias }}</td>
+      <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.userName }} / {{ include.document.name }}</span></td>
+      <td>
+        <div class="btn-group" role="group">
+          <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngFor="let type of types; index as typeIndex" class="card editor-type">
+  <div class="card-header editor-type-name">
+    {{ type.name }}<br>
+    <div class="text-secondary editor-type-description">{{ type.description }}</div>
+  </div>
+  <div class="card-body">
+    <div [ngSwitch]="type.type">
+      <ng-container *ngSwitchCase="'reference'">
+        <div class="editor-type-description">Reference: {{ type.ref }}</div>
+        <div class="editor-type-description" *ngIf="type.template">Template: {{ type.template }}</div>
+      </ng-container>
+      <ng-container *ngSwitchCase="'map'">
+        <div class="editor-type-description">Reference: {{ type.ref }}</div>
+      </ng-container>
+      <ng-container *ngSwitchDefault>
+        <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col width="150">
             <col width="*">
+            <col width="100">
+            <col width="100">
+            <col width="150">
             <col width="50">
           </colgroup>
+          <thead>
           <tr>
-            <th>Alias</th>
-            <th>Document</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Format</th>
+            <th>Reference</th>
             <th></th>
           </tr>
-          <tr *ngFor="let include of imports; index as includeIndex">
-            <td>{{ include.alias }}</td>
-            <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.userName }} / {{ include.document.name }}</span></td>
+          </thead>
+          <tbody>
+          <tr *ngFor="let property of type.properties; index as propertyIndex">
+            <td>
+              <div class="editor-type-property-name">{{ property.name }}</div>
+              <div class="editor-type-property-description text-secondary">{{ property.description }}</div>
+            </td>
+            <td>{{ property.type }}</td>
+            <td>{{ property.format }}</td>
+            <td>
+              <ul>
+                <li *ngFor="let ref of property.refs">
+                  <span>{{ ref }}</span>
+                </li>
+              </ul>
+            </td>
             <td>
               <div class="btn-group" role="group">
-                <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
+                <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
+                <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
+                <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)">Edit</button>
+                <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)">Remove</button>
               </div>
             </td>
           </tr>
+          </tbody>
         </table>
-      </div>
-
-      <div *ngFor="let type of types; index as typeIndex" class="editor-type">
-        <div class="btn-group float-right" role="group">
-          <a class="btn btn-light" (click)="upType(typeIndex)">Up</a>
-          <a class="btn btn-light" (click)="downType(typeIndex)">Down</a>
-          <a class="btn btn-primary" (click)="editType(typeModal, typeIndex)">Edit</a>
-          <a class="btn btn-danger" (click)="deleteType(typeIndex)">Remove</a>
+        <div class="btn-group" role="group">
+          <a class="btn btn-success" (click)="openProperty(propertyModal, typeIndex)">New Property</a>
         </div>
-
-        <h3 class="editor-type-name">{{ type.name }}</h3>
-        <div class="editor-type-description text-secondary">{{ type.description }}</div>
-
-        <div [ngSwitch]="type.type">
-          <ng-container *ngSwitchCase="'reference'">
-            <div class="editor-type-description">Reference: {{ type.ref }}</div>
-            <div class="editor-type-description" *ngIf="type.template">Template: {{ type.template }}</div>
-          </ng-container>
-          <ng-container *ngSwitchCase="'map'">
-            <div class="editor-type-description">Reference: {{ type.ref }}</div>
-          </ng-container>
-          <ng-container *ngSwitchDefault>
-            <table class="table editor-type-properties">
-              <colgroup>
-                <col width="*">
-                <col width="100">
-                <col width="100">
-                <col width="150">
-                <col width="50">
-              </colgroup>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Format</th>
-                <th>Reference</th>
-                <th></th>
-              </tr>
-              <tr *ngFor="let property of type.properties; index as propertyIndex">
-                <td>
-                  <div class="editor-type-property-name">{{ property.name }}</div>
-                  <div class="editor-type-property-description text-secondary">{{ property.description }}</div>
-                </td>
-                <td>{{ property.type }}</td>
-                <td>{{ property.format }}</td>
-                <td>
-                  <ul>
-                    <li *ngFor="let ref of property.refs">
-                      <span>{{ ref }}</span>
-                    </li>
-                  </ul>
-                </td>
-                <td>
-                  <div class="btn-group" role="group">
-                    <a class="btn btn-light" (click)="upProperty(typeIndex, propertyIndex)">Up</a>
-                    <a class="btn btn-light" (click)="downProperty(typeIndex, propertyIndex)">Down</a>
-                    <a class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)">Edit</a>
-                    <a class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)">Remove</a>
-                  </div>
-                </td>
-              </tr>
-            </table>
-            <div class="btn-group" role="group">
-              <a class="btn btn-success" (click)="openProperty(propertyModal, typeIndex)">New Property</a>
-            </div>
-          </ng-container>
-        </div>
-      </div>
+      </ng-container>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-secondary" (click)="upType(typeIndex)"><i class="bi bi-arrow-up"></i></button>
+      <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
+      <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)">Edit</button>
+      <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)">Remove</button>
     </div>
   </div>
 </div>
@@ -113,106 +116,104 @@
 <ng-template #typeModal let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Add type</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label for="typeType">Type</label>
-      <div class="input-group">
-        <select id="typeType" class="form-control" [(ngModel)]="type.type">
-          <option value="object">Object</option>
-          <option value="map">Map</option>
-          <option value="reference">Reference</option>
+    <div class="mb-3 row">
+      <label for="typeType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select id="typeType" name="typeType" class="form-select" [(ngModel)]="type.type">
+          <option ngValue="object">Object</option>
+          <option ngValue="map">Map</option>
+          <option ngValue="reference">Reference</option>
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label for="typeName">Name</label>
-      <div class="input-group">
-        <input id="typeName" class="form-control" [(ngModel)]="type.name">
+    <div class="mb-3 row">
+      <label for="typeName" class="col-sm-2 col-form-label fw-bold">Name</label>
+      <div class="col-sm-10">
+        <input id="typeName" name="typeName" class="form-control" [(ngModel)]="type.name">
       </div>
     </div>
-    <div class="form-group">
-      <label for="typeDescription">Description</label>
-      <div class="input-group">
-        <input id="typeDescription" class="form-control" [(ngModel)]="type.description">
+    <div class="mb-3 row">
+      <label for="typeDescription" class="col-sm-2 col-form-label fw-bold">Description</label>
+      <div class="col-sm-10">
+        <input id="typeDescription" name="typeDescription" class="form-control" [(ngModel)]="type.description">
       </div>
     </div>
-    <div class="form-group" *ngIf="type.type === 'object'">
-      <label for="typeParent">Parent</label>
-      <div class="input-group">
-        <select id="typeParent" class="form-control" [(ngModel)]="type.parent">
+    <div class="mb-3 row" *ngIf="type.type === 'object'">
+      <label for="typeParent" class="col-sm-2 col-form-label fw-bold">Parent</label>
+      <div class="col-sm-10">
+        <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent">
           <option>No parent</option>
           <optgroup label="self">
             <ng-container *ngFor="let parentType of types">
-              <option value="{{ parentType.name }}" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
           <optgroup label="{{include.alias}}" *ngFor="let include of imports">
             <ng-container *ngFor="let parentType of include.types">
-              <option value="{{ include.alias + ':' + parentType.name }}">{{ parentType.name }}</option>
+              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
         </select>
       </div>
     </div>
-    <div class="form-group" *ngIf="type.type === 'map'">
-      <label for="typeReference">Reference</label>
-      <div class="input-group">
-        <select id="mapReference" class="form-control" [(ngModel)]="type.ref">
+    <div class="mb-3 row" *ngIf="type.type === 'map'">
+      <label for="mapReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+      <div class="col-sm-10">
+        <select id="mapReference" name="mapReference" class="form-select" [(ngModel)]="type.ref">
           <optgroup label="scalar">
-            <option value="string">String</option>
-            <option value="integer">Integer</option>
-            <option value="number">Number</option>
-            <option value="boolean">Boolean</option>
-            <option value="T">Generic</option>
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
+            <option ngValue="T">Generic</option>
           </optgroup>
           <optgroup label="self">
             <ng-container *ngFor="let parentType of types">
-              <option value="{{ parentType.name }}" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
           <optgroup label="{{include.alias}}" *ngFor="let include of imports">
             <ng-container *ngFor="let parentType of include.types">
-              <option value="{{ include.alias + ':' + parentType.name }}">{{ parentType.name }}</option>
+              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
         </select>
       </div>
     </div>
-    <div class="form-group" *ngIf="type.type === 'reference'">
-      <label for="typeReference">Reference</label>
-      <div class="input-group">
-        <select id="typeReference" class="form-control" [(ngModel)]="type.ref">
+    <div class="mb-3 row" *ngIf="type.type === 'reference'">
+      <label for="typeReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+      <div class="col-sm-10">
+        <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.ref">
           <option>No reference</option>
           <optgroup label="self">
             <ng-container *ngFor="let parentType of types">
-              <option value="{{ parentType.name }}" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
           <optgroup label="{{include.alias}}" *ngFor="let include of imports">
             <ng-container *ngFor="let parentType of include.types">
-              <option value="{{ include.alias + ':' + parentType.name }}">{{ parentType.name }}</option>
+              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
         </select>
       </div>
     </div>
-    <div class="form-group" *ngIf="type.type === 'reference' && hasTypeReferenceContainsGeneric(type.ref)">
-      <label for="typeTemplate">Template</label>
-      <div class="input-group">
-        <select id="typeTemplate" class="form-control" [(ngModel)]="type.template">
+    <div class="mb-3 row" *ngIf="type.type === 'reference' && hasTypeReferenceContainsGeneric(type.ref)">
+      <label for="typeTemplate" class="col-sm-2 col-form-label fw-bold">Template</label>
+      <div class="col-sm-10">
+        <select id="typeTemplate" name="typeTemplate" class="form-select" [(ngModel)]="type.template">
           <option>No template</option>
           <optgroup label="self">
             <ng-container *ngFor="let parentType of types">
-              <option value="{{ parentType.name }}" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
           <optgroup label="{{include.alias}}" *ngFor="let include of imports">
             <ng-container *ngFor="let parentType of include.types">
-              <option value="{{ include.alias + ':' + parentType.name }}">{{ parentType.name }}</option>
+              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
         </select>
@@ -227,102 +228,100 @@
 <ng-template #propertyModal let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Add property</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label for="propertyName">Name</label>
-      <div class="input-group">
-        <input id="propertyName" class="form-control" [(ngModel)]="property.name">
+    <div class="mb-3 row">
+      <label for="propertyName" class="col-sm-2 col-form-label fw-bold">Name</label>
+      <div class="col-sm-10">
+        <input id="propertyName" name="propertyName" class="form-control" [(ngModel)]="property.name">
       </div>
     </div>
-    <div class="form-group">
-      <label for="propertyDescription">Description</label>
-      <div class="input-group">
-        <input id="propertyDescription" class="form-control" [(ngModel)]="property.description">
+    <div class="mb-3 row">
+      <label for="propertyDescription" class="col-sm-2 col-form-label fw-bold">Description</label>
+      <div class="col-sm-10">
+        <input id="propertyDescription" name="propertyDescription" class="form-control" [(ngModel)]="property.description">
       </div>
     </div>
-    <div class="form-group">
-      <label for="propertyType">Type</label>
-      <div class="input-group">
-        <select id="propertyType" class="form-control" [(ngModel)]="property.type">
+    <div class="mb-3 row">
+      <label for="propertyType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select id="propertyType" name="propertyType" class="form-select" [(ngModel)]="property.type">
           <optgroup label="Scalar">
-            <option value="string">String</option>
-            <option value="integer">Integer</option>
-            <option value="number">Number</option>
-            <option value="boolean">Boolean</option>
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
           </optgroup>
           <optgroup label="Complex">
-            <option value="object">Object</option>
-            <option value="map">Map</option>
-            <option value="array">Array</option>
-            <option value="union">Union</option>
-            <option value="intersection">Intersection</option>
-            <option value="any">Any</option>
+            <option ngValue="object">Object</option>
+            <option ngValue="map">Map</option>
+            <option ngValue="array">Array</option>
+            <option ngValue="union">Union</option>
+            <option ngValue="intersection">Intersection</option>
+            <option ngValue="any">Any</option>
           </optgroup>
         </select>
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'string'">
-      <label for="propertyFormat">Format</label>
-      <div class="input-group">
-        <select id="propertyFormat" class="form-control" [(ngModel)]="property.format">
-          <option value=""></option>
-          <option *ngIf="property.type == 'string'" value="date">Date</option>
-          <option *ngIf="property.type == 'string'" value="date-time">Date-Time</option>
-          <option *ngIf="property.type == 'string'" value="binary">Binary</option>
+    <div class="mb-3 row" *ngIf="property.type == 'string'">
+      <label for="propertyFormat" class="col-sm-2 col-form-label fw-bold">Format</label>
+      <div class="col-sm-10">
+        <select id="propertyFormat" name="propertyFormat" class="form-select" [(ngModel)]="property.format">
+          <option ngValue=""></option>
+          <option *ngIf="property.type == 'string'" ngValue="date">Date</option>
+          <option *ngIf="property.type == 'string'" ngValue="date-time">Date-Time</option>
+          <option *ngIf="property.type == 'string'" ngValue="binary">Binary</option>
         </select>
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'string'">
-      <label for="propertyPattern">Pattern</label>
-      <div class="input-group">
-        <input id="propertyPattern" type="text" class="form-control" [(ngModel)]="property.pattern">
+    <div class="mb-3 row" *ngIf="property.type == 'string'">
+      <label for="propertyPattern" class="col-sm-2 col-form-label fw-bold">Pattern</label>
+      <div class="col-sm-10">
+        <input id="propertyPattern" name="propertyPattern" type="text" class="form-control" [(ngModel)]="property.pattern">
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'string'">
-      <label for="propertyMinLength">Min-Length</label>
-      <div class="input-group">
-        <input id="propertyMinLength" type="number" class="form-control" [(ngModel)]="property.minLength">
+    <div class="mb-3 row" *ngIf="property.type == 'string'">
+      <label for="propertyMinLength" class="col-sm-2 col-form-label fw-bold">Min-Length</label>
+      <div class="col-sm-10">
+        <input id="propertyMinLength" name="propertyMinLength" type="number" class="form-control" [(ngModel)]="property.minLength">
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'string'">
-      <label for="propertyMaxLength">Max-Length</label>
-      <div class="input-group">
-        <input id="propertyMaxLength" type="number" class="form-control" [(ngModel)]="property.maxLength">
+    <div class="mb-3 row" *ngIf="property.type == 'string'">
+      <label for="propertyMaxLength" class="col-sm-2 col-form-label fw-bold">Max-Length</label>
+      <div class="col-sm-10">
+        <input id="propertyMaxLength" name="propertyMaxLength" type="number" class="form-control" [(ngModel)]="property.maxLength">
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'integer' || property.type == 'number'">
-      <label for="propertyMinimum">Minimum</label>
-      <div class="input-group">
-        <input id="propertyMinimum" type="number" class="form-control" [(ngModel)]="property.minimum">
+    <div class="mb-3 row" *ngIf="property.type == 'integer' || property.type == 'number'">
+      <label for="propertyMinimum" class="col-sm-2 col-form-label fw-bold">Minimum</label>
+      <div class="col-sm-10">
+        <input id="propertyMinimum" name="propertyMinimum" type="number" class="form-control" [(ngModel)]="property.minimum">
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'integer' || property.type == 'number'">
-      <label for="propertyMaximum">Maximum</label>
-      <div class="input-group">
-        <input id="propertyMaximum" type="number" class="form-control" [(ngModel)]="property.maximum">
+    <div class="mb-3 row" *ngIf="property.type == 'integer' || property.type == 'number'">
+      <label for="propertyMaximum" class="col-sm-2 col-form-label fw-bold">Maximum</label>
+      <div class="col-sm-10">
+        <input id="propertyMaximum" name="propertyMaximum" type="number" class="form-control" [(ngModel)]="property.maximum">
       </div>
     </div>
-    <div class="form-group" *ngIf="property.type == 'object' || property.type == 'array' || property.type == 'map' || property.type == 'union' || property.type == 'intersection'">
-      <label for="propertyReferences">References</label>
-      <div class="input-group">
-        <select id="propertyReferences" size="8" class="form-control" multiple="multiple" [(ngModel)]="property.refs">
+    <div class="mb-3 row" *ngIf="property.type == 'object' || property.type == 'array' || property.type == 'map' || property.type == 'union' || property.type == 'intersection'">
+      <label for="propertyReferences" class="col-sm-2 col-form-label fw-bold">References</label>
+      <div class="col-sm-10">
+        <select id="propertyReferences" name="propertyReferences" size="8" class="form-select" multiple="multiple" [(ngModel)]="property.refs">
           <optgroup label="scalar" *ngIf="property.type != 'object' && property.type != 'union' && property.type != 'intersection'">
-            <option value="string">String</option>
-            <option value="integer">Integer</option>
-            <option value="number">Number</option>
-            <option value="boolean">Boolean</option>
-            <option value="T">Generic</option>
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
+            <option ngValue="T">Generic</option>
           </optgroup>
           <optgroup label="self">
-            <option *ngFor="let refType of types" value="{{ refType.name }}">{{ refType.name }}</option>
+            <option *ngFor="let refType of types" [ngValue]="refType.name">{{ refType.name }}</option>
           </optgroup>
           <optgroup label="{{ include.alias }}" *ngFor="let include of imports">
             <ng-container *ngFor="let parentType of include.types">
-              <option value="{{ include.alias + ':' + parentType.name }}" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
           </optgroup>
         </select>
@@ -337,29 +336,27 @@
 <ng-template #includeModal let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Include</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label for="includeAlias">Alias</label>
-      <div class="input-group">
-        <input id="includeAlias" class="form-control" [(ngModel)]="include.alias">
+    <div class="mb-3 row">
+      <label for="includeAlias" class="col-sm-2 col-form-label fw-bold">Alias</label>
+      <div class="col-sm-10">
+        <input id="includeAlias" name="includeAlias" class="form-control" [(ngModel)]="include.alias">
       </div>
     </div>
-    <div class="form-group">
-      <label for="includeDocument">Document</label>
-      <div class="input-group">
-        <input id="includeDocument" type="text" class="form-control" [class.is-invalid]="searchFailed" [(ngModel)]="include.document" [ngbTypeahead]="search" [inputFormatter]="formatter" [resultFormatter]="formatter" [editable]="false" (ngModelChange)="loadIncludeVersions()" placeholder="Document search ..." />
+    <div class="mb-3 row">
+      <label for="includeDocument" class="col-sm-2 col-form-label fw-bold">Document</label>
+      <div class="col-sm-10">
+        <input id="includeDocument" name="includeDocument" type="text" class="form-control" [class.is-invalid]="searchFailed" [(ngModel)]="include.document" [ngbTypeahead]="search" [inputFormatter]="formatter" [resultFormatter]="formatter" [editable]="false" (ngModelChange)="loadIncludeVersions()" placeholder="Document search ..." />
       </div>
     </div>
-    <div class="form-group">
-      <label for="includeVersion">Version</label>
-      <div class="input-group">
-        <select id="includeVersion" class="form-control" [(ngModel)]="include.version">
-          <option value="master">master</option>
-          <option *ngFor="let version of includeVersions" value="{{ version }}">{{ version }}</option>
+    <div class="mb-3 row">
+      <label for="includeVersion" class="col-sm-2 col-form-label fw-bold">Version</label>
+      <div class="col-sm-10">
+        <select id="includeVersion" name="includeVersion" class="form-select" [(ngModel)]="include.version">
+          <option ngValue="master">master</option>
+          <option *ngFor="let version of includeVersions" [ngValue]="version">{{ version }}</option>
         </select>
       </div>
     </div>
@@ -372,39 +369,33 @@
 <ng-template #importModal let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Import</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label for="import">Import</label>
-      <div class="input-group">
-        <textarea id="import" rows="20" class="form-control" [(ngModel)]="import"></textarea>
+    <div class="mb-3 row">
+      <div class="col-sm-12">
+        <textarea id="import" name="import" rows="20" class="form-control" [(ngModel)]="import"></textarea>
       </div>
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+    <button type="button" class="btn btn-primary" (click)="modal.close()">Import</button>
   </div>
 </ng-template>
 
 <ng-template #exportModal let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Export</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="form-group">
-      <label for="import">Export</label>
-      <div class="input-group">
-        <textarea id="export" rows="20" class="form-control" [(ngModel)]="export"></textarea>
+    <div class="mb-3 row">
+      <div class="col-sm-12">
+        <textarea id="export" name="export" rows="20" class="form-control" [(ngModel)]="export"></textarea>
       </div>
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+    <button type="button" class="btn btn-primary" (click)="modal.close()">Close</button>
   </div>
 </ng-template>

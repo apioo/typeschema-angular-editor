@@ -118,7 +118,7 @@ export class EditorComponent implements OnInit {
       description: '',
     };
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const type = Object.assign({}, this.type);
       type.properties = [];
 
@@ -140,7 +140,7 @@ export class EditorComponent implements OnInit {
   editType(content: any, typeIndex: number): void {
     this.type = Object.assign({}, this.types[typeIndex]);
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const type = Object.assign({}, this.type);
       if (!type.properties) {
         type.properties = [];
@@ -254,7 +254,7 @@ export class EditorComponent implements OnInit {
       type: 'string',
     };
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
       if (!property.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
@@ -280,7 +280,7 @@ export class EditorComponent implements OnInit {
 
     this.property = Object.assign({}, props[propertyIndex]);
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
       if (!property.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
