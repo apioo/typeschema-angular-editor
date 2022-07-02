@@ -369,14 +369,19 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content).result.then((result) => {
       let data = JSON.parse(this.import);
       let types: Array<Type> = [];
-      if (data.definitions) {
-        types = types.concat(this.schemaTransformer.transform(data.definitions));
-      }
 
-      if (data.properties) {
-        types = types.concat(this.schemaTransformer.transform({
-          Root: data
-        }));
+      if (Array.isArray(data)) {
+        types = data;
+      } else {
+        if (data.definitions) {
+          types = types.concat(this.schemaTransformer.transform(data.definitions));
+        }
+
+        if (data.properties) {
+          types = types.concat(this.schemaTransformer.transform({
+            Root: data
+          }));
+        }
       }
 
       this.specification.types = types;
