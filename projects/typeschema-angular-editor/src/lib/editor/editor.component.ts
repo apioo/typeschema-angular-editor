@@ -1,11 +1,15 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {ApiService} from '../api.service';
 import {Observable, of, OperatorFunction} from 'rxjs';
-import {Document} from '../model/Document';
-import {Message} from '../model/Message';
-import {Include, Property, SchemaTransformerService, Type} from '../schema-transformer.service';
+import {Document} from '../typehub/Document';
+import {Message} from '../typehub/Message';
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
+import {Specification} from "../model/Specification";
+import {Type} from "../model/Type";
+import {Property} from "../model/Property";
+import {Include} from "../model/Include";
+import {TypeSchemaToInternalService} from "../typeschema-to-internal.service";
+import {TypeHubService} from "../typehub.service";
 
 @Component({
   selector: 'typeschema-editor',
@@ -56,7 +60,7 @@ export class EditorComponent implements OnInit {
       distinctUntilChanged(),
       tap(() => this.searching = true),
       switchMap((term) => {
-        return this.service.findDocuments(term).pipe(
+        return this.typeHubService.findDocuments(term).pipe(
           tap(() => this.searchFailed = false),
           map((collection): Array<Document> => {
             if (!collection.entry) {
@@ -78,7 +82,7 @@ export class EditorComponent implements OnInit {
     return document.userName + ' / ' + document.name;
   }
 
-  constructor(private service: ApiService, private schemaTransformer: SchemaTransformerService, private modalService: NgbModal) { }
+  constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal) { }
 
   ngOnInit(): void {
     this.doPreview();
@@ -326,7 +330,7 @@ export class EditorComponent implements OnInit {
     }
 
     this.includeVersions = [];
-    this.service.findTags(document.userName, document.name).subscribe((tags) => {
+    this.typeHubService.findTags(document.userName, document.name).subscribe((tags) => {
       tags.entry?.forEach((tag) => {
         if (!tag.version) {
           return;
@@ -355,7 +359,7 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.service.findDocument(include.document.userName, include.document.name).subscribe(doc => {
+      this.typeHubService.findDocument(include.document.userName, include.document.name).subscribe(doc => {
         include.types = doc.spec.types ?? [];
         this.specification.imports.push(include);
       });
@@ -368,23 +372,17 @@ export class EditorComponent implements OnInit {
 
     this.modalService.open(content).result.then((result) => {
       let data = JSON.parse(this.import);
-      let types: Array<Type> = [];
+      let spec: Specification;
 
-      if (Array.isArray(data)) {
-        types = data;
+      if (data.types && Array.isArray(data.types)) {
+        // we already have an internal spec format
+        spec = data;
       } else {
-        if (data.definitions) {
-          types = types.concat(this.schemaTransformer.transform(data.definitions));
-        }
-
-        if (data.properties) {
-          types = types.concat(this.schemaTransformer.transform({
-            Root: data
-          }));
-        }
+        // we probably get a TypeSchema so we try to convert
+        spec = this.schemaTransformer.transform(data);
       }
 
-      this.specification.types = types;
+      this.specification = spec;
       this.dirty = true;
       this.import = '';
       this.doPreview();
@@ -393,16 +391,10 @@ export class EditorComponent implements OnInit {
   }
 
   openExport(content: any): void {
-    this.export = JSON.stringify(this.specification.types, null, 2);
+    this.export = JSON.stringify(this.specification, null, 2);
 
     this.modalService.open(content).result.then((result) => {
     }, (reason) => {
     });
   }
-}
-
-export interface Specification {
-  imports: Array<Include>
-  types: Array<Type>
-  root?: number
 }

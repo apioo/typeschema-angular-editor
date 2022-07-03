@@ -1,29 +1,59 @@
 import {Injectable} from '@angular/core';
-import {Document} from './model/Document';
+import {Type} from "./model/Type";
+import {Property} from "./model/Property";
+import {Specification} from "./model/Specification";
+import {pascalCase} from "pascal-case";
 
 @Injectable({
   providedIn: 'root'
 })
-export class SchemaTransformerService {
+export class TypeSchemaToInternalService {
 
   constructor() { }
 
-  transform(definitions: any): Array<Type> {
-    const result: Array<Type> = [];
+  transform(schema: any): Specification {
+    const spec: Specification = {
+      imports: [],
+      types: []
+    };
+    const typeNames: Array<string> = [];
 
-    for (const key in definitions) {
-      if (!definitions.hasOwnProperty(key)) {
-        continue;
+    if (this.isset(schema.definitions) && typeof schema.definitions === 'object') {
+      for (const [key, value] of Object.entries(schema.definitions)) {
+        spec.types.push(this.transformType(key, value));
+        typeNames.push(key);
       }
-      result.push(this.transformType(key, definitions[key]));
     }
 
-    return result;
+    if (this.isset(schema.properties) && typeof schema.properties === 'object') {
+      // it looks like we have a root schema we try to convert
+      let key = 'Root';
+      if (this.isset(schema.title) && typeof schema.title === 'string') {
+        key = this.normalizeTitle(schema.title);
+      }
+
+      spec.types.push(this.transformType(key, {
+        description: schema.description,
+        type: 'object',
+        properties: schema.properties,
+      }));
+      typeNames.push(key);
+      spec.root = spec.types.length - 1;
+    }
+
+    if (this.isset(schema.$ref) && typeof schema.$ref === 'string') {
+      const index = typeNames.findIndex(schema.$ref);
+      if (index !== -1) {
+        spec.root = index;
+      }
+    }
+
+    return spec;
   }
 
   private transformType(name: string, data: any): Type {
     let type: Type;
-    if (data.$ref) {
+    if (this.isset(data.$ref)) {
       type = {
         type: 'reference',
         name: name,
@@ -31,10 +61,10 @@ export class SchemaTransformerService {
         ref: data.$ref
       };
 
-      if (data.$template) {
+      if (this.isset(data.$template) && this.isset(data.$template.T) && typeof data.$template.T === 'string') {
         type.template = data.$template.T;
       }
-    } else if (data.additionalProperties) {
+    } else if (this.isset(data.additionalProperties)) {
       type = {
         type: 'map',
         name: name,
@@ -52,17 +82,14 @@ export class SchemaTransformerService {
         description: data.description && typeof data.description === 'string' ? data.description : '',
       };
 
-      if (data.$extends) {
+      if (this.isset(data.$extends) && typeof data.$extends === 'string') {
         type.parent = data.$extends;
       }
 
-      if (data.properties) {
+      if (this.isset(data.properties) && typeof data.properties === 'object') {
         type.properties = [];
-        for (const key in data.properties) {
-          if (!data.properties.hasOwnProperty(key)) {
-            continue;
-          }
-          type.properties.push(this.transformProperty(key, data.properties[key]));
+        for (const [key, value] of Object.entries(data.properties)) {
+          type.properties.push(this.transformProperty(key, value));
         }
       }
     }
@@ -75,53 +102,53 @@ export class SchemaTransformerService {
     let type;
     let format, pattern, minLength, maxLength, minimum, maximum;
     let i;
-    if (data.additionalProperties) {
+    if (this.isset(data.additionalProperties)) {
       type = 'map';
       refs = refs.concat(this.parseRef(data.additionalProperties));
-    } else if (data.items) {
+    } else if (this.isset(data.items)) {
       type = 'array';
       refs = refs.concat(this.parseRef(data.items));
-    } else if (data.oneOf) {
+    } else if (this.isset(data.oneOf) && Array.isArray(data.oneOf)) {
       type = 'union';
       for (i = 0; i < data.oneOf.length; i++) {
         refs = refs.concat(this.parseRef(data.oneOf[i]));
       }
-    } else if (data.allOf) {
+    } else if (this.isset(data.allOf) && Array.isArray(data.allOf)) {
       type = 'intersection';
       for (i = 0; i < data.allOf.length; i++) {
         refs = refs.concat(this.parseRef(data.allOf[i]));
       }
-    } else if (data.$ref) {
+    } else if (this.isset(data.$ref)) {
       type = 'object';
       refs = refs.concat(this.parseRef(data));
     } else if (data.type === 'string') {
       type = 'string';
-      if (data.format) {
+      if (this.isset(data.format)) {
         format = data.format;
       }
-      if (data.pattern) {
+      if (this.isset(data.pattern)) {
         pattern = data.pattern;
       }
-      if (data.minLength) {
+      if (this.isset(data.minLength)) {
         minLength = data.minLength;
       }
-      if (data.maxLength) {
+      if (this.isset(data.maxLength)) {
         maxLength = data.maxLength;
       }
     } else if (data.type === 'integer') {
       type = 'integer';
-      if (data.minimum) {
+      if (this.isset(data.minimum)) {
         minimum = data.minimum;
       }
-      if (data.maximum) {
+      if (this.isset(data.maximum)) {
         maximum = data.maximum;
       }
     } else if (data.type === 'number') {
       type = 'number';
-      if (data.minimum) {
+      if (this.isset(data.minimum)) {
         minimum = data.minimum;
       }
-      if (data.maximum) {
+      if (this.isset(data.maximum)) {
         maximum = data.maximum;
       }
     } else if (data.type === 'boolean') {
@@ -138,39 +165,39 @@ export class SchemaTransformerService {
       type: type,
     };
 
-    if (data.deprecated) {
+    if (this.isset(data.deprecated) && typeof data.deprecated === 'boolean') {
       property.deprecated = data.deprecated;
     }
 
-    if (data.nullable) {
+    if (this.isset(data.nullable) && typeof data.nullable === 'boolean') {
       property.nullable = data.nullable;
     }
 
-    if (data.readonly) {
+    if (this.isset(data.readonly) && typeof data.readonly === 'boolean') {
       property.readonly = data.readonly;
     }
 
-    if (format) {
+    if (this.isset(format) && typeof format === 'string') {
       property.format = format;
     }
 
-    if (pattern) {
+    if (this.isset(pattern) && typeof pattern === 'string') {
       property.pattern = pattern;
     }
 
-    if (minLength) {
+    if (this.isset(minLength) && typeof minLength === 'number') {
       property.minLength = minLength;
     }
 
-    if (maxLength) {
+    if (this.isset(maxLength) && typeof maxLength === 'number') {
       property.maxLength = maxLength;
     }
 
-    if (minimum) {
+    if (this.isset(minimum) && typeof minimum === 'number') {
       property.minimum = minimum;
     }
 
-    if (maximum) {
+    if (this.isset(maximum) && typeof maximum === 'number') {
       property.maximum = maximum;
     }
 
@@ -182,11 +209,11 @@ export class SchemaTransformerService {
   }
 
   private parseRef(data: any): Array<string> {
-    if (data.$ref) {
+    if (this.isset(data.$ref) && typeof data.$ref === 'string') {
       return [data.$ref];
-    } else if (data.$generic) {
+    } else if (this.isset(data.$generic)) {
       return ['T'];
-    } else if (data.oneOf) {
+    } else if (this.isset(data.oneOf) && Array.isArray(data.oneOf)) {
       let result = new Array<string>();
       for (let i = 0; i < data.oneOf.length; i++) {
         result = result.concat(this.parseRef(data.oneOf[i]));
@@ -201,37 +228,12 @@ export class SchemaTransformerService {
       throw new Error('Could not resolve ref: ' + JSON.stringify(data));
     }
   }
-}
 
-export interface Property {
-  name: string;
-  description: string;
-  type?: string;
-  format?: string;
-  pattern?: string;
-  minLength?: number;
-  maxLength?: number;
-  minimum?: number;
-  maximum?: number;
-  deprecated?: boolean;
-  nullable?: boolean;
-  readonly?: boolean;
-  refs?: Array<string>;
-}
+  private normalizeTitle(title: string): string {
+    return pascalCase(title);
+  }
 
-export interface Type {
-  type: string;
-  name: string;
-  description: string;
-  parent?: string;
-  properties?: Array<Property>;
-  ref?: string;
-  template?: string;
-}
-
-export interface Include {
-  alias: string;
-  version: string;
-  document: Document|undefined;
-  types: Array<Type>|undefined;
+  private isset(value: any): boolean {
+    return typeof value !== 'undefined' && value !== null;
+  }
 }

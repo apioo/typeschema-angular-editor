@@ -1,14 +1,14 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Document_Collection} from './model/Document_Collection';
-import {Document} from './model/Document';
+import {Document_Collection} from './typehub/Document_Collection';
+import {Document} from './typehub/Document';
 import {Observable} from 'rxjs';
-import {Tag_Collection} from './model/Tag_Collection';
+import {Tag_Collection} from './typehub/Tag_Collection';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ApiService {
+export class TypeHubService {
 
   private baseUrl: string = 'https://typehub.cloud/';
 
