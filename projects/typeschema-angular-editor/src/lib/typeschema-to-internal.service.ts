@@ -42,7 +42,7 @@ export class TypeSchemaToInternalService {
     }
 
     if (this.isset(schema.$ref) && typeof schema.$ref === 'string') {
-      const index = typeNames.findIndex(schema.$ref);
+      const index = typeNames.indexOf(schema.$ref);
       if (index !== -1) {
         spec.root = index;
       }
