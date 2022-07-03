@@ -3,5 +3,6 @@
   "dest": "../../dist/typeschema-angular-editor",
   "lib": {
     "entryFile": "src/public-api.ts"
-  }
+  },
+  "allowedNonPeerDependencies": ["pascal-case"]
 }
