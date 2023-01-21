@@ -28,7 +28,7 @@
     <tbody>
     <tr *ngFor="let include of specification.imports; index as includeIndex">
       <td>{{ include.alias }}</td>
-      <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.userName }} / {{ include.document.name }}</span></td>
+      <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.user?.name }} / {{ include.document.name }}</span></td>
       <td>
         <div class="btn-group" role="group">
           <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
