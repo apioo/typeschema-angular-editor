@@ -20,7 +20,7 @@ export class InternalToTypeSchemaService {
 
     schema.definitions = definitions;
 
-    if (typeof spec.root === 'number' && spec.types[spec.root]) {
+    if (spec.root !== undefined && spec.types[spec.root]) {
       schema['$ref'] = spec.types[spec.root].name;
     }
 
