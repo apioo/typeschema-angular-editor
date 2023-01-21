@@ -79,7 +79,7 @@ export class EditorComponent implements OnInit {
     );
   }
   formatter = (document: Document) => {
-    return document.userName + ' / ' + document.name;
+    return document.user?.name + ' / ' + document.name;
   }
 
   constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal) { }
@@ -325,12 +325,12 @@ export class EditorComponent implements OnInit {
 
   loadIncludeVersions(): void {
     const document = this.include.document;
-    if (!document || !document.userName || !document.name) {
+    if (!document || !document.user?.name || !document.name) {
       return;
     }
 
     this.includeVersions = [];
-    this.typeHubService.findTags(document.userName, document.name).subscribe((tags) => {
+    this.typeHubService.findTags(document.user?.name, document.name).subscribe((tags) => {
       tags.entry?.forEach((tag) => {
         if (!tag.version) {
           return;
@@ -355,11 +355,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      if (!include.document.userName || !include.document.name) {
+      if (!include.document.user?.name || !include.document.name) {
         return;
       }
 
-      this.typeHubService.findDocument(include.document.userName, include.document.name).subscribe(doc => {
+      this.typeHubService.findDocument(include.document.user?.name, include.document.name).subscribe(doc => {
         include.types = doc.spec.types ?? [];
         this.specification.imports.push(include);
       });
