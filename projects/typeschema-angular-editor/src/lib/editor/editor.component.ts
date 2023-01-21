@@ -344,14 +344,14 @@ export class EditorComponent implements OnInit {
   openInclude(content: any): void {
     this.include = {
       alias: '',
-      version: 'master',
+      version: '',
       document: undefined,
       types: []
     };
 
     this.modalService.open(content).result.then((result) => {
       const include = this.include;
-      if (!include || !include.document) {
+      if (!include || !include.document || !include.version) {
         return;
       }
 
@@ -359,7 +359,7 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.typeHubService.findDocument(include.document.user?.name, include.document.name).subscribe(doc => {
+      this.typeHubService.findDocument(include.document.user?.name, include.document.name, include.version).subscribe(doc => {
         include.types = doc.spec.types ?? [];
         this.specification.imports.push(include);
       });
@@ -397,4 +397,5 @@ export class EditorComponent implements OnInit {
     }, (reason) => {
     });
   }
+
 }

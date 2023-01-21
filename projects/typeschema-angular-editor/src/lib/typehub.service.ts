@@ -23,8 +23,8 @@ export class TypeHubService {
     });
   }
 
-  public findDocument(user: string, name: string): Observable<Document> {
-    return this.httpClient.get<Document>(this.baseUrl + 'document/' + user + '/' + name);
+  public findDocument(user: string, name: string, version: string): Observable<Document> {
+    return this.httpClient.get<Document>(this.baseUrl + 'document/' + user + '/' + name + '?version=' + version);
   }
 
   public findTags(user: string, name: string): Observable<TagCollection> {

@@ -2,7 +2,7 @@
 <ngb-alert type="danger" *ngIf="response && response.success === false">{{ response.message }}</ngb-alert>
 <ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
 
-<div class="btn-group" role="group">
+<div class="btn-group mb-3" role="group">
   <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
   <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
   <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
@@ -10,36 +10,41 @@
   <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
 </div>
 
-<div class="editor-type" *ngIf="specification.imports.length > 0">
-  <h3 class="editor-type-name">Imports</h3>
-  <table class="table editor-type-properties">
-    <colgroup>
-      <col width="150">
-      <col width="*">
-      <col width="50">
-    </colgroup>
-    <thead>
-    <tr>
-      <th>Alias</th>
-      <th>Document</th>
-      <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let include of specification.imports; index as includeIndex">
-      <td>{{ include.alias }}</td>
-      <td><span class="badge badge-primary">{{ include.version }}</span>&nbsp;<span *ngIf="include.document">{{ include.document.user?.name }} / {{ include.document.name }}</span></td>
-      <td>
-        <div class="btn-group" role="group">
-          <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
-        </div>
-      </td>
-    </tr>
-    </tbody>
-  </table>
+<div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
+  <div class="card-header">Import</div>
+  <div class="card-body">
+    <table class="table table table-striped">
+      <colgroup>
+        <col width="100">
+        <col width="*">
+        <col width="100">
+        <col width="50">
+      </colgroup>
+      <thead>
+      <tr>
+        <th>Alias</th>
+        <th>Document</th>
+        <th>Version</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let include of specification.imports; index as includeIndex">
+        <td><span class="editor-import-alias">{{ include.alias }}</span></td>
+        <td><span class="editor-import-document">{{ include.document?.user?.name }} / {{ include.document?.name }}</span></td>
+        <td><span class="badge bg-primary editor-import-version">{{ include.version }}</span></td>
+        <td>
+          <div class="btn-group" role="group">
+            <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type" [ngClass]="{'border-primary': specification.root === typeIndex}">
+<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
@@ -356,7 +361,6 @@
       <label for="includeVersion" class="col-sm-2 col-form-label fw-bold">Version</label>
       <div class="col-sm-10">
         <select id="includeVersion" name="includeVersion" class="form-select" [(ngModel)]="include.version">
-          <option ngValue="master">master</option>
           <option *ngFor="let version of includeVersions" [ngValue]="version">{{ version }}</option>
         </select>
       </div>
