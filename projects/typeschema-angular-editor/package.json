@@ -13,11 +13,11 @@
   "homepage": "https://typehub.cloud/",
   "peerDependencies": {
     "@angular/common": "~13.3.0",
-    "@angular/core": "~13.3.0"
+    "@angular/core": "~13.3.0",
+    "typehub-javascript-sdk": "^0.1.0",
+    "pascal-case": "^3.1.2"
   },
   "dependencies": {
-    "typehub-javascript-sdk": "^0.1.0",
-    "pascal-case": "^3.1.2",
     "tslib": "^2.3.0"
   }
 }
