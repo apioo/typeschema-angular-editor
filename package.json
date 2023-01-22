@@ -21,6 +21,7 @@
     "@ng-bootstrap/ng-bootstrap": "^12.1.2",
     "ng-packagr": "~13.3.0",
     "pascal-case": "^3.1.2",
+    "typehub-javascript-sdk": "^0.1.0",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
