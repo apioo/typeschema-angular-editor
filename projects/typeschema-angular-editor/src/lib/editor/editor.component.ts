@@ -1,8 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Observable, of, OperatorFunction} from 'rxjs';
-import {Document} from '../typehub/Document';
-import {Message} from '../typehub/Message';
+import {Document} from "typehub-javascript-sdk/dist/src/Document";
+import {Message} from "typehub-javascript-sdk/dist/src/Message";
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
@@ -43,7 +43,7 @@ export class EditorComponent implements OnInit {
   export: string = '';
 
   dirty = false;
-  response: Message|undefined;
+  response?: Message;
 
   include: Include = {
     alias: '',
