@@ -267,10 +267,10 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
-      if (!property.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
+      if (!property.name.match(/^[A-Za-z0-9_$]{1,32}$/)) {
         this.response = {
           success: false,
-          message: 'Property name must match the regular expression [A-Za-z0-9_]{1,32}'
+          message: 'Property name must match the regular expression [A-Za-z0-9_$]{1,32}'
         };
         return;
       }
@@ -293,10 +293,10 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
-      if (!property.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
+      if (!property.name.match(/^[A-Za-z0-9_$]{1,32}$/)) {
         this.response = {
           success: false,
-          message: 'Property name must match the regular expression [A-Za-z0-9_]{1,32}'
+          message: 'Property name must match the regular expression [A-Za-z0-9_$]{1,32}'
         };
         return;
       }
