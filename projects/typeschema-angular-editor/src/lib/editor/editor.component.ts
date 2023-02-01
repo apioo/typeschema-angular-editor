@@ -382,7 +382,10 @@ export class EditorComponent implements OnInit {
         spec = this.schemaTransformer.transform(data);
       }
 
-      this.specification = spec;
+      this.specification.imports = spec.imports;
+      this.specification.types = spec.types;
+      this.specification.root = spec.root;
+
       this.dirty = true;
       this.import = '';
       this.doPreview();
