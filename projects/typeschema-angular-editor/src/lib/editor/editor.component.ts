@@ -10,6 +10,7 @@ import {Property} from "../model/Property";
 import {Include} from "../model/Include";
 import {TypeSchemaToInternalService} from "../typeschema-to-internal.service";
 import {TypeHubService} from "../typehub.service";
+import {fromPromise} from "rxjs/internal/observable/innerFrom";
 
 @Component({
   selector: 'typeschema-editor',
@@ -54,30 +55,26 @@ export class EditorComponent implements OnInit {
   includeVersions: Array<string> = [];
   searching = false;
   searchFailed = false;
-  search: OperatorFunction<string, readonly Document[]> = (text$: Observable<string>) => {
-    return text$.pipe(
-      debounceTime(300),
+  search: OperatorFunction<string, Array<Document>> = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(200),
       distinctUntilChanged(),
-      tap(() => this.searching = true),
-      switchMap((term) => {
-        return this.typeHubService.findDocuments(term).pipe(
-          tap(() => this.searchFailed = false),
-          map((collection): Array<Document> => {
-            if (!collection.entry) {
-              return [];
-            }
-
-            return collection.entry;
+      tap(() => (this.searching = true)),
+      switchMap((term) =>
+        fromPromise(this.typeHubService.findDocuments(term)).pipe(
+          map((response) => {
+            return response.entry ? response.entry : [];
           }),
+          tap(() => (this.searchFailed = false)),
           catchError(() => {
             this.searchFailed = true;
             return of([]);
-          })
-        );
-      }),
-      tap(() => this.searching = false)
+          }),
+        ),
+      ),
+      tap(() => (this.searching = false)),
     );
-  }
+
   formatter = (document: Document) => {
     return document.user?.name + ' / ' + document.name;
   }
@@ -323,21 +320,21 @@ export class EditorComponent implements OnInit {
     this.doPreview();
   }
 
-  loadIncludeVersions(): void {
+  async loadIncludeVersions(): Promise<void> {
     const document = this.include.document;
     if (!document || !document.user?.name || !document.name) {
       return;
     }
 
     this.includeVersions = [];
-    this.typeHubService.findTags(document.user?.name, document.name).subscribe((tags) => {
-      tags.entry?.forEach((tag) => {
-        if (!tag.version) {
-          return;
-        }
 
-        this.includeVersions.push(tag.version);
-      });
+    const tags = await this.typeHubService.findTags(document.user?.name, document.name);
+    tags.entry?.forEach((tag) => {
+      if (!tag.version) {
+        return;
+      }
+
+      this.includeVersions.push(tag.version);
     });
   }
 
@@ -349,7 +346,7 @@ export class EditorComponent implements OnInit {
       types: []
     };
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content).result.then(async (result) => {
       const include = this.include;
       if (!include || !include.document || !include.version) {
         return;
@@ -359,10 +356,23 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.typeHubService.findDocument(include.document.user?.name, include.document.name, include.version).subscribe(doc => {
-        include.types = doc.spec.types ?? [];
-        this.specification.imports.push(include);
-      });
+      const doc = await this.typeHubService.findDocument(include.document.user?.name, include.document.name);
+      if (!doc) {
+        return;
+      }
+
+      const typeSchema = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
+      if (!typeSchema) {
+        return;
+      }
+
+      const spec = await this.schemaTransformer.transform(typeSchema);
+      if (!spec) {
+        return;
+      }
+
+      include.types = spec.types;
+      this.specification.imports.push(include);
     }, (reason) => {
     });
   }
@@ -370,7 +380,7 @@ export class EditorComponent implements OnInit {
   openImport(content: any): void {
     this.import = '';
 
-    this.modalService.open(content).result.then((result) => {
+    this.modalService.open(content).result.then(async (result) => {
       let data = JSON.parse(this.import);
       let spec: Specification;
 
@@ -379,7 +389,7 @@ export class EditorComponent implements OnInit {
         spec = data;
       } else {
         // we probably get a TypeSchema so we try to convert
-        spec = this.schemaTransformer.transform(data);
+        spec = await this.schemaTransformer.transform(data);
       }
 
       this.specification.imports = spec.imports;

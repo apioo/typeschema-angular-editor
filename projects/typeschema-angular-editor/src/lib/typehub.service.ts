@@ -4,6 +4,7 @@ import {DocumentCollection} from "typehub-javascript-sdk/dist/src/DocumentCollec
 import {Document} from "typehub-javascript-sdk/dist/src/Document";
 import {Observable} from 'rxjs';
 import {TagCollection} from "typehub-javascript-sdk/dist/src/TagCollection";
+import {Client} from "typehub-javascript-sdk/dist/src/Client";
 
 @Injectable({
   providedIn: 'root'
@@ -11,24 +12,35 @@ import {TagCollection} from "typehub-javascript-sdk/dist/src/TagCollection";
 export class TypeHubService {
 
   private baseUrl: string = 'https://api.typehub.cloud/';
+  private client: Client;
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) {
+    this.client = new Client(this.baseUrl);
+  }
 
-  public findDocuments(search?: string): Observable<DocumentCollection> {
-    return this.httpClient.get<DocumentCollection>(this.baseUrl + 'explore', {
-      params: {
-        startIndex: 0,
-        search: search ?? ''
-      },
+  public async findDocuments(search?: string): Promise<DocumentCollection> {
+    return this.client.explore().getAll(0, 16, search);
+  }
+
+  public async findDocument(user: string, name: string): Promise<Document> {
+    return await this.client.document().get(user, name);
+  }
+
+  public async export(user: string, name: string, version: string): Promise<any> {
+    const response = await this.client.document().export(user, name, {
+      version: version,
+      format: 'typeschema'
     });
+
+    if (!response.href) {
+      return;
+    }
+
+    return this.httpClient.get<any>(response.href);
   }
 
-  public findDocument(user: string, name: string, version: string): Observable<Document> {
-    return this.httpClient.get<Document>(this.baseUrl + 'document/' + user + '/' + name + '?version=' + version);
-  }
-
-  public findTags(user: string, name: string): Observable<TagCollection> {
-    return this.httpClient.get<TagCollection>(this.baseUrl + 'document/' + user + '/' + name + '/tag');
+  public findTags(user: string, name: string): Promise<TagCollection> {
+    return this.client.tag().getAll(user, name);
   }
 
 }

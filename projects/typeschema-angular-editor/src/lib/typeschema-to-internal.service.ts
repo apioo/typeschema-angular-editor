@@ -3,20 +3,31 @@ import {Type} from "./model/Type";
 import {Property} from "./model/Property";
 import {Specification} from "./model/Specification";
 import {pascalCase} from "pascal-case";
+import {Include} from "./model/Include";
+import {TypeHubService} from "./typehub.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class TypeSchemaToInternalService {
 
-  constructor() { }
+  constructor(private typeHubService: TypeHubService) { }
 
-  transform(schema: any): Specification {
+  async transform(schema: any): Promise<Specification> {
     const spec: Specification = {
       imports: [],
       types: []
     };
     const typeNames: Array<string> = [];
+
+    if (this.isset(schema.$import) && typeof schema.$import === 'object') {
+      for (const [key, value] of Object.entries(schema.$import)) {
+        const include = await this.transformImport(key, value);
+        if (include) {
+          spec.imports.push(include);
+        }
+      }
+    }
 
     if (this.isset(schema.definitions) && typeof schema.definitions === 'object') {
       for (const [key, value] of Object.entries(schema.definitions)) {
@@ -49,6 +60,46 @@ export class TypeSchemaToInternalService {
     }
 
     return spec;
+  }
+
+  private async transformImport(alias: string, data: any): Promise<Include|undefined> {
+    if (typeof data !== 'string') {
+      return;
+    }
+
+    if (!data.startsWith('typehub://')) {
+      return;
+    }
+
+    const source = data.substring(10);
+    const parts = source.split(':');
+    const nameAndVersion = parts[1] || '';
+    const nv = nameAndVersion.split('@')
+    const user = parts[0] || '';
+    const name = nv[0] || '';
+    const version = nv[1] || '';
+
+    const doc = await this.typeHubService.findDocument(user, name);
+    if (!doc) {
+      return;
+    }
+
+    const typeSchema = await this.typeHubService.export(user, name, version);
+    if (!typeSchema) {
+      return;
+    }
+
+    const spec = await this.transform(typeSchema);
+    if (!spec) {
+      return;
+    }
+
+    return {
+      alias: alias,
+      version: version,
+      document: doc,
+      types: spec.types ?? [],
+    };
   }
 
   private transformType(name: string, data: any): Type {
