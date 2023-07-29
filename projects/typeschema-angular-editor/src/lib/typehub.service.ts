@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {DocumentCollection} from "typehub-javascript-sdk/dist/src/DocumentCollection";
 import {Document} from "typehub-javascript-sdk/dist/src/Document";
-import {Observable} from 'rxjs';
 import {TagCollection} from "typehub-javascript-sdk/dist/src/TagCollection";
 import {Client} from "typehub-javascript-sdk/dist/src/Client";
 
