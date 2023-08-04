@@ -1,16 +1,19 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Observable, of, OperatorFunction} from 'rxjs';
+import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
+import {fromPromise} from "rxjs/internal/observable/innerFrom";
 import {Document} from "typehub-javascript-sdk/dist/src/Document";
 import {Message} from "typehub-javascript-sdk/dist/src/Message";
-import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {Include} from "../model/Include";
 import {TypeSchemaToInternalService} from "../typeschema-to-internal.service";
 import {TypeHubService} from "../typehub.service";
-import {fromPromise} from "rxjs/internal/observable/innerFrom";
+import {Operation} from "../model/Operation";
+import {Argument} from "../model/Argument";
+import {Throw} from "../model/Throw";
 
 @Component({
   selector: 'typeschema-editor',
@@ -21,12 +24,36 @@ export class EditorComponent implements OnInit {
 
   @Input() specification: Specification = {
     imports: [],
-    types: []
+    operations: [],
+    types: [],
   };
+  @Input() operationEnabled: boolean = false;
   @Input() importEnabled: boolean = true;
 
   @Output() save = new EventEmitter<Specification>();
   @Output() preview = new EventEmitter<Specification>();
+
+  operation: Operation = {
+    name: '',
+    description: '',
+    httpMethod: 'GET',
+    httpPath: '',
+    httpCode: 200,
+    arguments: [],
+    throws: [],
+    return: '',
+  };
+
+  argument: Argument = {
+    name: '',
+    in: 'query',
+    type: '',
+  };
+
+  throw: Throw = {
+    code: 500,
+    type: '',
+  };
 
   type: Type = {
     type: 'object',
@@ -82,6 +109,10 @@ export class EditorComponent implements OnInit {
   constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal) { }
 
   ngOnInit(): void {
+    if (!Array.isArray(this.specification.operations)) {
+      this.specification.operations = [];
+    }
+
     this.doPreview();
   }
 
@@ -96,6 +127,83 @@ export class EditorComponent implements OnInit {
 
   setRoot(typeIndex: number) {
     this.specification.root = typeIndex;
+  }
+
+  upOperation(operationIndex: number): void {
+    const operation = this.specification.operations.splice(operationIndex, 1)[0];
+    if (!operation) {
+      return;
+    }
+    this.specification.operations.splice(operationIndex - 1, 0, operation);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  downOperation(operationIndex: number): void {
+    const operation = this.specification.operations.splice(operationIndex, 1)[0];
+    if (!operation) {
+      return;
+    }
+    this.specification.operations.splice(operationIndex + 1, 0, operation);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  openOperation(content: any): void {
+    this.operation = {
+      name: '',
+      description: '',
+      httpMethod: 'GET',
+      httpPath: '',
+      httpCode: 200,
+      arguments: [],
+      throws: [],
+      return: '',
+    };
+
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
+      const operation = Object.assign({}, this.operation);
+
+      if (!operation.name.match(/^[A-Za-z0-9_.]{1,32}$/)) {
+        this.response = {
+          success: false,
+          message: 'Operation name must match the regular expression [A-Za-z0-9_.]{1,32}'
+        };
+        return;
+      }
+
+      this.specification.operations.push(operation);
+      this.dirty = true;
+      this.doPreview();
+    }, (reason) => {
+    });
+  }
+
+  editOperation(content: any, operationIndex: number): void {
+    this.operation = Object.assign({}, this.specification.operations[operationIndex]);
+
+    this.modalService.open(content, {size: 'lg'}).result.then((result) => {
+      const operation = Object.assign({}, this.operation);
+      if (!operation.arguments) {
+        operation.arguments = [];
+      }
+      if (!operation.throws) {
+        operation.throws = [];
+      }
+
+      if (!operation.name.match(/^[A-Za-z0-9_.]{1,32}$/)) {
+        this.response = {
+          success: false,
+          message: 'Type name must match the regular expression [A-Za-z0-9_.]{1,32}'
+        };
+        return;
+      }
+
+      this.specification.operations[operationIndex] = operation;
+      this.dirty = true;
+      this.doPreview();
+    }, (reason) => {
+    });
   }
 
   upType(typeIndex: number): void {
@@ -193,6 +301,16 @@ export class EditorComponent implements OnInit {
     return false;
   }
 
+  findOperationByName(operationName: string): Operation|null {
+    for (let i = 0; i < this.specification.operations.length; i++) {
+      if (this.specification.operations[i].name === operationName) {
+        return this.specification.operations[i];
+      }
+    }
+
+    return null;
+  }
+
   findTypeByName(typeName: string): Type|null {
     for (let i = 0; i < this.specification.types.length; i++) {
       if (this.specification.types[i].name === typeName) {
@@ -226,6 +344,12 @@ export class EditorComponent implements OnInit {
     }
 
     return null;
+  }
+
+  deleteOperation(operationIndex: number): void {
+    this.specification.operations.splice(operationIndex, 1);
+    this.dirty = true;
+    this.doPreview();
   }
 
   deleteType(typeIndex: number): void {

@@ -1,0 +1,44 @@
+<div class="row mb-3" *ngFor="let row of result;">
+  <div class="col-3">
+    <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" (ngModelChange)="remove(); changeValue()" class="form-select">
+      <option *ngFor="let code of errorStatusCodes" [ngValue]="code.key">{{code.value}}</option>
+    </select>
+  </div>
+  <div class="col-9">
+    <div class="input-group">
+      <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
+        <optgroup label="self">
+          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+        </optgroup>
+        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+          <ng-container *ngFor="let parentType of include.types">
+            <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+          </ng-container>
+        </optgroup>
+      </select>
+      <button class="btn btn-outline-secondary" (click)="remove(row.code); changeValue()"><i class="bi bi-x"></i></button>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-3">
+    <select id="newThrowCode" name="newThrowCode" [(ngModel)]="newCode" class="form-select">
+      <option *ngFor="let code of getNotUsedCodes()" [ngValue]="code.key">{{code.value}}</option>
+    </select>
+  </div>
+  <div class="col-9">
+    <div class="input-group">
+      <select id="newThrowType" name="newThrowType" class="form-select" [(ngModel)]="newType">
+        <optgroup label="self">
+          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+        </optgroup>
+        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+          <ng-container *ngFor="let parentType of include.types">
+            <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+          </ng-container>
+        </optgroup>
+      </select>
+      <button class="btn btn-outline-secondary" (click)="add(); changeValue()"><i class="bi bi-plus"></i></button>
+    </div>
+  </div>
+</div>

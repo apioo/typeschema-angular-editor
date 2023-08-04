@@ -4,6 +4,7 @@
 
 <div class="btn-group mb-3" role="group">
   <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
+  <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
   <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
   <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
   <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
@@ -15,10 +16,10 @@
   <div class="card-body">
     <table class="table table table-striped">
       <colgroup>
-        <col width="100">
-        <col width="*">
-        <col width="100">
-        <col width="50">
+        <col class="w-25">
+        <col class="w-25">
+        <col class="w-25">
+        <col class="w-25">
       </colgroup>
       <thead>
       <tr>
@@ -44,6 +45,68 @@
   </div>
 </div>
 
+<ng-container *ngIf="operationEnabled">
+  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3">
+    <div class="card-header editor-type-name">
+      <div class="float-end text-end">
+        <code>{{ operation.httpMethod }} {{ operation.httpPath }} - {{ operation.httpCode }}</code><br>
+        <span *ngFor="let tag of operation.tags" class="badge text-bg-primary ms-1">{{ tag }}</span>
+      </div>
+      {{ operation.name }}<br>
+      <div class="text-secondary editor-type-description">{{ operation.description }}</div>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped" *ngIf="operation.arguments.length > 0">
+        <colgroup>
+          <col class="w-25">
+          <col class="w-25">
+          <col class="w-50">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>In</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let argument of operation.arguments; index as argumentIndex">
+          <td>{{ argument.name }}</td>
+          <td><span class="badge text-bg-primary">{{ argument.type }}</span></td>
+          <td><span class="badge text-bg-secondary">{{ argument.in }}</span></td>
+        </tr>
+        </tbody>
+      </table>
+      <table class="table table-striped" *ngIf="operation.throws.length > 0">
+        <colgroup>
+          <col class="w-25">
+          <col class="w-75">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Code</th>
+          <th>Type</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
+          <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
+          <td>{{ throw_.type }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-secondary" (click)="upOperation(operationIndex)"><i class="bi bi-arrow-up"></i></button>
+        <button type="button" class="btn btn-secondary" (click)="downOperation(operationIndex)"><i class="bi bi-arrow-down"></i></button>
+        <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)">Edit</button>
+        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)">Remove</button>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
 <div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
@@ -61,18 +124,16 @@
       <ng-container *ngSwitchDefault>
         <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col width="*">
-            <col width="100">
-            <col width="100">
-            <col width="150">
-            <col width="50">
+            <col class="w-25">
+            <col class="w-25">
+            <col class="w-25">
+            <col class="w-25">
           </colgroup>
           <thead>
           <tr>
             <th>Name</th>
             <th>Type</th>
             <th>Format</th>
-            <th>Reference</th>
             <th></th>
           </tr>
           </thead>
@@ -82,17 +143,13 @@
               <div class="editor-type-property-name">{{ property.name }}</div>
               <div class="editor-type-property-description text-secondary">{{ property.description }}</div>
             </td>
-            <td>{{ property.type }}</td>
-            <td>{{ property.format }}</td>
             <td>
-              <ul>
-                <li *ngFor="let ref of property.refs">
-                  <span>{{ ref }}</span>
-                </li>
-              </ul>
+              <span class="badge text-bg-primary">{{ property.type }}</span><br>
+              <span *ngFor="let ref of property.refs" class="badge text-bg-secondary me-1">{{ ref }}</span>
             </td>
+            <td><span class="badge text-bg-secondary">{{ property.format }}</span></td>
             <td>
-              <div class="btn-group" role="group">
+              <div class="btn-group float-end" role="group">
                 <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
                 <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
                 <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)">Edit</button>
@@ -119,9 +176,180 @@
   </div>
 </div>
 
+<ng-template #operationModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Add Operation</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3 row">
+      <label for="operationName" class="col-sm-2 col-form-label fw-bold">Name</label>
+      <div class="col-sm-10">
+        <input id="operationName" name="operationName" class="form-control" placeholder="my.operation.execute" [(ngModel)]="operation.name">
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationDescription" class="col-sm-2 col-form-label fw-bold">Description</label>
+      <div class="col-sm-10">
+        <input id="operationDescription" name="operationDescription" class="form-control" [(ngModel)]="operation.description">
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationHttpMethod" class="col-sm-2 col-form-label fw-bold">HTTP Method</label>
+      <div class="col-sm-10">
+        <select id="operationHttpMethod" name="operationHttpMethod" class="form-select" [(ngModel)]="operation.httpMethod">
+          <option ngValue="GET">GET</option>
+          <option ngValue="POST">POST</option>
+          <option ngValue="PUT">PUT</option>
+          <option ngValue="PATCH">PATCH</option>
+          <option ngValue="DELETE">DELETE</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationHttpPath" class="col-sm-2 col-form-label fw-bold">HTTP Path</label>
+      <div class="col-sm-10">
+        <input id="operationHttpPath" name="operationHttpPath" class="form-control" placeholder="/my/endpoint" [(ngModel)]="operation.httpPath">
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationHttpCode" class="col-sm-2 col-form-label fw-bold">HTTP Code</label>
+      <div class="col-sm-10">
+        <select id="operationHttpCode" name="operationHttpCode" class="form-select" [(ngModel)]="operation.httpCode">
+          <option [ngValue]="200">200</option>
+          <option [ngValue]="201">201</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationArguments" class="col-sm-2 col-form-label fw-bold">Arguments</label>
+      <div class="col-sm-10">
+        <typeschema-arguments [data]="operation.arguments" [specification]="specification" (dataChange)="operation.arguments = $event"></typeschema-arguments>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationThrows" class="col-sm-2 col-form-label fw-bold">Throws</label>
+      <div class="col-sm-10">
+        <typeschema-throws [data]="operation.throws" [specification]="specification" (dataChange)="operation.throws = $event"></typeschema-throws>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationReturn" class="col-sm-2 col-form-label fw-bold">Return</label>
+      <div class="col-sm-10">
+        <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+          <optgroup label="self">
+            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+          </optgroup>
+          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+            <ng-container *ngFor="let parentType of include.types">
+              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+            </ng-container>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="operationTags" class="col-sm-2 col-form-label fw-bold">Tags</label>
+      <div class="col-sm-10">
+        <typeschema-tags [data]="operation.tags" (dataChange)="operation.tags = $event"></typeschema-tags>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+  </div>
+</ng-template>
+
+<ng-template #argumentModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Add Argument</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3 row">
+      <label for="argumentName" class="col-sm-2 col-form-label fw-bold">Name</label>
+      <div class="col-sm-10">
+        <input id="argumentName" name="argumentName" class="form-control" [(ngModel)]="argument.name">
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="argumentIn" class="col-sm-2 col-form-label fw-bold">In</label>
+      <div class="col-sm-10">
+        <select id="argumentIn" name="argumentIn" class="form-select" [(ngModel)]="argument.in">
+          <option ngValue="query">Query</option>
+          <option ngValue="header">Header</option>
+          <option ngValue="body">Body</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="argumentType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select id="argumentType" name="argumentType" class="form-select" [(ngModel)]="argument.type">
+          <optgroup label="scalar" *ngIf="argument.in !== 'body'">
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
+          </optgroup>
+          <ng-container *ngIf="argument.in === 'body'">
+            <optgroup label="self">
+              <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+            </optgroup>
+            <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+              <ng-container *ngFor="let parentType of include.types">
+                <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              </ng-container>
+            </optgroup>
+          </ng-container>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+  </div>
+</ng-template>
+
+<ng-template #throwModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Add Argument</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3 row">
+      <label for="throwCode" class="col-sm-2 col-form-label fw-bold">Code</label>
+      <div class="col-sm-10">
+        <select id="throwCode" name="throwCode" class="form-select" [(ngModel)]="throw.code">
+          <option [ngValue]="200">200</option>
+          <option [ngValue]="201">201</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="throwType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select id="throwType" name="throwType" class="form-select" [(ngModel)]="throw.type">
+          <optgroup label="self">
+            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+          </optgroup>
+          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+            <ng-container *ngFor="let parentType of include.types">
+              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+            </ng-container>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+  </div>
+</ng-template>
+
 <ng-template #typeModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title">Add type</h4>
+    <h4 class="modal-title">Add Type</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
@@ -233,7 +461,7 @@
 
 <ng-template #propertyModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title">Add property</h4>
+    <h4 class="modal-title">Add Property</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
