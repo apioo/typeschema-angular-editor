@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
 import {Observable, of, OperatorFunction} from 'rxjs';
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
 import {fromPromise} from "rxjs/internal/observable/innerFrom";
@@ -14,6 +14,7 @@ import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
+import {ViewportScroller} from "@angular/common";
 
 @Component({
   selector: 'typeschema-editor',
@@ -29,6 +30,7 @@ export class EditorComponent implements OnInit {
   };
   @Input() operationEnabled: boolean = false;
   @Input() importEnabled: boolean = true;
+  @Input() readonly: boolean = false;
 
   @Output() save = new EventEmitter<Specification>();
   @Output() preview = new EventEmitter<Specification>();
@@ -106,7 +108,7 @@ export class EditorComponent implements OnInit {
     return document.user?.name + ' / ' + document.name;
   }
 
-  constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal) { }
+  constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   ngOnInit(): void {
     if (!Array.isArray(this.specification.operations)) {
@@ -352,6 +354,64 @@ export class EditorComponent implements OnInit {
     this.doPreview();
   }
 
+  upArgument(operationIndex: number, argumentIndex: number): void {
+    const property = this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
+    if (!property) {
+      return;
+    }
+    this.specification.operations[operationIndex].arguments?.splice(argumentIndex - 1, 0, property);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  downArgument(operationIndex: number, argumentIndex: number): void {
+    const property = this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
+    if (!property) {
+      return;
+    }
+    this.specification.operations[operationIndex].arguments?.splice(argumentIndex + 1, 0, property);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  deleteArgument(operationIndex: number, argumentIndex: number): void {
+    if (!this.specification.operations[operationIndex]) {
+      return;
+    }
+    this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  upThrow(operationIndex: number, throwIndex: number): void {
+    const property = this.specification.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
+    if (!property) {
+      return;
+    }
+    this.specification.operations[operationIndex].throws?.splice(throwIndex - 1, 0, property);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  downThrow(operationIndex: number, throwIndex: number): void {
+    const property = this.specification.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
+    if (!property) {
+      return;
+    }
+    this.specification.operations[operationIndex].throws?.splice(throwIndex + 1, 0, property);
+    this.dirty = true;
+    this.doPreview();
+  }
+
+  deleteThrow(operationIndex: number, throwIndex: number): void {
+    if (!this.specification.operations[operationIndex]) {
+      return;
+    }
+    this.specification.operations[operationIndex].throws?.splice(throwIndex, 1);
+    this.dirty = true;
+    this.doPreview();
+  }
+
   deleteType(typeIndex: number): void {
     this.specification.types.splice(typeIndex, 1);
     this.dirty = true;
@@ -535,4 +595,13 @@ export class EditorComponent implements OnInit {
     });
   }
 
+  openToc(content: any) {
+    this.offCanvasService.open(content, { ariaLabelledBy: 'offcanvas-basic-title' }).result.then(
+      (result) => {
+        this.viewportScroller.scrollToAnchor(result);
+      },
+      (reason) => {
+      },
+    );
+  }
 }

@@ -10,7 +10,7 @@ import {Client} from "typehub-javascript-sdk/dist/src/Client";
 })
 export class TypeHubService {
 
-  private baseUrl: string = 'https://api.typehub.cloud/';
+  private baseUrl: string = 'http://127.0.0.1/website/typehub.cloud/backend/public/index.php/';
   private client: Client;
 
   constructor(private httpClient: HttpClient) {

@@ -1,15 +1,24 @@
 
-<ngb-alert type="danger" *ngIf="response && response.success === false">{{ response.message }}</ngb-alert>
-<ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
+<ng-container *ngIf="!readonly">
+  <ngb-alert type="danger" *ngIf="response && response.success === false">{{ response.message }}</ngb-alert>
+  <ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
 
-<div class="btn-group mb-3" role="group">
-  <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
-  <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
-  <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
-  <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
-  <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
-  <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
-</div>
+  <div class="btn-group mb-3" role="group">
+    <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
+    <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
+    <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
+    <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
+    <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
+    <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
+    <button type="button" class="btn btn-light" (click)="openToc(tocOffCanvas)">TOC</button>
+  </div>
+</ng-container>
+<ng-container *ngIf="readonly">
+  <div class="btn-group mb-3" role="group">
+    <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
+    <button type="button" class="btn btn-light" (click)="openToc(tocOffCanvas)">TOC</button>
+  </div>
+</ng-container>
 
 <div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
   <div class="card-header">Import</div>
@@ -46,11 +55,11 @@
 </div>
 
 <ng-container *ngIf="operationEnabled">
-  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3">
+  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" id="operation-{{operationIndex}}">
     <div class="card-header editor-type-name">
       <div class="float-end text-end">
         <code>{{ operation.httpMethod }} {{ operation.httpPath }} - {{ operation.httpCode }}</code><br>
-        <span *ngFor="let tag of operation.tags" class="badge text-bg-primary ms-1">{{ tag }}</span>
+        <span *ngFor="let tag of operation.tags" class="badge text-bg-dark ms-1">{{ tag }}</span>
       </div>
       {{ operation.name }}<br>
       <div class="text-secondary editor-type-description">{{ operation.description }}</div>
@@ -60,13 +69,15 @@
         <colgroup>
           <col class="w-25">
           <col class="w-25">
-          <col class="w-50">
+          <col class="w-25">
+          <col class="w-25">
         </colgroup>
         <thead>
         <tr>
           <th>Name</th>
           <th>Type</th>
           <th>In</th>
+          <th></th>
         </tr>
         </thead>
         <tbody>
@@ -74,29 +85,45 @@
           <td>{{ argument.name }}</td>
           <td><span class="badge text-bg-primary">{{ argument.type }}</span></td>
           <td><span class="badge text-bg-secondary">{{ argument.in }}</span></td>
+          <td>
+            <div class="btn-group float-end" role="group" *ngIf="!readonly">
+              <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
+              <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)">Remove</button>
+            </div>
+          </td>
         </tr>
         </tbody>
       </table>
       <table class="table table-striped" *ngIf="operation.throws.length > 0">
         <colgroup>
           <col class="w-25">
-          <col class="w-75">
+          <col class="w-50">
+          <col class="w-25">
         </colgroup>
         <thead>
         <tr>
           <th>Code</th>
           <th>Type</th>
+          <th></th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
           <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
-          <td>{{ throw_.type }}</td>
+          <td><span class="badge text-bg-primary">{{ throw_.type }}</span></td>
+          <td>
+            <div class="btn-group float-end" role="group" *ngIf="!readonly">
+              <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
+              <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
+              <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)">Remove</button>
+            </div>
+          </td>
         </tr>
         </tbody>
       </table>
     </div>
-    <div class="card-footer">
+    <div class="card-footer" *ngIf="!readonly">
       <div class="btn-group" role="group">
         <button type="button" class="btn btn-secondary" (click)="upOperation(operationIndex)"><i class="bi bi-arrow-up"></i></button>
         <button type="button" class="btn btn-secondary" (click)="downOperation(operationIndex)"><i class="bi bi-arrow-down"></i></button>
@@ -107,7 +134,7 @@
   </div>
 </ng-container>
 
-<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}">
+<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}" id="type-{{typeIndex}}">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
@@ -149,7 +176,7 @@
             </td>
             <td><span class="badge text-bg-secondary">{{ property.format }}</span></td>
             <td>
-              <div class="btn-group float-end" role="group">
+              <div class="btn-group float-end" role="group" *ngIf="!readonly">
                 <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
                 <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
                 <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)">Edit</button>
@@ -159,13 +186,13 @@
           </tr>
           </tbody>
         </table>
-        <div class="btn-group" role="group">
+        <div class="btn-group" role="group" *ngIf="!readonly">
           <a class="btn btn-success" (click)="openProperty(propertyModal, typeIndex)">New Property</a>
         </div>
       </ng-container>
     </div>
   </div>
-  <div class="card-footer">
+  <div class="card-footer" *ngIf="!readonly">
     <div class="btn-group" role="group">
       <button type="button" class="btn btn-secondary" (click)="upType(typeIndex)"><i class="bi bi-arrow-up"></i></button>
       <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
@@ -630,5 +657,22 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-primary" (click)="modal.close()">Close</button>
+  </div>
+</ng-template>
+
+<ng-template #tocOffCanvas let-offcanvas>
+  <div class="offcanvas-header">
+    <h4 class="offcanvas-title" id="offcanvas-basic-title">TOC</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="offcanvas.dismiss('closed')"></button>
+  </div>
+  <div class="offcanvas-body">
+    <ul class="list-group">
+      <ng-container *ngIf="operationEnabled">
+        <li class="list-group-item disabled">Operations</li>
+        <li *ngFor="let operation of specification.operations; index as operationIndex" class="list-group-item"><a (click)="offcanvas.close('operation-' + operationIndex)" role="button" class="link-underline-primary">{{operation.name}}</a></li>
+      </ng-container>
+      <li class="list-group-item disabled">Types</li>
+      <li *ngFor="let type of specification.types; index as typeIndex" class="list-group-item"><a (click)="offcanvas.close('type-' + typeIndex)" role="button" class="link-underline-primary">{{type.name}}</a></li>
+    </ul>
   </div>
 </ng-template>
