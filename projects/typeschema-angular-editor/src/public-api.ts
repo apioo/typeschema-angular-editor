@@ -2,8 +2,8 @@
  * Public API Surface of typeschema-angular-editor
  */
 
-export * from './lib/internal-to-typeschema.service';
-export * from './lib/typeschema-to-internal.service';
+export * from './lib/export.service';
+export * from './lib/import.service';
 export * from './lib/editor/editor.component';
 export * from './lib/editor/guard/editor-confirm-save.guard';
 export * from './lib/typeschema-editor.module';

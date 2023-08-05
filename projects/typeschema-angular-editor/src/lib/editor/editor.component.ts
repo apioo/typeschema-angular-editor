@@ -9,7 +9,7 @@ import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {Include} from "../model/Include";
-import {SchemaType, TypeSchemaToInternalService} from "../typeschema-to-internal.service";
+import {SchemaType, ImportService} from "../import.service";
 import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
@@ -109,7 +109,7 @@ export class EditorComponent implements OnInit {
     return document.user?.name + ' / ' + document.name;
   }
 
-  constructor(private typeHubService: TypeHubService, private schemaTransformer: TypeSchemaToInternalService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
+  constructor(private typeHubService: TypeHubService, private importService: ImportService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   ngOnInit(): void {
     if (!Array.isArray(this.specification.operations)) {
@@ -551,7 +551,7 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      const spec = await this.schemaTransformer.transform('typeapi', typeApi);
+      const spec = await this.importService.transform('typeapi', typeApi);
       if (!spec) {
         return;
       }
@@ -566,7 +566,7 @@ export class EditorComponent implements OnInit {
     this.import = '';
 
     this.modalService.open(content).result.then(async (result) => {
-      const spec = await this.schemaTransformer.transform(this.importType, this.import);
+      const spec = await this.importService.transform(this.importType, this.import);
 
       this.specification.imports = spec.imports;
       this.specification.operations = spec.operations;

@@ -13,7 +13,7 @@ import {JsonSchemaYaml} from "./transformer/JsonSchemaYaml";
 @Injectable({
   providedIn: 'root'
 })
-export class TypeSchemaToInternalService {
+export class ImportService {
 
   private transformer: Record<string, TransformerInterface> = {};
 

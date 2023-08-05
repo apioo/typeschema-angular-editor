@@ -6,7 +6,7 @@ import {Property} from "./model/Property";
 @Injectable({
   providedIn: 'root'
 })
-export class InternalToTypeSchemaService {
+export class ExportService {
 
   constructor() { }
 
