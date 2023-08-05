@@ -634,6 +634,19 @@
   <div class="modal-body">
     <div class="mb-3 row">
       <div class="col-sm-12">
+        <select id="importType" name="importType" class="form-select" [(ngModel)]="importType">
+          <option ngValue="internal">Internal (JSON)</option>
+          <option ngValue="typeapi">TypeAPI (JSON)</option>
+          <option ngValue="typeschema">TypeSchema (JSON)</option>
+          <option ngValue="openapi-json">OpenAPI (JSON)</option>
+          <option ngValue="openapi-yaml">OpenAPI (YAML)</option>
+          <option ngValue="jsonschema-json">JsonSchema (JSON)</option>
+          <option ngValue="jsonschema-yaml">JsonSchema (YAML)</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <div class="col-sm-12">
         <textarea id="import" name="import" rows="20" class="form-control" [(ngModel)]="import"></textarea>
       </div>
     </div>

@@ -28,7 +28,7 @@ export class TypeHubService {
   public async export(user: string, name: string, version: string): Promise<any> {
     const response = await this.client.document().export(user, name, {
       version: version,
-      format: 'typeschema'
+      format: 'spec-typeapi'
     });
 
     if (!response.href) {

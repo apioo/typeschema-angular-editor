@@ -1,358 +1,40 @@
 import {Injectable} from '@angular/core';
-import {Type} from "./model/Type";
-import {Property} from "./model/Property";
 import {Specification} from "./model/Specification";
-import {pascalCase} from "pascal-case";
-import {Include} from "./model/Include";
 import {TypeHubService} from "./typehub.service";
-import {Operation} from "./model/Operation";
-import {Argument} from "./model/Argument";
-import {Throw} from "./model/Throw";
+import {TransformerInterface} from "./transformer/TransformerInterface";
+import {Internal} from "./transformer/Internal";
+import {JsonSchemaJson} from "./transformer/JsonSchemaJson";
+import {OpenAPIJson} from "./transformer/OpenAPIJson";
+import {TypeSchema} from "./transformer/TypeSchema";
+import {TypeAPI} from "./transformer/TypeAPI";
+import {OpenAPIYaml} from "./transformer/OpenAPIYaml";
+import {JsonSchemaYaml} from "./transformer/JsonSchemaYaml";
 
 @Injectable({
   providedIn: 'root'
 })
 export class TypeSchemaToInternalService {
 
-  constructor(private typeHubService: TypeHubService) { }
+  private transformer: Record<string, TransformerInterface> = {};
 
-  async transform(schema: any): Promise<Specification> {
-    const spec: Specification = {
-      operations: [],
-      imports: [],
-      types: []
-    };
-    const typeNames: Array<string> = [];
-
-    if (this.isset(schema.$import) && typeof schema.$import === 'object') {
-      for (const [key, value] of Object.entries(schema.$import)) {
-        const include = await this.transformImport(key, value);
-        if (include) {
-          spec.imports.push(include);
-        }
-      }
-    }
-
-    if (this.isset(schema.operations) && typeof schema.operations === 'object') {
-      for (const [key, value] of Object.entries(schema.operations)) {
-        spec.operations.push(this.transformOperation(key, value));
-      }
-    }
-
-    if (this.isset(schema.definitions) && typeof schema.definitions === 'object') {
-      for (const [key, value] of Object.entries(schema.definitions)) {
-        spec.types.push(this.transformType(key, value));
-        typeNames.push(key);
-      }
-    }
-
-    if (this.isset(schema.properties) && typeof schema.properties === 'object') {
-      // it looks like we have a root schema we try to convert
-      let key = 'Root';
-      if (this.isset(schema.title) && typeof schema.title === 'string') {
-        key = this.normalizeTitle(schema.title);
-      }
-
-      spec.types.push(this.transformType(key, {
-        description: schema.description,
-        type: 'object',
-        properties: schema.properties,
-      }));
-      typeNames.push(key);
-      spec.root = spec.types.length - 1;
-    }
-
-    if (this.isset(schema.$ref) && typeof schema.$ref === 'string') {
-      const index = typeNames.indexOf(schema.$ref);
-      if (index !== -1) {
-        spec.root = index;
-      }
-    }
-
-    return spec;
+  constructor(typeHubService: TypeHubService) {
+    this.transformer['internal'] = new Internal();
+    this.transformer['typeapi'] = new TypeAPI(typeHubService);
+    this.transformer['typeschema'] = new TypeSchema(typeHubService);
+    this.transformer['openapi-json'] = new OpenAPIJson(typeHubService);
+    this.transformer['openapi-yaml'] = new OpenAPIYaml(typeHubService);
+    this.transformer['jsonschema-json'] = new JsonSchemaJson(typeHubService);
+    this.transformer['jsonschema-yaml'] = new JsonSchemaYaml(typeHubService);
   }
 
-  private async transformImport(alias: string, data: any): Promise<Include|undefined> {
-    if (typeof data !== 'string') {
-      return;
-    }
-
-    if (!data.startsWith('typehub://')) {
-      return;
-    }
-
-    const source = data.substring(10);
-    const parts = source.split(':');
-    const nameAndVersion = parts[1] || '';
-    const nv = nameAndVersion.split('@')
-    const user = parts[0] || '';
-    const name = nv[0] || '';
-    const version = nv[1] || '';
-
-    const doc = await this.typeHubService.findDocument(user, name);
-    if (!doc) {
-      return;
-    }
-
-    const typeSchema = await this.typeHubService.export(user, name, version);
-    if (!typeSchema) {
-      return;
-    }
-
-    const spec = await this.transform(typeSchema);
-    if (!spec) {
-      return;
-    }
-
-    return {
-      alias: alias,
-      version: version,
-      document: doc,
-      types: spec.types ?? [],
-    };
-  }
-
-  private transformOperation(name: string, data: any): Operation {
-    let operation: Operation = {
-      name: name,
-      description: data.description && typeof data.description === 'string' ? data.description : '',
-      httpMethod: data.method && typeof data.method === 'string' ? data.method.toUpperCase() : 'GET',
-      httpPath: data.path && typeof data.path === 'string' ? data.path : '/',
-      httpCode: data.return && data.return.code && typeof data.return.code === 'number' ? data.return.code : 200,
-      arguments: [],
-      throws: [],
-      return: '',
-    };
-
-    for (const [key, value] of Object.entries(data.arguments)) {
-      operation.arguments.push(this.transformArgument(key, value));
-    }
-
-    for (const [key, value] of Object.entries(data.throws)) {
-      operation.throws.push(this.transformThrow(key, value));
-    }
-
-    if (data.return && data.return.schema) {
-      operation.return = this.parseRef(data.return.schema)[0];
-    }
-
-    if (data.stability && typeof data.stability === 'number') {
-      operation.stability = data.stability;
-    }
-
-    if (data.security && Array.isArray(data.security)) {
-      operation.security = data.security;
-    }
-
-    if (data.authorization && typeof data.authorization === 'boolean') {
-      operation.authorization = data.authorization;
-    }
-
-    if (data.tags && Array.isArray(data.tags)) {
-      operation.tags = data.tags;
-    }
-
-    return operation;
-  }
-
-  private transformArgument(name: string, data: any): Argument {
-    return {
-      name: name,
-      in: data.in && typeof data.in === 'string' ? data.in : 'query',
-      type: this.parseRef(data.schema)[0],
-    };
-  }
-
-  private transformThrow(name: string, data: any): Throw {
-    return {
-      code: data.code && typeof data.code === 'number' ? data.code : 500,
-      type: this.parseRef(data.schema)[0],
-    };
-  }
-
-  private transformType(name: string, data: any): Type {
-    let type: Type;
-    if (this.isset(data.$ref)) {
-      type = {
-        type: 'reference',
-        name: name,
-        description: data.description && typeof data.description === 'string' ? data.description : '',
-        ref: data.$ref
-      };
-
-      if (this.isset(data.$template) && this.isset(data.$template.T) && typeof data.$template.T === 'string') {
-        type.template = data.$template.T;
-      }
-    } else if (this.isset(data.additionalProperties)) {
-      type = {
-        type: 'map',
-        name: name,
-        description: data.description && typeof data.description === 'string' ? data.description : '',
-      };
-
-      const refs = this.parseRef(data.additionalProperties);
-      if (refs.length > 0) {
-        type.ref = refs[0];
-      }
+  async transform(type: SchemaType, schema: string): Promise<Specification> {
+    if (this.transformer[type]) {
+      return this.transformer[type].transform(schema);
     } else {
-      type = {
-        type: 'object',
-        name: name,
-        description: data.description && typeof data.description === 'string' ? data.description : '',
-      };
-
-      if (this.isset(data.$extends) && typeof data.$extends === 'string') {
-        type.parent = data.$extends;
-      }
-
-      if (this.isset(data.properties) && typeof data.properties === 'object') {
-        type.properties = [];
-        for (const [key, value] of Object.entries(data.properties)) {
-          type.properties.push(this.transformProperty(key, value));
-        }
-      }
-    }
-
-    return type;
-  }
-
-  private transformProperty(name: string, data: any): Property {
-    let refs: Array<string> = [];
-    let type;
-    let format, pattern, minLength, maxLength, minimum, maximum;
-    let i;
-    if (this.isset(data.additionalProperties)) {
-      type = 'map';
-      refs = refs.concat(this.parseRef(data.additionalProperties));
-    } else if (this.isset(data.items)) {
-      type = 'array';
-      refs = refs.concat(this.parseRef(data.items));
-    } else if (this.isset(data.oneOf) && Array.isArray(data.oneOf)) {
-      type = 'union';
-      for (i = 0; i < data.oneOf.length; i++) {
-        refs = refs.concat(this.parseRef(data.oneOf[i]));
-      }
-    } else if (this.isset(data.allOf) && Array.isArray(data.allOf)) {
-      type = 'intersection';
-      for (i = 0; i < data.allOf.length; i++) {
-        refs = refs.concat(this.parseRef(data.allOf[i]));
-      }
-    } else if (this.isset(data.$ref)) {
-      type = 'object';
-      refs = refs.concat(this.parseRef(data));
-    } else if (data.type === 'string') {
-      type = 'string';
-      if (this.isset(data.format)) {
-        format = data.format;
-      }
-      if (this.isset(data.pattern)) {
-        pattern = data.pattern;
-      }
-      if (this.isset(data.minLength)) {
-        minLength = data.minLength;
-      }
-      if (this.isset(data.maxLength)) {
-        maxLength = data.maxLength;
-      }
-    } else if (data.type === 'integer') {
-      type = 'integer';
-      if (this.isset(data.minimum)) {
-        minimum = data.minimum;
-      }
-      if (this.isset(data.maximum)) {
-        maximum = data.maximum;
-      }
-    } else if (data.type === 'number') {
-      type = 'number';
-      if (this.isset(data.minimum)) {
-        minimum = data.minimum;
-      }
-      if (this.isset(data.maximum)) {
-        maximum = data.maximum;
-      }
-    } else if (data.type === 'boolean') {
-      type = 'boolean';
-    } else if (data.type === 'any') {
-      type = 'any';
-    } else {
-      throw new Error('Could not resolve type: ' + JSON.stringify(data));
-    }
-
-    const property: Property = {
-      name: name,
-      description: data.description && typeof data.description === 'string' ? data.description : '',
-      type: type,
-    };
-
-    if (this.isset(data.deprecated) && typeof data.deprecated === 'boolean') {
-      property.deprecated = data.deprecated;
-    }
-
-    if (this.isset(data.nullable) && typeof data.nullable === 'boolean') {
-      property.nullable = data.nullable;
-    }
-
-    if (this.isset(data.readonly) && typeof data.readonly === 'boolean') {
-      property.readonly = data.readonly;
-    }
-
-    if (this.isset(format) && typeof format === 'string') {
-      property.format = format;
-    }
-
-    if (this.isset(pattern) && typeof pattern === 'string') {
-      property.pattern = pattern;
-    }
-
-    if (this.isset(minLength) && typeof minLength === 'number') {
-      property.minLength = minLength;
-    }
-
-    if (this.isset(maxLength) && typeof maxLength === 'number') {
-      property.maxLength = maxLength;
-    }
-
-    if (this.isset(minimum) && typeof minimum === 'number') {
-      property.minimum = minimum;
-    }
-
-    if (this.isset(maximum) && typeof maximum === 'number') {
-      property.maximum = maximum;
-    }
-
-    if (refs.length > 0) {
-      property.refs = refs;
-    }
-
-    return property;
-  }
-
-  private parseRef(data: any): Array<string> {
-    if (this.isset(data.$ref) && typeof data.$ref === 'string') {
-      return [data.$ref];
-    } else if (this.isset(data.$generic)) {
-      return ['T'];
-    } else if (this.isset(data.oneOf) && Array.isArray(data.oneOf)) {
-      let result = new Array<string>();
-      for (let i = 0; i < data.oneOf.length; i++) {
-        result = result.concat(this.parseRef(data.oneOf[i]));
-      }
-      return result;
-    } else if (data.type === 'string' || data.type === 'integer' || data.type === 'number' || data.type === 'boolean' || data.type === 'any') {
-      return [data.type];
-    } else if (data.type === 'array') {
-      // at the moment we can not handle array inside maps but we simply return the array type
-      return this.parseRef(data.items);
-    } else {
-      throw new Error('Could not resolve ref: ' + JSON.stringify(data));
+      throw new Error('Provided an invalid type')
     }
   }
 
-  private normalizeTitle(title: string): string {
-    return pascalCase(title);
-  }
-
-  private isset(value: any): boolean {
-    return typeof value !== 'undefined' && value !== null;
-  }
 }
+
+export type SchemaType = 'internal' | 'typeapi' | 'typeschema' | 'openapi-json' | 'openapi-yaml' | 'jsonschema-json' | 'jsonschema-yaml';

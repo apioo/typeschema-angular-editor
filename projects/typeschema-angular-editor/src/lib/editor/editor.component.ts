@@ -9,7 +9,7 @@ import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {Include} from "../model/Include";
-import {TypeSchemaToInternalService} from "../typeschema-to-internal.service";
+import {SchemaType, TypeSchemaToInternalService} from "../typeschema-to-internal.service";
 import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
@@ -70,6 +70,7 @@ export class EditorComponent implements OnInit {
   };
 
   import: string = '';
+  importType: SchemaType = 'internal';
   export: string = '';
 
   dirty = false;
@@ -545,12 +546,12 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      const typeSchema = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
-      if (!typeSchema) {
+      const typeApi = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
+      if (!typeApi) {
         return;
       }
 
-      const spec = await this.schemaTransformer.transform(typeSchema);
+      const spec = await this.schemaTransformer.transform('typeapi', typeApi);
       if (!spec) {
         return;
       }
@@ -565,18 +566,10 @@ export class EditorComponent implements OnInit {
     this.import = '';
 
     this.modalService.open(content).result.then(async (result) => {
-      let data = JSON.parse(this.import);
-      let spec: Specification;
-
-      if (data.types && Array.isArray(data.types)) {
-        // we already have an internal spec format
-        spec = data;
-      } else {
-        // we probably get a TypeSchema so we try to convert
-        spec = await this.schemaTransformer.transform(data);
-      }
+      const spec = await this.schemaTransformer.transform(this.importType, this.import);
 
       this.specification.imports = spec.imports;
+      this.specification.operations = spec.operations;
       this.specification.types = spec.types;
       this.specification.root = spec.root;
 
