@@ -33,7 +33,7 @@ export class EditorComponent implements OnInit {
   @Input() readonly: boolean = false;
 
   @Output() save = new EventEmitter<Specification>();
-  @Output() preview = new EventEmitter<Specification>();
+  @Output() change = new EventEmitter<Specification>();
 
   operation: Operation = {
     name: '',
@@ -73,6 +73,7 @@ export class EditorComponent implements OnInit {
   importType: SchemaType = 'internal';
   export: string = '';
 
+  loading = false;
   dirty = false;
   response?: Message;
 
@@ -109,14 +110,14 @@ export class EditorComponent implements OnInit {
     return document.user?.name + ' / ' + document.name;
   }
 
-  constructor(private typeHubService: TypeHubService, private importService: ImportService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
+  constructor(private typeHubService: TypeHubService, private schemaTransformer: ImportService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   ngOnInit(): void {
     if (!Array.isArray(this.specification.operations)) {
       this.specification.operations = [];
     }
 
-    this.doPreview();
+    this.doChange();
   }
 
   doSave(): void {
@@ -124,8 +125,8 @@ export class EditorComponent implements OnInit {
     this.dirty = false;
   }
 
-  doPreview(): void {
-    this.preview.emit(this.specification);
+  doChange(): void {
+    this.change.emit(this.specification);
   }
 
   setRoot(typeIndex: number) {
@@ -139,7 +140,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations.splice(operationIndex - 1, 0, operation);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   downOperation(operationIndex: number): void {
@@ -149,7 +150,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations.splice(operationIndex + 1, 0, operation);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   openOperation(content: any): void {
@@ -177,7 +178,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.operations.push(operation);
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -204,7 +205,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.operations[operationIndex] = operation;
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -216,7 +217,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.types.splice(typeIndex - 1, 0, type);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   downType(typeIndex: number): void {
@@ -226,7 +227,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.types.splice(typeIndex + 1, 0, type);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   openType(content: any): void {
@@ -250,7 +251,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.types.push(type);
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -274,7 +275,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.types[typeIndex] = type;
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -352,7 +353,7 @@ export class EditorComponent implements OnInit {
   deleteOperation(operationIndex: number): void {
     this.specification.operations.splice(operationIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   upArgument(operationIndex: number, argumentIndex: number): void {
@@ -362,7 +363,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex - 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   downArgument(operationIndex: number, argumentIndex: number): void {
@@ -372,7 +373,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex + 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   deleteArgument(operationIndex: number, argumentIndex: number): void {
@@ -381,7 +382,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   upThrow(operationIndex: number, throwIndex: number): void {
@@ -391,7 +392,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].throws?.splice(throwIndex - 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   downThrow(operationIndex: number, throwIndex: number): void {
@@ -401,7 +402,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].throws?.splice(throwIndex + 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   deleteThrow(operationIndex: number, throwIndex: number): void {
@@ -410,13 +411,13 @@ export class EditorComponent implements OnInit {
     }
     this.specification.operations[operationIndex].throws?.splice(throwIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   deleteType(typeIndex: number): void {
     this.specification.types.splice(typeIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   upProperty(typeIndex: number, propertyIndex: number): void {
@@ -426,7 +427,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.types[typeIndex].properties?.splice(propertyIndex - 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   downProperty(typeIndex: number, propertyIndex: number): void {
@@ -436,7 +437,7 @@ export class EditorComponent implements OnInit {
     }
     this.specification.types[typeIndex].properties?.splice(propertyIndex + 1, 0, property);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   openProperty(content: any, typeIndex: number): void {
@@ -459,7 +460,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.types[typeIndex].properties?.push(property);
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -485,7 +486,7 @@ export class EditorComponent implements OnInit {
 
       props[propertyIndex] = property;
       this.dirty = true;
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }
@@ -496,13 +497,13 @@ export class EditorComponent implements OnInit {
     }
     this.specification.types[typeIndex].properties?.splice(propertyIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   deleteInclude(includeIndex: number): void {
     this.specification.imports.splice(includeIndex, 1);
     this.dirty = true;
-    this.doPreview();
+    this.doChange();
   }
 
   async loadIncludeVersions(): Promise<void> {
@@ -551,7 +552,7 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      const spec = await this.importService.transform('typeapi', typeApi);
+      const spec = await this.schemaTransformer.transform('typeapi', typeApi);
       if (!spec) {
         return;
       }
@@ -566,16 +567,19 @@ export class EditorComponent implements OnInit {
     this.import = '';
 
     this.modalService.open(content).result.then(async (result) => {
-      const spec = await this.importService.transform(this.importType, this.import);
+      this.loading = true;
+
+      const spec = await this.schemaTransformer.transform(this.importType, this.import);
 
       this.specification.imports = spec.imports;
       this.specification.operations = spec.operations;
       this.specification.types = spec.types;
       this.specification.root = spec.root;
 
+      this.loading = false;
       this.dirty = true;
       this.import = '';
-      this.doPreview();
+      this.doChange();
     }, (reason) => {
     });
   }

@@ -20,6 +20,12 @@
   </div>
 </ng-container>
 
+<div class="text-center mt-5" *ngIf="loading">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
 <div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
   <div class="card-header">Import</div>
   <div class="card-body">
