@@ -77,23 +77,33 @@ export class OpenAPIJson extends JsonSchemaJson {
       }
 
       let httpCode = 200;
-      let ret = '';
+      let result = '';
       let throws: Array<Throw> = [];
       if (this.isset(value.responses) && typeof value.responses === 'object') {
         for (const [code, resp] of Object.entries(value.responses)) {
-          if (resp !== null && typeof resp === 'object') {
+          if (resp === null || typeof resp !== 'object') {
+            continue;
+          }
+
+          try {
             let responseCode = parseInt(code);
             if (responseCode >= 200 && responseCode < 300) {
               httpCode = responseCode;
-              ret = await this.parseResponseRef(resp);
+              result = await this.parseResponseRef(resp);
             } else if (responseCode >= 400 && responseCode < 600) {
               throws.push({
                 code: responseCode,
                 type: await this.parseResponseRef(resp),
               })
             }
+          } catch (error) {
           }
         }
+      }
+
+      let tags: Array<string> = [];
+      if (this.isset(value.tags) && Array.isArray(value.tags)) {
+        tags = value.tags;
       }
 
       operations.push({
@@ -104,7 +114,8 @@ export class OpenAPIJson extends JsonSchemaJson {
         httpCode: httpCode,
         arguments: args,
         throws: throws,
-        return: ret
+        return: result,
+        tags: tags
       });
     }
 
@@ -138,6 +149,13 @@ export class OpenAPIJson extends JsonSchemaJson {
 
   private parseArgumentSchema(schema: Record<string, any>): string {
     if (this.isset(schema['$ref']) && typeof schema['$ref'] === 'string') {
+      const resolved = this.resolve(schema['$ref']);
+      if (this.isset(resolved['type']) && typeof resolved['type'] === 'string' && this.scalarTypes.includes(resolved['type'])) {
+        return resolved['type'];
+      }
+    }
+
+    if (this.isset(schema['$ref']) && typeof schema['$ref'] === 'string') {
       return this.normalizeRef(schema['$ref']);
     } else if (this.isset(schema['type']) && typeof schema['type'] === 'string') {
       return schema['type'];
@@ -170,17 +188,13 @@ export class OpenAPIJson extends JsonSchemaJson {
 
   private extractSchema(response: Record<string, any>): Record<string, any>|undefined {
     if (this.isset(response['content']) && typeof response['content'] === 'object') {
-      if (this.isset(response['application/json']) && typeof response['application/json'] === 'object') {
-        if (this.isset(response['schema']) && typeof response['schema'] === 'object') {
-          return response['schema'];
+      if (this.isset(response['content']['application/json']) && typeof response['content']['application/json'] === 'object') {
+        if (this.isset(response['content']['application/json']['schema']) && typeof response['content']['application/json']['schema'] === 'object') {
+          return response['content']['application/json']['schema'];
         }
       }
     }
     return;
-  }
-
-  private normalizeRef(ref: string): string {
-    return ref.replace('#/components/schemas/', '');
   }
 
   private resolve(ref: string): Record<string, any> {
@@ -200,6 +214,11 @@ export class OpenAPIJson extends JsonSchemaJson {
     })
 
     return data;
+  }
+
+  protected override normalizeRef(ref: string): string {
+    return ref
+      .replace('#/components/schemas/', '');
   }
 
 }
