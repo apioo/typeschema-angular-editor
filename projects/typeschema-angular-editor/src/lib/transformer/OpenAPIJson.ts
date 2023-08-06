@@ -7,14 +7,19 @@ import {Argument} from "../model/Argument";
 
 export class OpenAPIJson extends JsonSchemaJson {
 
-  override async transform(schema: string): Promise<Specification> {
-    const data = JSON.parse(schema) as Record<string, any>;
-    const spec = await this.build(data);
+  data: Record<string, any> = {};
+  inlineObjects: Record<string, any> = {};
 
-    if (this.isset(data['paths']) && typeof data['paths'] === 'object') {
-      for (const [path, value] of Object.entries(data['paths'])) {
+  override async transform(schema: string): Promise<Specification> {
+    this.data = JSON.parse(schema) as Record<string, any>;
+    const spec = await this.build(this.data);
+
+    this.inlineObjects = {};
+
+    if (this.isset(this.data['paths']) && typeof this.data['paths'] === 'object') {
+      for (const [path, value] of Object.entries(this.data['paths'])) {
         if (value !== null && typeof value === 'object') {
-          const operations = this.transformPath(path, value);
+          const operations = await this.transformPath(path, value);
           operations.forEach((operation) => {
             spec.operations.push(operation);
           });
@@ -22,16 +27,23 @@ export class OpenAPIJson extends JsonSchemaJson {
       }
     }
 
+    for (const [key, value] of Object.entries(this.inlineObjects)) {
+      try {
+        spec.types.push(await this.transformType(key, value));
+      } catch (error) {
+      }
+    }
+
     return spec;
   }
 
-  private transformPath(path: string, method: object): Array<Operation> {
+  private async transformPath(path: string, method: object): Promise<Array<Operation>> {
     const operations: Array<Operation> = [];
 
     for (const [methodName, value] of Object.entries(method)) {
       let name = '';
       if (this.isset(value.operationId) && typeof value.operationId === 'string') {
-        name = value.operationId;
+        name = value.operationId.replace('/', '.');
       } else {
         name = pascalCase(path.substring(1).replace('/', '.') + '.' + methodName);
       }
@@ -46,8 +58,22 @@ export class OpenAPIJson extends JsonSchemaJson {
       let args: Array<Argument> = [];
       if (this.isset(value.parameters) && Array.isArray(value.parameters)) {
         value.parameters.forEach((parameter: Record<string, any>) => {
-          args.push(this.parseArgument(parameter));
+          try {
+            args.push(this.parseArgument(parameter));
+          } catch (error) {
+          }
         });
+      }
+
+      if (this.isset(value.requestBody) && typeof value.requestBody === 'object') {
+        const payload = await this.parseResponseRef(value.requestBody);
+        if (payload) {
+          args.push({
+            name: 'payload',
+            in: 'body',
+            type: payload,
+          });
+        }
       }
 
       let httpCode = 200;
@@ -59,11 +85,11 @@ export class OpenAPIJson extends JsonSchemaJson {
             let responseCode = parseInt(code);
             if (responseCode >= 200 && responseCode < 300) {
               httpCode = responseCode;
-              ret = this.parseResponseRef(resp);
+              ret = await this.parseResponseRef(resp);
             } else if (responseCode >= 400 && responseCode < 600) {
               throws.push({
                 code: responseCode,
-                type: this.parseResponseRef(resp),
+                type: await this.parseResponseRef(resp),
               })
             }
           }
@@ -86,16 +112,28 @@ export class OpenAPIJson extends JsonSchemaJson {
   }
 
   private parseArgument(parameter: Record<string, any>): Argument {
+    if (this.isset(parameter['$ref']) && typeof parameter['$ref'] === 'string') {
+      const resolved = this.resolve(parameter['$ref']);
+      if (!resolved) {
+        throw new Error('Could not resolve ref');
+      }
+      parameter = resolved;
+    }
+
     let type = '';
     if (this.isset(parameter['schema']) && typeof parameter['schema'] === 'object') {
       type = this.parseArgumentSchema(parameter['schema']);
     }
 
-    return {
-      name: parameter['name'],
-      in: parameter['in'],
-      type: type,
-    };
+    if (type && (parameter['in'] === 'path' || parameter['in'] === 'query')) {
+      return {
+        name: parameter['name'],
+        in: parameter['in'],
+        type: type,
+      };
+    } else {
+      throw new Error('Provided an invalid argument');
+    }
   }
 
   private parseArgumentSchema(schema: Record<string, any>): string {
@@ -108,7 +146,11 @@ export class OpenAPIJson extends JsonSchemaJson {
     }
   }
 
-  private parseResponseRef(response: Record<string, any>): string {
+  private async parseResponseRef(response: Record<string, any>): Promise<string> {
+    if (this.isset(response['$ref']) && typeof response['$ref'] === 'string') {
+      response = this.resolve(response['$ref']);
+    }
+
     let schema = this.extractSchema(response);
     if (!schema) {
       return '';
@@ -116,14 +158,14 @@ export class OpenAPIJson extends JsonSchemaJson {
 
     let ref = schema['$ref'];
     if (typeof ref === 'string') {
-      ref = this.normalizeRef(ref);
-    }
+      return this.normalizeRef(ref);
+    } else {
+      const hash = await this.hash(JSON.stringify(schema));
+      const anonymousName = 'Object' + hash.substring(0, 8);
+      this.inlineObjects[anonymousName] = schema;
 
-    if (!ref) {
-      ref = '';
+      return anonymousName;
     }
-
-    return ref;
   }
 
   private extractSchema(response: Record<string, any>): Record<string, any>|undefined {
@@ -139,6 +181,25 @@ export class OpenAPIJson extends JsonSchemaJson {
 
   private normalizeRef(ref: string): string {
     return ref.replace('#/components/schemas/', '');
+  }
+
+  private resolve(ref: string): Record<string, any> {
+    if (!ref.startsWith('#/')) {
+      throw new Error('Can only resolve local refs');
+    }
+
+    ref = ref.substring(2);
+
+    let data = this.data;
+    ref.split('/').forEach((name) => {
+      if (this.isset(data[name])) {
+        data = data[name];
+      } else {
+        throw new Error('Could not resolve ' + name);
+      }
+    })
+
+    return data;
   }
 
 }

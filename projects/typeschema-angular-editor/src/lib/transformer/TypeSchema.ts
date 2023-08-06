@@ -8,6 +8,8 @@ import {TransformerInterface} from "./TransformerInterface";
 
 export class TypeSchema implements TransformerInterface {
 
+  anonymousObjects: Record<string, any> = {};
+
   constructor(protected typeHubService: TypeHubService) {
   }
 
@@ -16,6 +18,8 @@ export class TypeSchema implements TransformerInterface {
   }
 
   protected async build(data: Record<string, any>) {
+    this.anonymousObjects = {};
+
     const typeNames: Array<string> = [];
     const spec: Specification = {
       imports: [],
@@ -34,22 +38,39 @@ export class TypeSchema implements TransformerInterface {
 
     if (this.isset(data['$defs']) && typeof data['$defs'] === 'object') {
       for (const [key, value] of Object.entries(data['$defs'])) {
-        spec.types.push(this.transformType(key, value));
-        typeNames.push(key);
+        try {
+          spec.types.push(await this.transformType(key, value));
+          typeNames.push(key);
+        } catch (error) {
+        }
       }
     }
 
     if (this.isset(data['components']['schemas']) && typeof data['components']['schemas'] === 'object') {
       for (const [key, value] of Object.entries(data['components']['schemas'])) {
-        spec.types.push(this.transformType(key, value));
-        typeNames.push(key);
+        try {
+          spec.types.push(await this.transformType(key, value));
+          typeNames.push(key);
+        } catch (error) {
+        }
       }
     }
 
     if (this.isset(data['definitions']) && typeof data['definitions'] === 'object') {
       for (const [key, value] of Object.entries(data['definitions'])) {
-        spec.types.push(this.transformType(key, value));
+        try {
+          spec.types.push(await this.transformType(key, value));
+          typeNames.push(key);
+        } catch (error) {
+        }
+      }
+    }
+
+    for (const [key, value] of Object.entries(this.anonymousObjects)) {
+      try {
+        spec.types.push(await this.transformType(key, value));
         typeNames.push(key);
+      } catch (error) {
       }
     }
 
@@ -60,7 +81,7 @@ export class TypeSchema implements TransformerInterface {
         key = pascalCase(data['title']);
       }
 
-      spec.types.push(this.transformType(key, {
+      spec.types.push(await this.transformType(key, {
         description: data['description'],
         type: 'object',
         properties: data['properties'],
@@ -119,7 +140,7 @@ export class TypeSchema implements TransformerInterface {
     };
   }
 
-  private transformType(name: string, data: any): Type {
+  protected async transformType(name: string, data: any): Promise<Type> {
     let type: Type;
     if (this.isset(data.$ref)) {
       type = {
@@ -157,7 +178,11 @@ export class TypeSchema implements TransformerInterface {
       if (this.isset(data.properties) && typeof data.properties === 'object') {
         type.properties = [];
         for (const [key, value] of Object.entries(data.properties)) {
-          type.properties.push(this.transformProperty(key, value));
+          try {
+            type.properties.push(await this.transformProperty(key, value));
+          } catch (error) {
+            // ignore in case we can not transform the property
+          }
         }
       }
     }
@@ -165,12 +190,21 @@ export class TypeSchema implements TransformerInterface {
     return type;
   }
 
-  private transformProperty(name: string, data: any): Property {
+  private async transformProperty(name: string, data: any): Promise<Property> {
     let refs: Array<string> = [];
     let type;
     let format, pattern, minLength, maxLength, minimum, maximum;
     let i;
-    if (this.isset(data.additionalProperties)) {
+    if (this.isset(data.properties)) {
+      // in this case we have a nested object which is not supported at TypeAPI we automatically create an anonymous
+      // object and use a reference
+      const hash = await this.hash(JSON.stringify(data));
+      const anonymousName = 'Object' + hash.substring(0, 8);
+      this.anonymousObjects[anonymousName] = data;
+
+      type = 'object';
+      refs = refs.concat([anonymousName]);
+    } else if (this.isset(data.additionalProperties)) {
       type = 'map';
       refs = refs.concat(this.parseRef(data.additionalProperties));
     } else if (this.isset(data.items)) {
@@ -299,6 +333,13 @@ export class TypeSchema implements TransformerInterface {
 
   protected isset(value: any): boolean {
     return typeof value !== 'undefined' && value !== null;
+  }
+
+  protected async hash(data: string): Promise<string> {
+    const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(data));
+    return Array.from(new Uint8Array(buffer))
+      .map((bytes) => bytes.toString(16).padStart(2, '0'))
+      .join('');
   }
 
 }
