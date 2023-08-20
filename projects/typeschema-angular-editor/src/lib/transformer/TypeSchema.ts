@@ -48,7 +48,7 @@ export class TypeSchema implements TransformerInterface {
       }
     }
 
-    if (this.isset(data['components']['schemas']) && typeof data['components']['schemas'] === 'object') {
+    if (this.isset(data['components']) && this.isset(data['components']['schemas']) && typeof data['components']['schemas'] === 'object') {
       for (const [key, value] of Object.entries(data['components']['schemas'])) {
         try {
           spec.types.push(await this.transformType(key, value as Record<string, any>));
