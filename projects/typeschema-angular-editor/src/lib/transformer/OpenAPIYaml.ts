@@ -1,5 +1,4 @@
 import {Specification} from "../model/Specification";
-import {TransformerInterface} from "./TransformerInterface";
 import {OpenAPIJson} from "./OpenAPIJson";
 import {parse} from "yaml";
 
