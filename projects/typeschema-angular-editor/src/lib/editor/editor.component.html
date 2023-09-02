@@ -64,7 +64,7 @@
   <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" id="operation-{{operationIndex}}">
     <div class="card-header editor-type-name">
       <div class="float-end text-end">
-        <code>{{ operation.httpMethod }} {{ operation.httpPath }} - {{ operation.httpCode }}</code><br>
+        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code><br>
         <span *ngFor="let tag of operation.tags" class="badge text-bg-dark ms-1">{{ tag }}</span>
       </div>
       {{ operation.name }}<br>
@@ -101,7 +101,7 @@
         </tr>
         </tbody>
       </table>
-      <table class="table table-striped" *ngIf="operation.throws.length > 0">
+      <table class="table table-striped" *ngIf="(operation.httpCode && operation.return) || operation.throws.length > 0">
         <colgroup>
           <col class="w-25">
           <col class="w-50">
@@ -115,6 +115,10 @@
         </tr>
         </thead>
         <tbody>
+        <tr *ngIf="operation.httpCode && operation.return">
+          <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+          <td><span class="badge text-bg-primary">{{ operation.return }}</span></td>
+        </tr>
         <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
           <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
           <td><span class="badge text-bg-primary">{{ throw_.type }}</span></td>
