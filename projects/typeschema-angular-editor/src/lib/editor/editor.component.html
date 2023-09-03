@@ -47,10 +47,10 @@
       <tbody>
       <tr *ngFor="let include of specification.imports; index as includeIndex">
         <td><span class="editor-import-alias">{{ include.alias }}</span></td>
-        <td><span class="editor-import-document">{{ include.document?.user?.name }} / {{ include.document?.name }}</span></td>
+        <td><span class="editor-import-document"><a href="https://app.typehub.cloud/d/{{ include.document?.user?.name }}">{{ include.document?.user?.name }}</a> / <a href="https://app.typehub.cloud/d/{{ include.document?.user?.name }}/{{ include.document?.name }}">{{ include.document?.name }}</a></span></td>
         <td><span class="badge bg-primary editor-import-version">{{ include.version }}</span></td>
         <td>
-          <div class="btn-group" role="group">
+          <div class="btn-group float-end" role="group" *ngIf="!readonly">
             <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
           </div>
         </td>
