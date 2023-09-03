@@ -112,9 +112,18 @@ export class EditorComponent implements OnInit {
 
   constructor(private typeHubService: TypeHubService, private schemaTransformer: ImportService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     if (!Array.isArray(this.specification.operations)) {
       this.specification.operations = [];
+    }
+
+    if (!this.readonly && this.specification.imports.length > 0) {
+      for (let i = 0; i < this.specification.imports.length; i++) {
+        const include = this.specification.imports[i];
+        if (include && !include.types) {
+          this.specification.imports[i].types = await this.resolveIncludeTypes(include);
+        }
+      }
     }
 
     this.doChange();
@@ -534,33 +543,37 @@ export class EditorComponent implements OnInit {
 
     this.modalService.open(content).result.then(async (result) => {
       const include = this.include;
-      if (!include || !include.document || !include.version) {
-        return;
-      }
-
-      if (!include.document.user?.name || !include.document.name) {
-        return;
-      }
-
-      const doc = await this.typeHubService.findDocument(include.document.user?.name, include.document.name);
-      if (!doc) {
-        return;
-      }
-
-      const typeApi = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
-      if (!typeApi) {
-        return;
-      }
-
-      const spec = await this.schemaTransformer.transform('typeapi', typeApi);
-      if (!spec) {
-        return;
-      }
-
-      include.types = spec.types;
+      include.types = await this.resolveIncludeTypes(include);
       this.specification.imports.push(include);
     }, (reason) => {
     });
+  }
+
+  private async resolveIncludeTypes(include: Include|undefined): Promise<Array<Type>|undefined> {
+    if (!include || !include.document || !include.version) {
+      return;
+    }
+
+    if (!include.document.user?.name || !include.document.name) {
+      return;
+    }
+
+    const doc = await this.typeHubService.findDocument(include.document.user?.name, include.document.name);
+    if (!doc) {
+      return;
+    }
+
+    const typeApi = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
+    if (!typeApi) {
+      return;
+    }
+
+    const spec = await this.schemaTransformer.transform('typeapi', typeApi);
+    if (!spec) {
+      return;
+    }
+
+    return spec.types;
   }
 
   openImport(content: any): void {
