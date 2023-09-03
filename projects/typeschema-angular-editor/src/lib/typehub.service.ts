@@ -4,6 +4,7 @@ import {DocumentCollection} from "typehub-javascript-sdk/dist/src/DocumentCollec
 import {Document} from "typehub-javascript-sdk/dist/src/Document";
 import {TagCollection} from "typehub-javascript-sdk/dist/src/TagCollection";
 import {Client} from "typehub-javascript-sdk/dist/src/Client";
+import {lastValueFrom} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +26,7 @@ export class TypeHubService {
     return await this.client.document().get(user, name);
   }
 
-  public async export(user: string, name: string, version: string): Promise<any> {
+  public async export(user: string, name: string, version: string): Promise<string|undefined> {
     const response = await this.client.document().export(user, name, {
       version: version,
       format: 'spec-typeapi'
@@ -35,7 +36,12 @@ export class TypeHubService {
       return;
     }
 
-    return this.httpClient.get<any>(response.href);
+    const schema = await lastValueFrom(this.httpClient.get<any>(response.href));
+    if (typeof schema === 'string') {
+      return schema;
+    } else {
+      return JSON.stringify(schema);
+    }
   }
 
   public findTags(user: string, name: string): Promise<TagCollection> {

@@ -79,7 +79,7 @@ export class EditorComponent implements OnInit {
 
   include: Include = {
     alias: '',
-    version: 'master',
+    version: '0.1.0',
     document: undefined,
     types: []
   };
