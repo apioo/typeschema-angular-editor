@@ -61,7 +61,7 @@
 </div>
 
 <ng-container *ngIf="operationEnabled">
-  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" id="operation-{{operationIndex}}">
+  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" id="operation-{{ operation.name }}">
     <div class="card-header editor-type-name">
       <div class="float-end text-end">
         <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code><br>
@@ -144,7 +144,7 @@
   </div>
 </ng-container>
 
-<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}" id="type-{{typeIndex}}">
+<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex}" id="type-{{ type.name }}">
   <div class="card-header editor-type-name">
     {{ type.name }}<br>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
@@ -692,10 +692,10 @@
     <ul class="list-group">
       <ng-container *ngIf="operationEnabled">
         <li class="list-group-item disabled">Operations</li>
-        <li *ngFor="let operation of specification.operations; index as operationIndex" class="list-group-item"><a (click)="offcanvas.close('operation-' + operationIndex)" role="button" class="link-underline-primary">{{operation.name}}</a></li>
+        <li *ngFor="let operation of specification.operations" class="list-group-item"><a (click)="offcanvas.close('operation-' + operation.name)" role="button" class="link-underline-primary">{{operation.name}}</a></li>
       </ng-container>
       <li class="list-group-item disabled">Types</li>
-      <li *ngFor="let type of specification.types; index as typeIndex" class="list-group-item"><a (click)="offcanvas.close('type-' + typeIndex)" role="button" class="link-underline-primary">{{type.name}}</a></li>
+      <li *ngFor="let type of specification.types" class="list-group-item"><a (click)="offcanvas.close('type-' + type.name)" role="button" class="link-underline-primary">{{type.name}}</a></li>
     </ul>
   </div>
 </ng-template>
