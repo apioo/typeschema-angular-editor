@@ -36,12 +36,16 @@ export class TypeAPI extends TypeSchema {
       return: '',
     };
 
-    for (const [key, value] of Object.entries(data.arguments)) {
-      operation.arguments.push(this.transformArgument(key, value));
+    if (data.arguments) {
+      for (const [key, value] of Object.entries(data.arguments)) {
+        operation.arguments.push(this.transformArgument(key, value));
+      }
     }
 
-    for (const [key, value] of Object.entries(data.throws)) {
-      operation.throws.push(this.transformThrow(key, value));
+    if (data.throws) {
+      for (const [key, value] of Object.entries(data.throws)) {
+        operation.throws.push(this.transformThrow(key, value));
+      }
     }
 
     if (data.return && data.return.schema) {
