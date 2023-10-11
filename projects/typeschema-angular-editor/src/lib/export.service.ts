@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {Specification} from "./model/Specification";
 import {Type} from "./model/Type";
 import {Property} from "./model/Property";
+import {Operation} from "./model/Operation";
 
 @Injectable({
   providedIn: 'root'
@@ -29,18 +30,81 @@ export class ExportService {
       schema['$import'] = imports;
     }
 
-    const definitions: any = {};
-    spec.types.forEach((type) => {
-      definitions[type.name] = this.transformType(type);
-    });
+    if (spec.operations && Array.isArray(spec.operations) && spec.operations.length > 0) {
+      const operations: any = {};
+      spec.operations.forEach((operation) => {
+        operations[operation.name] = this.transformOperation(operation);
+      });
 
-    schema.definitions = definitions;
+      schema.operations = operations;
+    }
+
+    if (spec.types && Array.isArray(spec.types) && spec.types.length > 0) {
+      const definitions: any = {};
+      spec.types.forEach((type) => {
+        definitions[type.name] = this.transformType(type);
+      });
+
+      schema.definitions = definitions;
+    }
 
     if (spec.root !== undefined && spec.types[spec.root]) {
       schema['$ref'] = spec.types[spec.root].name;
     }
 
     return schema;
+  }
+
+  private transformOperation(operation: Operation): object {
+    const result: any = {};
+
+    if (this.isset(operation.description)) {
+      result.description = operation.description;
+    }
+
+    if (this.isset(operation.httpMethod)) {
+      result.method = operation.httpMethod;
+    }
+
+    if (this.isset(operation.httpPath)) {
+      result.path = operation.httpPath;
+    }
+
+    if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
+      const args: any = {};
+      operation.arguments.forEach((argument) => {
+        args[argument.name] = {
+          in: argument.in,
+          schema: this.resolveType([argument.type]),
+        };
+      });
+      result.arguments = args;
+    }
+
+    if (this.isset(operation.throws) && Array.isArray(operation.throws)) {
+      const throws: Array<any> = [];
+      operation.throws.forEach((throw_) => {
+        throws.push({
+          code: throw_.code,
+          schema: this.resolveType([throw_.type]),
+        });
+      });
+      result.throws = throws;
+    }
+
+    if (this.isset(operation.return)) {
+      const ret: any = {};
+      if (this.isset(operation.httpCode)) {
+        ret.code = operation.httpCode;
+      }
+      ret.schema = {
+        $ref: operation.return
+      };
+
+      result.return = ret;
+    }
+
+    return result;
   }
 
   private transformType(type: Type): object {
