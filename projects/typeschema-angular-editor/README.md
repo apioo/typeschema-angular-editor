@@ -1,8 +1,8 @@
-# TypeschemaAngularEditor
+# TypeSchemaAngularEditor
 
 This package provides an Angular Editor Component which provides a visual
-editor to create a TypeSchema. It also integrates with the [typehub.cloud](https://typehub.cloud/)
-API so that the user can integrate remote schemas registered at the cloud.
+editor to model and design a [TypeAPI](https://typeapi.org/)/[TypeSchema](https://typeschema.org/)
+specification. It also integrates with the [typehub.cloud](https://typehub.cloud/) platform.
 The following screenshot shows an example of the editor:
 
 ![Preview](../../assets/preview.png)
