@@ -9,6 +9,8 @@ import {TypeSchema} from "./transformer/TypeSchema";
 import {TypeAPI} from "./transformer/TypeAPI";
 import {OpenAPIYaml} from "./transformer/OpenAPIYaml";
 import {JsonSchemaYaml} from "./transformer/JsonSchemaYaml";
+import {RawJson} from "./transformer/RawJson";
+import {RawYaml} from "./transformer/RawYaml";
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +27,8 @@ export class ImportService {
     this.transformer['openapi-yaml'] = new OpenAPIYaml(typeHubService);
     this.transformer['jsonschema-json'] = new JsonSchemaJson(typeHubService);
     this.transformer['jsonschema-yaml'] = new JsonSchemaYaml(typeHubService);
+    this.transformer['raw-json'] = new RawJson(typeHubService);
+    this.transformer['raw-yaml'] = new RawYaml(typeHubService);
   }
 
   async transform(type: SchemaType, schema: string): Promise<Specification> {
