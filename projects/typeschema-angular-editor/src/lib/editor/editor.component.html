@@ -7,6 +7,7 @@
     <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
     <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
     <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
+    <button type="button" class="btn btn-light" (click)="openSettings(settingsModal)" *ngIf="importEnabled">Settings</button>
     <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
     <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
     <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
@@ -596,6 +597,69 @@
             </ng-container>
           </optgroup>
         </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+  </div>
+</ng-template>
+
+<ng-template #settingsModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Settings</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body" *ngIf="security">
+    <div class="mb-3 row">
+      <label for="settingsBaseUrl" class="col-sm-2 col-form-label fw-bold">Base-URL</label>
+      <div class="col-sm-10">
+        <input [(ngModel)]="baseUrl" id="settingsBaseUrl" name="settingsBaseUrl" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="settingsSecurityType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select [(ngModel)]="security.type" id="settingsSecurityType" name="settingsSecurityType" class="form-select">
+          <option ngValue="none">None</option>
+          <option ngValue="httpBasic">HTTP-Basic</option>
+          <option ngValue="httpBearer">HTTP-Bearer</option>
+          <option ngValue="apiKey">API-Key</option>
+          <option ngValue="oauth2">OAuth2</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="security.type == 'apiKey'">
+      <label for="settingsSecurityName" class="col-sm-2 col-form-label fw-bold">Name</label>
+      <div class="col-sm-10">
+        <input [(ngModel)]="security.name" id="settingsSecurityName" name="settingsSecurityName" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="security.type == 'apiKey'">
+      <label for="settingsSecurityIn" class="col-sm-2 col-form-label fw-bold">In</label>
+      <div class="col-sm-10">
+        <select [(ngModel)]="security.in" id="settingsSecurityIn" name="settingsSecurityIn" class="form-select">
+          <option ngValue="header">Header</option>
+          <option ngValue="query">Query</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
+      <label for="settingsSecurityTokenUrl" class="col-sm-2 col-form-label fw-bold">Token-URL</label>
+      <div class="col-sm-10">
+        <input [(ngModel)]="security.tokenUrl" id="settingsSecurityTokenUrl" name="settingsSecurityTokenUrl" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
+      <label for="settingsSecurityAuthorizationUrl" class="col-sm-2 col-form-label fw-bold">Authorization-URL</label>
+      <div class="col-sm-10">
+        <input [(ngModel)]="security.authorizationUrl" id="settingsSecurityAuthorizationUrl" name="settingsSecurityAuthorizationUrl" class="form-control">
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
+      <label for="settingsSecurityScopes" class="col-sm-2 col-form-label fw-bold">Scopes</label>
+      <div class="col-sm-10">
+        <input [(ngModel)]="security.scopes" id="settingsSecurityScopes" name="settingsSecurityScopes" class="form-control">
       </div>
     </div>
   </div>

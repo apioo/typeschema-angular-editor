@@ -9,12 +9,13 @@ import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {Include} from "../model/Include";
-import {SchemaType, ImportService} from "../import.service";
+import {ImportService, SchemaType} from "../import.service";
 import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
 import {ViewportScroller} from "@angular/common";
+import {Security} from "../model/Security";
 
 @Component({
   selector: 'typeschema-editor',
@@ -76,6 +77,9 @@ export class EditorComponent implements OnInit {
   loading = false;
   dirty = false;
   response?: Message;
+
+  baseUrl?: string;
+  security?: Security;
 
   include: Include = {
     alias: '',
@@ -533,6 +537,28 @@ export class EditorComponent implements OnInit {
     });
   }
 
+  openSettings(content: any): void {
+    this.baseUrl = this.specification.baseUrl || '';
+    this.security = this.specification.security || {
+      type: 'none'
+    };
+
+    this.modalService.open(content, {size: 'lg'}).result.then(async (result) => {
+      this.specification.baseUrl = this.baseUrl;
+
+      const availableType = ['httpBasic', 'httpBearer', 'apiKey', 'oauth2'];
+      if (this.security?.type && availableType.includes(this.security?.type)) {
+        this.specification.security = this.security;
+      } else {
+        this.specification.security = undefined;
+      }
+
+      this.dirty = true;
+      this.doChange();
+    }, (reason) => {
+    });
+  }
+
   openInclude(content: any): void {
     this.include = {
       alias: '',
@@ -541,10 +567,13 @@ export class EditorComponent implements OnInit {
       types: []
     };
 
-    this.modalService.open(content).result.then(async (result) => {
+    this.modalService.open(content, {size: 'lg'}).result.then(async (result) => {
       const include = this.include;
       include.types = await this.resolveIncludeTypes(include);
       this.specification.imports.push(include);
+
+      this.dirty = true;
+      this.doChange();
     }, (reason) => {
     });
   }

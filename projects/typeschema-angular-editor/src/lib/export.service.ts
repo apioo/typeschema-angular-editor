@@ -14,6 +14,14 @@ export class ExportService {
   transform(spec: Specification): object {
     const schema: any = {};
 
+    if (spec.baseUrl !== undefined) {
+      schema.baseUrl = spec.baseUrl;
+    }
+
+    if (spec.security !== undefined) {
+      schema.security = spec.security;
+    }
+
     if (spec.imports && Array.isArray(spec.imports) && spec.imports.length > 0) {
       const imports: Record<string, string> = {};
       spec.imports.forEach((include) => {
