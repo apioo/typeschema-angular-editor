@@ -17,14 +17,17 @@
     "@angular/platform-browser": "^16.1.0",
     "@angular/platform-browser-dynamic": "^16.1.0",
     "@angular/router": "^16.1.0",
+    "@ng-bootstrap/ng-bootstrap": "^15.0.0",
+    "bootstrap": "^5.2.3",
+    "bootstrap-icons": "^1.10.5",
+    "ng-packagr": "^16.1.0",
+    "ngx-highlightjs": "^10.0.0",
+    "pascal-case": "^3.1.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.13.0",
-    "ng-packagr": "^16.1.0",
-    "@ng-bootstrap/ng-bootstrap": "^15.0.0",
-    "pascal-case": "^3.1.2",
+    "typehub-javascript-sdk": "^1.1.0",
     "yaml": "^2.3.1",
-    "typehub-javascript-sdk": "^1.0.6"
+    "zone.js": "~0.13.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^16.1.0",
