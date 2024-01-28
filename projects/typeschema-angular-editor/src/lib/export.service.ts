@@ -100,16 +100,17 @@ export class ExportService {
       result.throws = throws;
     }
 
-    if (this.isset(operation.return)) {
+    let httpCode = 200;
+    if (this.isset(operation.httpCode)) {
+      httpCode = operation.httpCode;
+    }
+
+    if (this.isset(operation.return) && httpCode !== 204) {
       const ret: any = {};
-      if (this.isset(operation.httpCode)) {
-        ret.code = operation.httpCode;
-      }
+      ret.code = httpCode;
       ret.schema = {
         $ref: operation.return
       };
-
-      result.return = ret;
     }
 
     return result;
