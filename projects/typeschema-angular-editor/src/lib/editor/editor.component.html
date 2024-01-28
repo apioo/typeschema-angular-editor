@@ -102,7 +102,7 @@
         </tr>
         </tbody>
       </table>
-      <table class="table table-striped" *ngIf="(operation.httpCode && operation.return) || operation.throws.length > 0">
+      <table class="table table-striped" *ngIf="operation.httpCode || operation.throws.length > 0">
         <colgroup>
           <col class="w-25">
           <col class="w-50">
@@ -116,6 +116,10 @@
         </tr>
         </thead>
         <tbody>
+        <tr *ngIf="operation.httpCode === 204">
+          <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+          <td><span class="badge text-bg-secondary">-</span></td>
+        </tr>
         <tr *ngIf="operation.httpCode && operation.return">
           <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
           <td><span class="badge text-bg-primary">{{ operation.return }}</span></td>
@@ -254,8 +258,10 @@
       <label for="operationHttpCode" class="col-sm-2 col-form-label fw-bold">HTTP Code</label>
       <div class="col-sm-10">
         <select id="operationHttpCode" name="operationHttpCode" class="form-select" [(ngModel)]="operation.httpCode">
-          <option [ngValue]="200">200</option>
-          <option [ngValue]="201">201</option>
+          <option [ngValue]="200">200 OK</option>
+          <option [ngValue]="201">201 Created</option>
+          <option [ngValue]="202">202 Accepted</option>
+          <option [ngValue]="204">204 No Content</option>
         </select>
       </div>
     </div>
@@ -271,7 +277,7 @@
         <typeschema-throws [data]="operation.throws" [specification]="specification" (dataChange)="operation.throws = $event"></typeschema-throws>
       </div>
     </div>
-    <div class="mb-3 row">
+    <div class="mb-3 row" *ngIf="operation.httpCode !== 204">
       <label for="operationReturn" class="col-sm-2 col-form-label fw-bold">Return</label>
       <div class="col-sm-10">
         <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
