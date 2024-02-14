@@ -10,6 +10,7 @@ export interface Operation {
   arguments: Array<Argument>
   throws: Array<Throw>
   return: string,
+  returnShape?: string,
   stability?: 0 | 1 | 2 | 3,
   security?: Array<string>,
   authorization?: boolean,

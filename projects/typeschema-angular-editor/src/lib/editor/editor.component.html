@@ -282,16 +282,27 @@
     <div class="mb-3 row" *ngIf="operation.httpCode !== 204">
       <label for="operationReturn" class="col-sm-2 col-form-label fw-bold">Return</label>
       <div class="col-sm-10">
-        <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
-          <optgroup label="self">
-            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-          </optgroup>
-          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
+        <div class="row mb-3">
+          <div class="col-3">
+            <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="operation.returnShape">
+              <option [ngValue]="undefined">Object</option>
+              <option ngValue="map">Map</option>
+              <option ngValue="array">Array</option>
+            </select>
+          </div>
+          <div class="col-9">
+            <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+              <optgroup label="self">
+                <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+              </optgroup>
+              <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+                <ng-container *ngFor="let parentType of include.types">
+                  <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+                </ng-container>
+              </optgroup>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
     <div class="mb-3 row">

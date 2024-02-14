@@ -4,7 +4,14 @@
       <option *ngFor="let code of errorStatusCodes" [ngValue]="code.key">{{code.value}}</option>
     </select>
   </div>
-  <div class="col-9">
+  <div class="col-3">
+    <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="row.typeShape">
+      <option [ngValue]="undefined">Object</option>
+      <option ngValue="map">Map</option>
+      <option ngValue="array">Array</option>
+    </select>
+  </div>
+  <div class="col-6">
     <div class="input-group">
       <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
         <optgroup label="self">
