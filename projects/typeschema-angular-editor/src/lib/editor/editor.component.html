@@ -119,10 +119,12 @@
         <tr *ngIf="operation.httpCode === 204">
           <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
           <td><span class="badge text-bg-secondary">-</span></td>
+          <td></td>
         </tr>
         <tr *ngIf="operation.httpCode && operation.return">
           <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
           <td><span class="badge text-bg-primary">{{ operation.return }}</span></td>
+          <td></td>
         </tr>
         <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
           <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
