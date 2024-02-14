@@ -11,8 +11,9 @@ of the editor:
 We use this component in different products:
 
 * [Fusio](https://www.fusio-project.org/)
-* [APIgen](https://apigen.app/)
 * [TypeHub](https://typehub.cloud/)
+* [APIgen](https://apigen.app/)
+* [SDKgen](https://sdkgen.app/)
 
 ## Usage
 
