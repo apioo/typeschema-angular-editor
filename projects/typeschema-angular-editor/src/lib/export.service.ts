@@ -94,7 +94,7 @@ export class ExportService {
       operation.throws.forEach((throw_) => {
         throws.push({
           code: throw_.code,
-          schema: this.resolveType([throw_.type]),
+          schema: this.getSchemaForShape(throw_.type, throw_.typeShape),
         });
       });
       result.throws = throws;
@@ -108,12 +108,34 @@ export class ExportService {
     if (this.isset(operation.return) && httpCode !== 204) {
       const ret: any = {};
       ret.code = httpCode;
-      ret.schema = {
-        $ref: operation.return
-      };
+      ret.schema = this.getSchemaForShape(operation.return, operation.returnShape);
+      result.return = ret;
     }
 
     return result;
+  }
+
+  private getSchemaForShape(type: string, shape?: string)
+  {
+    if (shape === 'map') {
+      return {
+        type: 'object',
+        additionalProperties: {
+          $ref: type
+        }
+      };
+    } else if (shape === 'array') {
+      return {
+        type: 'array',
+        items: {
+          $ref: type
+        }
+      };
+    } else {
+      return {
+        $ref: type
+      };
+    }
   }
 
   private transformType(type: Type): object {
