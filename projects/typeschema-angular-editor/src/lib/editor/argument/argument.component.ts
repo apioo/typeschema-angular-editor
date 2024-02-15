@@ -16,7 +16,7 @@ export class ArgumentComponent {
   result: Array<Argument> = [];
 
   newName?: string;
-  newIn?: 'path' | 'query' | 'header' | 'body';
+  newIn?: 'path' | 'query' | 'header';
   newType?: string = 'string';
 
   types = [
@@ -30,7 +30,6 @@ export class ArgumentComponent {
     {key: 'path', value: 'Path'},
     {key: 'query', value: 'Query'},
     {key: 'header', value: 'Header'},
-    {key: 'body', value: 'Body'},
   ];
 
   ngOnInit() {

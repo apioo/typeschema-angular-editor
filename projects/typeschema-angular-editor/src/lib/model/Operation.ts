@@ -8,6 +8,8 @@ export interface Operation {
   httpPath: string;
   httpCode: number;
   arguments: Array<Argument>
+  payload?: string,
+  payloadShape?: string,
   throws: Array<Throw>
   return: string,
   returnShape?: string,

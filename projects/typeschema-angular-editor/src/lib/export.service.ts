@@ -78,14 +78,37 @@ export class ExportService {
       result.path = operation.httpPath;
     }
 
+    const args: Record<string, any> = {};
     if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
-      const args: any = {};
       operation.arguments.forEach((argument) => {
-        args[argument.name] = {
-          in: argument.in,
-          schema: this.resolveType([argument.type]),
-        };
+        if (argument.in === 'path') {
+          args[argument.name] = {
+            in: 'path',
+            schema: this.resolveType([argument.type]),
+          };
+        }
       });
+    }
+
+    if (this.isset(operation.payload) && operation.payload) {
+      args['payload'] = {
+        in: 'body',
+        schema: this.getSchemaForShape(operation.payload, operation.payloadShape),
+      };
+    }
+
+    if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
+      operation.arguments.forEach((argument) => {
+        if (argument.in === 'query' || argument.in === 'header') {
+          args[argument.name] = {
+            in: argument.in,
+            schema: this.resolveType([argument.type]),
+          };
+        }
+      });
+    }
+
+    if (Object.entries(args).length > 0) {
       result.arguments = args;
     }
 

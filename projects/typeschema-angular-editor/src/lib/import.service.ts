@@ -11,6 +11,7 @@ import {OpenAPIYaml} from "./transformer/OpenAPIYaml";
 import {JsonSchemaYaml} from "./transformer/JsonSchemaYaml";
 import {RawJson} from "./transformer/RawJson";
 import {RawYaml} from "./transformer/RawYaml";
+import {BCLayerService} from "./bclayer.service";
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +20,8 @@ export class ImportService {
 
   private transformer: Record<string, TransformerInterface> = {};
 
-  constructor(typeHubService: TypeHubService) {
-    this.transformer['internal'] = new Internal();
+  constructor(typeHubService: TypeHubService, bcLayerService: BCLayerService) {
+    this.transformer['internal'] = new Internal(bcLayerService);
     this.transformer['typeapi'] = new TypeAPI(typeHubService);
     this.transformer['typeschema'] = new TypeSchema(typeHubService);
     this.transformer['openapi-json'] = new OpenAPIJson(typeHubService);

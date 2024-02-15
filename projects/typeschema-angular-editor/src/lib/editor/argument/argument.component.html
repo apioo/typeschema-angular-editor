@@ -10,24 +10,12 @@
   <div class="col-6">
     <div class="input-group">
       <select [id]="'type_' + row.name" [name]="'type_' + row.name" [(ngModel)]="row.type" class="form-select">
-        <optgroup label="scalar" *ngIf="row.in !== 'body'">
+        <optgroup label="scalar">
           <option ngValue="string">String</option>
           <option ngValue="integer">Integer</option>
           <option ngValue="number">Number</option>
           <option ngValue="boolean">Boolean</option>
         </optgroup>
-        <ng-container *ngIf="row.in === 'body'">
-          <optgroup label="self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </ng-container>
       </select>
       <button class="btn btn-outline-secondary" (click)="remove(row.name); changeValue()"><i class="bi bi-x"></i></button>
     </div>
@@ -45,24 +33,12 @@
   <div class="col-6">
     <div class="input-group">
       <select id="newArgumentType" name="newArgumentType" [(ngModel)]="newType" class="form-select">
-        <optgroup label="scalar" *ngIf="newIn !== 'body'">
+        <optgroup label="scalar">
           <option ngValue="string">String</option>
           <option ngValue="integer">Integer</option>
           <option ngValue="number">Number</option>
           <option ngValue="boolean">Boolean</option>
         </optgroup>
-        <ng-container *ngIf="newIn === 'body'">
-          <optgroup label="self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </ng-container>
       </select>
       <button class="btn btn-outline-secondary" (click)="add(); changeValue()"><i class="bi bi-plus"></i></button>
     </div>

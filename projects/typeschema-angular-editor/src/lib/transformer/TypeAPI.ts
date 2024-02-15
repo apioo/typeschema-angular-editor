@@ -4,6 +4,8 @@ import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
 import {TypeHubService} from "../typehub.service";
+import {TypeApi} from "typeapi-model";
+import {Operation as TypeApiOperation} from "typeapi-model";
 
 export class TypeAPI extends TypeSchema {
 
@@ -12,11 +14,11 @@ export class TypeAPI extends TypeSchema {
   }
 
   override async transform(schema: string): Promise<Specification> {
-    const data = JSON.parse(schema) as Record<string, any>;
+    const data = JSON.parse(schema) as TypeApi;
     const spec = await this.build(data);
 
-    if (this.isset(data['operations']) && typeof data['operations'] === 'object') {
-      for (const [key, value] of Object.entries(data['operations'])) {
+    if (this.isset(data.operations) && typeof data.operations === 'object') {
+      for (const [key, value] of Object.entries(data.operations)) {
         spec.operations.push(this.transformOperation(key, value));
       }
     }
@@ -24,7 +26,7 @@ export class TypeAPI extends TypeSchema {
     return spec;
   }
 
-  private transformOperation(name: string, data: any): Operation {
+  private transformOperation(name: string, data: TypeApiOperation): Operation {
     let operation: Operation = {
       name: name,
       description: data.description && typeof data.description === 'string' ? data.description : '',
@@ -32,13 +34,21 @@ export class TypeAPI extends TypeSchema {
       httpPath: data.path && typeof data.path === 'string' ? data.path : '/',
       httpCode: data.return && data.return.code && typeof data.return.code === 'number' ? data.return.code : 200,
       arguments: [],
+      payload: '',
+      payloadShape: undefined,
       throws: [],
       return: '',
+      returnShape: undefined,
     };
 
     if (data.arguments) {
       for (const [key, value] of Object.entries(data.arguments)) {
-        operation.arguments.push(this.transformArgument(key, value));
+        if (value.in === 'body') {
+          operation.payload = this.parseRef(value.schema)[0];
+          operation.payloadShape = this.parseShape(value.schema);
+        } else {
+          operation.arguments.push(this.transformArgument(key, value));
+        }
       }
     }
 
@@ -50,10 +60,13 @@ export class TypeAPI extends TypeSchema {
 
     if (data.return && data.return.schema) {
       operation.return = this.parseRef(data.return.schema)[0];
+      operation.returnShape = this.parseShape(data.return.schema);
     }
 
     if (data.stability && typeof data.stability === 'number') {
-      operation.stability = data.stability;
+      if (data.stability === 0 || data.stability === 1 || data.stability === 2 || data.stability === 3) {
+        operation.stability = data.stability;
+      }
     }
 
     if (data.security && Array.isArray(data.security)) {
@@ -84,6 +97,16 @@ export class TypeAPI extends TypeSchema {
       code: data.code && typeof data.code === 'number' ? data.code : 500,
       type: this.parseRef(data.schema)[0],
     };
+  }
+
+  private parseShape(data: any): string|undefined {
+    if (this.isset(data.type) && data.type === 'object' && this.isset(data.additionalProperties)) {
+      return 'map';
+    } else if (this.isset(data.type) && data.type === 'array' && this.isset(data.items)) {
+      return 'array';
+    } else {
+      return;
+    }
   }
 
 }

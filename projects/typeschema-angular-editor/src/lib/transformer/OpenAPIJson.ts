@@ -65,15 +65,9 @@ export class OpenAPIJson extends JsonSchemaJson {
         });
       }
 
+      let payload: string|undefined = undefined;
       if (this.isset(value.requestBody) && typeof value.requestBody === 'object') {
-        const payload = await this.parseResponseRef(value.requestBody);
-        if (payload) {
-          args.push({
-            name: 'payload',
-            in: 'body',
-            type: payload,
-          });
-        }
+        payload = await this.parsePayload(value.requestBody);
       }
 
       let httpCode = 200;
@@ -113,13 +107,25 @@ export class OpenAPIJson extends JsonSchemaJson {
         httpPath: path,
         httpCode: httpCode,
         arguments: args,
+        payload: payload,
+        payloadShape: undefined,
         throws: throws,
         return: result,
+        returnShape: undefined,
         tags: tags
       });
     }
 
     return operations;
+  }
+
+  private async parsePayload(requestBody: object) {
+    const payload = await this.parseResponseRef(requestBody);
+    if (payload) {
+      return payload;
+    } else {
+      return;
+    }
   }
 
   private parseArgument(parameter: Record<string, any>): Argument {

@@ -12,10 +12,10 @@ import {Include} from "../model/Include";
 import {ImportService, SchemaType} from "../import.service";
 import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
-import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
 import {ViewportScroller} from "@angular/common";
 import {Security} from "../model/Security";
+import {BCLayerService} from "../bclayer.service";
 
 @Component({
   selector: 'typeschema-editor',
@@ -45,12 +45,6 @@ export class EditorComponent implements OnInit {
     arguments: [],
     throws: [],
     return: '',
-  };
-
-  argument: Argument = {
-    name: '',
-    in: 'query',
-    type: '',
   };
 
   throw: Throw = {
@@ -114,7 +108,7 @@ export class EditorComponent implements OnInit {
     return document.user?.name + ' / ' + document.name;
   }
 
-  constructor(private typeHubService: TypeHubService, private schemaTransformer: ImportService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
+  constructor(private typeHubService: TypeHubService, private importService: ImportService, private bcLayerService: BCLayerService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   async ngOnInit(): Promise<void> {
     if (!Array.isArray(this.specification.operations)) {
@@ -129,6 +123,8 @@ export class EditorComponent implements OnInit {
         }
       }
     }
+
+    this.specification = this.bcLayerService.transform(this.specification);
 
     this.doChange();
   }
@@ -174,8 +170,11 @@ export class EditorComponent implements OnInit {
       httpPath: '',
       httpCode: 200,
       arguments: [],
+      payload: '',
+      payloadShape: undefined,
       throws: [],
       return: '',
+      returnShape: undefined,
     };
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
@@ -597,7 +596,7 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    const spec = await this.schemaTransformer.transform('typeapi', typeApi);
+    const spec = await this.importService.transform('typeapi', typeApi);
     if (!spec) {
       return;
     }
@@ -611,7 +610,7 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content).result.then(async (result) => {
       this.loading = true;
 
-      const spec = await this.schemaTransformer.transform(this.importType, this.import);
+      const spec = await this.importService.transform(this.importType, this.import);
 
       this.specification.imports = spec.imports;
       this.specification.operations = spec.operations;

@@ -72,7 +72,7 @@
       <div class="text-secondary editor-type-description">{{ operation.description }}</div>
     </div>
     <div class="card-body">
-      <table class="table table-striped" *ngIf="operation.arguments.length > 0">
+      <table class="table table-striped" *ngIf="operation.arguments.length > 0 || operation.payload">
         <colgroup>
           <col class="w-25">
           <col class="w-25">
@@ -99,6 +99,12 @@
               <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)">Remove</button>
             </div>
           </td>
+        </tr>
+        <tr *ngIf="operation.payload">
+          <td>payload</td>
+          <td><span class="badge text-bg-primary">{{ operation.payload }}</span></td>
+          <td><span class="badge text-bg-secondary">body</span></td>
+          <td></td>
         </tr>
         </tbody>
       </table>
@@ -273,6 +279,32 @@
         <typeschema-arguments [data]="operation.arguments" [specification]="specification" (dataChange)="operation.arguments = $event"></typeschema-arguments>
       </div>
     </div>
+    <div class="mb-3 row" *ngIf="operation.httpMethod === 'POST' || operation.httpMethod === 'PUT' || operation.httpMethod === 'PATCH'">
+      <label for="operationPayload" class="col-sm-2 col-form-label fw-bold">Payload</label>
+      <div class="col-sm-10">
+        <div class="row mb-3">
+          <div class="col-3">
+            <select id="operationPayloadShape" name="operationPayloadShape" class="form-select" [(ngModel)]="operation.payloadShape">
+              <option [ngValue]="undefined">Object</option>
+              <option ngValue="map">Map</option>
+              <option ngValue="array">Array</option>
+            </select>
+          </div>
+          <div class="col-9">
+            <select id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
+              <optgroup label="self">
+                <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+              </optgroup>
+              <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+                <ng-container *ngFor="let parentType of include.types">
+                  <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+                </ng-container>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="mb-3 row">
       <label for="operationThrows" class="col-sm-2 col-form-label fw-bold">Throws</label>
       <div class="col-sm-10">
@@ -309,93 +341,6 @@
       <label for="operationTags" class="col-sm-2 col-form-label fw-bold">Tags</label>
       <div class="col-sm-10">
         <typeschema-tags [data]="operation.tags" (dataChange)="operation.tags = $event"></typeschema-tags>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
-  </div>
-</ng-template>
-
-<ng-template #argumentModal let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title">Add Argument</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-  </div>
-  <div class="modal-body">
-    <div class="mb-3 row">
-      <label for="argumentName" class="col-sm-2 col-form-label fw-bold">Name</label>
-      <div class="col-sm-10">
-        <input id="argumentName" name="argumentName" class="form-control" [(ngModel)]="argument.name">
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="argumentIn" class="col-sm-2 col-form-label fw-bold">In</label>
-      <div class="col-sm-10">
-        <select id="argumentIn" name="argumentIn" class="form-select" [(ngModel)]="argument.in">
-          <option ngValue="query">Query</option>
-          <option ngValue="header">Header</option>
-          <option ngValue="body">Body</option>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="argumentType" class="col-sm-2 col-form-label fw-bold">Type</label>
-      <div class="col-sm-10">
-        <select id="argumentType" name="argumentType" class="form-select" [(ngModel)]="argument.type">
-          <optgroup label="scalar" *ngIf="argument.in !== 'body'">
-            <option ngValue="string">String</option>
-            <option ngValue="integer">Integer</option>
-            <option ngValue="number">Number</option>
-            <option ngValue="boolean">Boolean</option>
-          </optgroup>
-          <ng-container *ngIf="argument.in === 'body'">
-            <optgroup label="self">
-              <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-            </optgroup>
-            <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-              <ng-container *ngFor="let parentType of include.types">
-                <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-              </ng-container>
-            </optgroup>
-          </ng-container>
-        </select>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
-  </div>
-</ng-template>
-
-<ng-template #throwModal let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title">Add Argument</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-  </div>
-  <div class="modal-body">
-    <div class="mb-3 row">
-      <label for="throwCode" class="col-sm-2 col-form-label fw-bold">Code</label>
-      <div class="col-sm-10">
-        <select id="throwCode" name="throwCode" class="form-select" [(ngModel)]="throw.code">
-          <option [ngValue]="200">200</option>
-          <option [ngValue]="201">201</option>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="throwType" class="col-sm-2 col-form-label fw-bold">Type</label>
-      <div class="col-sm-10">
-        <select id="throwType" name="throwType" class="form-select" [(ngModel)]="throw.type">
-          <optgroup label="self">
-            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-          </optgroup>
-          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
       </div>
     </div>
   </div>
