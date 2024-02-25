@@ -102,7 +102,13 @@
         </tr>
         <tr *ngIf="operation.payload">
           <td>payload</td>
-          <td><span class="badge text-bg-primary">{{ operation.payload }}</span></td>
+          <td>
+            <span class="badge text-bg-primary">
+              <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;{{ operation.payload }}&gt;</ng-container>
+              <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, {{ operation.payload }}&gt;</ng-container>
+              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map'">{{ operation.payload }}</ng-container>
+            </span>
+          </td>
           <td><span class="badge text-bg-secondary">body</span></td>
           <td></td>
         </tr>
@@ -140,7 +146,13 @@
         </tr>
         <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
           <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
-          <td><span class="badge text-bg-primary">{{ throw_.type }}</span></td>
+          <td>
+            <span class="badge text-bg-primary">
+              <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;{{ throw_.type }}&gt;</ng-container>
+              <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, {{ throw_.type }}&gt;</ng-container>
+              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map'">{{ throw_.type }}</ng-container>
+            </span>
+          </td>
           <td>
             <div class="btn-group float-end" role="group" *ngIf="!readonly">
               <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
