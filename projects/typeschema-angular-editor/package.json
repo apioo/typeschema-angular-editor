@@ -1,6 +1,6 @@
 {
   "name": "ngx-typeschema-editor",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Editor to model and design a TypeAPI/TypeSchema specification",
   "keywords": [
     "TypeAPI",
