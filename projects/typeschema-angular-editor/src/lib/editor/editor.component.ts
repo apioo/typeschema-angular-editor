@@ -368,6 +368,25 @@ export class EditorComponent implements OnInit {
     this.doChange();
   }
 
+  copyOperation(operationIndex: number): void {
+    if (!this.specification.operations[operationIndex]) {
+      return;
+    }
+
+    let newOperation = JSON.parse(JSON.stringify(this.specification.operations[operationIndex]));
+    let newName = newOperation.name + '_copy';
+    let i = 0;
+    while (this.findOperationByName(newName)) {
+      i++;
+      newName = newOperation.name + '_copy' + i;
+    }
+    newOperation.name = newName;
+
+    this.specification.operations.push(newOperation);
+    this.dirty = true;
+    this.doChange();
+  }
+
   upArgument(operationIndex: number, argumentIndex: number): void {
     const property = this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
     if (!property) {
@@ -428,6 +447,25 @@ export class EditorComponent implements OnInit {
 
   deleteType(typeIndex: number): void {
     this.specification.types.splice(typeIndex, 1);
+    this.dirty = true;
+    this.doChange();
+  }
+
+  copyType(typeIndex: number): void {
+    if (!this.specification.types[typeIndex]) {
+      return;
+    }
+
+    let newType = JSON.parse(JSON.stringify(this.specification.types[typeIndex]));
+    let newName = newType.name + '_copy';
+    let i = 0;
+    while (this.findTypeByName(newName)) {
+      i++;
+      newName = newType.name + '_copy' + i;
+    }
+    newType.name = newName;
+
+    this.specification.types.push(newType);
     this.dirty = true;
     this.doChange();
   }

@@ -170,6 +170,7 @@
         <button type="button" class="btn btn-secondary" (click)="downOperation(operationIndex)"><i class="bi bi-arrow-down"></i></button>
         <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)">Edit</button>
         <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)">Remove</button>
+        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)">Copy</button>
       </div>
     </div>
   </div>
@@ -239,6 +240,7 @@
       <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
       <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)">Edit</button>
       <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)">Remove</button>
+      <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)">Copy</button>
       <button *ngIf="specification.root !== typeIndex" type="button" class="btn btn-secondary" (click)="setRoot(typeIndex)">Primary</button>
     </div>
   </div>
