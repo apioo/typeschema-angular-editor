@@ -32,6 +32,7 @@ export class EditorComponent implements OnInit {
   @Input() operationEnabled: boolean = false;
   @Input() importEnabled: boolean = true;
   @Input() readonly: boolean = false;
+  @Input() id: string = '';
 
   @Output() save = new EventEmitter<Specification>();
   @Output() change = new EventEmitter<Specification>();
@@ -135,6 +136,7 @@ export class EditorComponent implements OnInit {
   }
 
   doChange(): void {
+    this.saveToLocalStorage();
     this.change.emit(this.specification);
   }
 
@@ -679,5 +681,28 @@ export class EditorComponent implements OnInit {
       (reason) => {
       },
     );
+  }
+
+  loadFromLocalStorage() {
+    let spec = localStorage.getItem(this.getLocalStorageName());
+    if (spec) {
+      this.specification = JSON.parse(spec);
+      this.dirty = true;
+      this.doChange();
+    }
+  }
+
+  saveToLocalStorage() {
+    if (!this.isEmptySpecification()) {
+      localStorage.setItem(this.getLocalStorageName(), JSON.stringify(this.specification));
+    }
+  }
+
+  private getLocalStorageName(): string {
+    return 'typeschema_editor_' + this.id;
+  }
+
+  private isEmptySpecification(): boolean {
+    return this.specification.imports.length === 0 && this.specification.operations.length === 0 && this.specification.types.length === 0;
   }
 }
