@@ -3,7 +3,7 @@
   <ngb-alert type="danger" *ngIf="response && response.success === false">{{ response.message }}</ngb-alert>
   <ngb-alert type="success" *ngIf="response && response.success === true">{{ response.message }}</ngb-alert>
 
-  <div class="btn-group mb-3" role="group">
+  <div class="btn-group mb-3 sticky-top" role="group">
     <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
     <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
     <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
