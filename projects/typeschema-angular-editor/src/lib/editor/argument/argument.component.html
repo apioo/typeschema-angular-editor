@@ -16,6 +16,16 @@
           <option ngValue="number">Number</option>
           <option ngValue="boolean">Boolean</option>
         </optgroup>
+        <ng-container *ngIf="row.in === 'query'">
+        <optgroup label="self">
+          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+        </optgroup>
+        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+          <ng-container *ngFor="let parentType of include.types">
+            <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != row.name">{{ parentType.name }}</option>
+          </ng-container>
+        </optgroup>
+        </ng-container>
       </select>
       <button class="btn btn-outline-secondary" (click)="remove(row.name); changeValue()"><i class="bi bi-x"></i></button>
     </div>
