@@ -150,11 +150,14 @@ export class RawJson implements TransformerInterface {
     return 'Type' + hash.substring(0, 8);
   }
 
-  protected async hash(data: string): Promise<string> {
-    const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(data));
-    return Array.from(new Uint8Array(buffer))
-      .map((bytes) => bytes.toString(16).padStart(2, '0'))
-      .join('');
+  protected hash(data: string): string {
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      let char = data.charCodeAt(i);
+      hash += char;
+    }
+
+    return '' + hash;
   }
 
 }
