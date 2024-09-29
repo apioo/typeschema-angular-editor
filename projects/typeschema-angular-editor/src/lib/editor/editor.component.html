@@ -107,7 +107,8 @@
             <span class="badge text-bg-primary">
               <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;{{ operation.payload }}&gt;</ng-container>
               <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, {{ operation.payload }}&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map'">{{ operation.payload }}</ng-container>
+              <ng-container *ngIf="operation.payloadShape === 'mime'">{{ operation.payload }}</ng-container>
+              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map' && operation.payloadShape !== 'mime'">{{ operation.payload }}</ng-container>
             </span>
           </td>
           <td><span class="badge text-bg-secondary">body</span></td>
@@ -140,7 +141,8 @@
             <span class="badge text-bg-primary">
               <ng-container *ngIf="operation.returnShape === 'array'">Array&lt;{{ operation.return }}&gt;</ng-container>
               <ng-container *ngIf="operation.returnShape === 'map'">Map&lt;string, {{ operation.return }}&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map'">{{ operation.return }}</ng-container>
+              <ng-container *ngIf="operation.returnShape === 'mime'">{{ operation.return }}</ng-container>
+              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map' && operation.returnShape !== 'mime'">{{ operation.return }}</ng-container>
             </span>
           </td>
           <td></td>
@@ -151,7 +153,8 @@
             <span class="badge text-bg-primary">
               <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;{{ throw_.type }}&gt;</ng-container>
               <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, {{ throw_.type }}&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map'">{{ throw_.type }}</ng-container>
+              <ng-container *ngIf="throw_.typeShape === 'mime'">{{ throw_.type }}</ng-container>
+              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map' && throw_.typeShape !== 'mime'">{{ throw_.type }}</ng-container>
             </span>
           </td>
           <td>
@@ -185,11 +188,38 @@
   <div class="card-body">
     <div [ngSwitch]="type.type">
       <ng-container *ngSwitchCase="'reference'">
-        <div class="editor-type-description">Reference: {{ type.ref }}</div>
-        <div class="editor-type-description" *ngIf="type.template">Template: {{ type.template }}</div>
+        <div class="editor-type-description">Reference: {{ type.reference }}</div>
+        <table class="table table table-striped editor-type-properties">
+          <colgroup>
+            <col class="w-25">
+            <col class="w-25">
+            <col class="w-25">
+            <col class="w-25">
+          </colgroup>
+          <thead>
+          <tr>
+            <th>Generic</th>
+            <th>Type</th>
+            <th></th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody *ngIf="type.template">
+          <tr *ngFor="let kv of type.template | keyvalue">
+            <td>
+              <div class="editor-type-property-name">{{ kv.key }}</div>
+            </td>
+            <td>
+              <span class="badge text-bg-primary">{{ kv.value }}</span><br>
+            </td>
+            <td></td>
+            <td></td>
+          </tr>
+          </tbody>
+        </table>
       </ng-container>
       <ng-container *ngSwitchCase="'map'">
-        <div class="editor-type-description">Reference: {{ type.ref }}</div>
+        <div class="editor-type-description">Reference: {{ type.reference }}</div>
       </ng-container>
       <ng-container *ngSwitchDefault>
         <table class="table table table-striped editor-type-properties">
@@ -215,7 +245,8 @@
             </td>
             <td>
               <span class="badge text-bg-primary">{{ property.type }}</span><br>
-              <span *ngFor="let ref of property.refs" class="badge text-bg-secondary me-1">{{ ref }}</span>
+              <span class="badge text-bg-secondary me-1" *ngIf="property.reference">{{ property.reference }}</span>
+              <span class="badge text-bg-secondary me-1" *ngIf="property.generic">{{ property.generic }}</span>
             </td>
             <td><span class="badge text-bg-secondary">{{ property.format }}</span></td>
             <td>
@@ -249,7 +280,7 @@
 
 <ng-template #operationModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title">Add Operation</h4>
+    <h4 class="modal-title">Operation</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
@@ -309,10 +340,11 @@
               <option [ngValue]="undefined">Object</option>
               <option ngValue="map">Map</option>
               <option ngValue="array">Array</option>
+              <option ngValue="mime">Content-Type</option>
             </select>
           </div>
           <div class="col-9">
-            <select id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
+            <select *ngIf="operation.payloadShape !== 'mime'" id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
               <optgroup label="self">
                 <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
               </optgroup>
@@ -322,6 +354,9 @@
                 </ng-container>
               </optgroup>
             </select>
+            <select *ngIf="operation.payloadShape === 'mime'" id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
+              <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
+            </select>
           </div>
         </div>
       </div>
@@ -329,7 +364,7 @@
     <div class="mb-3 row">
       <label for="operationThrows" class="col-sm-2 col-form-label fw-bold">Throws</label>
       <div class="col-sm-10">
-        <typeschema-throws [data]="operation.throws" [specification]="specification" (dataChange)="operation.throws = $event"></typeschema-throws>
+        <typeschema-throws [data]="operation.throws" [specification]="specification" [contentTypes]="contentTypes" (dataChange)="operation.throws = $event"></typeschema-throws>
       </div>
     </div>
     <div class="mb-3 row" *ngIf="operation.httpCode !== 204">
@@ -341,10 +376,11 @@
               <option [ngValue]="undefined">Object</option>
               <option ngValue="map">Map</option>
               <option ngValue="array">Array</option>
+              <option ngValue="mime">Content-Type</option>
             </select>
           </div>
           <div class="col-9">
-            <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+            <select *ngIf="operation.returnShape !== 'mime'" id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
               <optgroup label="self">
                 <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
               </optgroup>
@@ -353,6 +389,9 @@
                   <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
                 </ng-container>
               </optgroup>
+            </select>
+            <select *ngIf="operation.returnShape === 'mime'" id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+              <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
             </select>
           </div>
         </div>
@@ -372,20 +411,10 @@
 
 <ng-template #typeModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title">Add Type</h4>
+    <h4 class="modal-title">Type</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <div class="mb-3 row">
-      <label for="typeType" class="col-sm-2 col-form-label fw-bold">Type</label>
-      <div class="col-sm-10">
-        <select id="typeType" name="typeType" class="form-select" [(ngModel)]="type.type">
-          <option ngValue="object">Object</option>
-          <option ngValue="map">Map</option>
-          <option ngValue="reference">Reference</option>
-        </select>
-      </div>
-    </div>
     <div class="mb-3 row">
       <label for="typeName" class="col-sm-2 col-form-label fw-bold">Name</label>
       <div class="col-sm-10">
@@ -398,12 +427,23 @@
         <input id="typeDescription" name="typeDescription" class="form-control" [(ngModel)]="type.description">
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'object'">
+    <div class="mb-3 row">
+      <label for="typeAbstract" class="col-sm-2 col-form-label fw-bold">Abstract</label>
+      <div class="col-sm-10">
+        <div class="form-check form-switch mt-2">
+          <input class="form-check-input" type="checkbox" role="switch" id="typeAbstract" [(ngModel)]="type.abstract">
+        </div>
+      </div>
+    </div>
+    <div class="mb-3 row">
       <label for="typeParent" class="col-sm-2 col-form-label fw-bold">Parent</label>
       <div class="col-sm-10">
-        <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent">
-          <option>No parent</option>
-          <optgroup label="self">
+        <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent" (ngModelChange)="updateGenerics()">
+          <option [ngValue]="undefined">No parent</option>
+          <optgroup label="Internal">
+            <option ngValue="typeapi:map">Map</option>
+          </optgroup>
+          <optgroup label="Self">
             <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
             </ng-container>
@@ -416,17 +456,17 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'map'">
+    <div class="mb-3 row" *ngIf="type.parent === 'typeapi:map'">
       <label for="mapReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
       <div class="col-sm-10">
-        <select id="mapReference" name="mapReference" class="form-select" [(ngModel)]="type.ref">
+        <select id="mapReference" name="mapReference" class="form-select" [(ngModel)]="type.reference">
           <optgroup label="scalar">
             <option ngValue="string">String</option>
             <option ngValue="integer">Integer</option>
             <option ngValue="number">Number</option>
             <option ngValue="boolean">Boolean</option>
             <option ngValue="any">Any</option>
-            <option ngValue="T">Generic</option>
+            <option ngValue="generic">Generic</option>
           </optgroup>
           <optgroup label="self">
             <ng-container *ngFor="let parentType of specification.types">
@@ -441,40 +481,42 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'reference'">
-      <label for="typeReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+    <div class="mb-3 row" *ngIf="type.abstract && type.parent !== 'typeapi:map'">
+      <label for="typeDiscriminator" class="col-sm-2 col-form-label fw-bold">Discriminator</label>
       <div class="col-sm-10">
-        <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.ref">
-          <option>No reference</option>
-          <optgroup label="self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
+        <select id="typeDiscriminator" name="typeDiscriminator" class="form-select" [(ngModel)]="type.discriminator" (ngModelChange)="updateDiscriminator()">
+          <option [ngValue]="undefined">No discriminator</option>
+          <ng-container *ngFor="let property of type.properties">
+            <option [ngValue]="property.name">{{ property.name }}</option>
+          </ng-container>
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'reference' && hasTypeReferenceContainsGeneric(type.ref)">
-      <label for="typeTemplate" class="col-sm-2 col-form-label fw-bold">Template</label>
+    <div class="mb-3 row" *ngIf="type.parent !== 'typeapi:map' && type.mapping && (type.mapping | keyvalue)?.length">
+      <label class="col-sm-2 col-form-label fw-bold">Mapping</label>
       <div class="col-sm-10">
-        <select id="typeTemplate" name="typeTemplate" class="form-select" [(ngModel)]="type.template">
-          <option>No template</option>
-          <optgroup label="self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
+        <div *ngFor="let child of children">
+          <div class="input-group mb-3">
+            <input id="typeMapping-{{ child }}" name="typeMapping-{{ child }}" type="text" class="form-control" [(ngModel)]="type.mapping[child]" placeholder="Value of the discriminator property">
+            <span class="input-group-text">{{ child }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="type.template && (type.template | keyvalue)?.length">
+      <label class="col-sm-2 col-form-label fw-bold">Template</label>
+      <div class="col-sm-10">
+        <div *ngFor="let generic of generics">
+          <div class="input-group mb-3">
+            <select id="typeTemplate-{{ generic }}" name="typeTemplate-{{ generic }}" class="form-select" [(ngModel)]="type.template[generic]">
+              <option>No type</option>
+              <ng-container *ngFor="let type of specification.types">
+                <option [ngValue]="type.name">{{ type.name }}</option>
+              </ng-container>
+            </select>
+            <span class="input-group-text">{{ generic }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -485,7 +527,7 @@
 
 <ng-template #propertyModal let-modal>
   <div class="modal-header">
-    <h4 class="modal-title">Add Property</h4>
+    <h4 class="modal-title">Property</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
@@ -515,9 +557,8 @@
             <option ngValue="object">Object</option>
             <option ngValue="map">Map</option>
             <option ngValue="array">Array</option>
-            <option ngValue="union">Union</option>
-            <option ngValue="intersection">Intersection</option>
             <option ngValue="any">Any</option>
+            <option ngValue="generic">Generic</option>
           </optgroup>
         </select>
       </div>
@@ -526,54 +567,30 @@
       <label for="propertyFormat" class="col-sm-2 col-form-label fw-bold">Format</label>
       <div class="col-sm-10">
         <select id="propertyFormat" name="propertyFormat" class="form-select" [(ngModel)]="property.format">
-          <option ngValue=""></option>
+          <option [ngValue]="undefined">No Format</option>
           <option *ngIf="property.type == 'string'" ngValue="date">Date</option>
           <option *ngIf="property.type == 'string'" ngValue="date-time">Date-Time</option>
-          <option *ngIf="property.type == 'string'" ngValue="binary">Binary</option>
+          <option *ngIf="property.type == 'string'" ngValue="time">Time</option>
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="property.type == 'string'">
-      <label for="propertyPattern" class="col-sm-2 col-form-label fw-bold">Pattern</label>
+    <div class="mb-3 row" *ngIf="property.type == 'generic'">
+      <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
       <div class="col-sm-10">
-        <input id="propertyPattern" name="propertyPattern" type="text" class="form-control" [(ngModel)]="property.pattern">
+        <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="property.type == 'string'">
-      <label for="propertyMinLength" class="col-sm-2 col-form-label fw-bold">Min-Length</label>
+    <div class="mb-3 row" *ngIf="property.type == 'object' || property.type == 'array' || property.type == 'map'">
+      <label for="propertyReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
       <div class="col-sm-10">
-        <input id="propertyMinLength" name="propertyMinLength" type="number" class="form-control" [(ngModel)]="property.minLength">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'string'">
-      <label for="propertyMaxLength" class="col-sm-2 col-form-label fw-bold">Max-Length</label>
-      <div class="col-sm-10">
-        <input id="propertyMaxLength" name="propertyMaxLength" type="number" class="form-control" [(ngModel)]="property.maxLength">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'integer' || property.type == 'number'">
-      <label for="propertyMinimum" class="col-sm-2 col-form-label fw-bold">Minimum</label>
-      <div class="col-sm-10">
-        <input id="propertyMinimum" name="propertyMinimum" type="number" class="form-control" [(ngModel)]="property.minimum">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'integer' || property.type == 'number'">
-      <label for="propertyMaximum" class="col-sm-2 col-form-label fw-bold">Maximum</label>
-      <div class="col-sm-10">
-        <input id="propertyMaximum" name="propertyMaximum" type="number" class="form-control" [(ngModel)]="property.maximum">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'object' || property.type == 'array' || property.type == 'map' || property.type == 'union' || property.type == 'intersection'">
-      <label for="propertyReferences" class="col-sm-2 col-form-label fw-bold">References</label>
-      <div class="col-sm-10">
-        <select id="propertyReferences" name="propertyReferences" size="8" class="form-select" multiple="multiple" [(ngModel)]="property.refs">
-          <optgroup label="scalar" *ngIf="property.type != 'object' && property.type != 'union' && property.type != 'intersection'">
+        <select id="propertyReference" name="propertyReference" class="form-select" [(ngModel)]="property.reference" (ngModelChange)="updatePropertyReference()">
+          <optgroup label="scalar" *ngIf="property.type != 'object'">
             <option ngValue="string">String</option>
             <option ngValue="integer">Integer</option>
             <option ngValue="number">Number</option>
             <option ngValue="boolean">Boolean</option>
             <option ngValue="any">Any</option>
-            <option ngValue="T">Generic</option>
+            <option ngValue="generic">Generic</option>
           </optgroup>
           <optgroup label="self">
             <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
@@ -584,6 +601,12 @@
             </ng-container>
           </optgroup>
         </select>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="property.type != 'generic' && property.reference == 'generic'">
+      <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
+      <div class="col-sm-10">
+        <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
       </div>
     </div>
   </div>

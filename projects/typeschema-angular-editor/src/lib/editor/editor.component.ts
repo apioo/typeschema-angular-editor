@@ -57,7 +57,11 @@ export class EditorComponent implements OnInit {
     type: 'object',
     name: '',
     description: '',
+    discriminator: '',
+    mapping: {},
   };
+  children: Array<string> = [];
+  generics: Array<string> = [];
 
   property: Property = {
     name: '',
@@ -75,6 +79,26 @@ export class EditorComponent implements OnInit {
 
   baseUrl?: string;
   security?: Security;
+
+  contentTypes: Array<{name: string, value: string}> = [{
+    name: 'application/octet-stream',
+    value: 'application/octet-stream'
+  }, {
+    name: 'application/x-www-form-urlencoded',
+    value: 'application/x-www-form-urlencoded'
+  }, {
+    name: 'application/json',
+    value: 'application/json'
+  }, {
+    name: 'multipart/form-data',
+    value: 'multipart/form-data'
+  }, {
+    name: 'text/plain',
+    value: 'text/plain'
+  }, {
+    name: 'application/xml',
+    value: 'application/xml'
+  }];
 
   include: Include = {
     alias: '',
@@ -272,6 +296,8 @@ export class EditorComponent implements OnInit {
 
   editType(content: any, typeIndex: number): void {
     this.type = Object.assign({}, this.specification.types[typeIndex]);
+    this.updateMapping();
+    this.updateGenerics();
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const type = Object.assign({}, this.type);
@@ -294,29 +320,25 @@ export class EditorComponent implements OnInit {
     });
   }
 
-  hasTypeReferenceContainsGeneric(reference: string|undefined): boolean {
-    if (!reference) {
-      return false;
-    }
-
-    const type = this.findTypeByName(reference);
-    if (type === null) {
-      return false;
+  findGenerics(type?: Type|null): Array<string> {
+    if (!type) {
+      return [];
     }
 
     const properties = type.properties;
     if (!properties) {
-      return false;
+      return [];
     }
 
+    let result: Array<string> = [];
     for (let i = 0; i < properties.length; i++) {
-      const refs = properties[i].refs;
-      if (Array.isArray(refs) && refs.includes('T')) {
-        return true;
+      const generic = properties[i].generic;
+      if (generic) {
+        result.push(generic);
       }
     }
 
-    return false;
+    return result;
   }
 
   findOperationByName(operationName: string): Operation|null {
@@ -362,6 +384,60 @@ export class EditorComponent implements OnInit {
     }
 
     return null;
+  }
+
+  findTypesWithParent(parent?: Type): Array<string> {
+    if (!parent) {
+      return [];
+    }
+
+    let result: Array<string> = [];
+    for (let i = 0; i < this.specification.types.length; i++) {
+      const type = this.specification?.types[i];
+      if (type?.parent === parent.name) {
+        if (type?.type === 'abstract') {
+          const mapping = type?.mapping;
+          if (mapping) {
+            result = result.concat(Object.keys(mapping));
+          }
+        } else {
+          result.push(type.name);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  updateDiscriminator() {
+    this.type.mapping = {};
+    this.updateMapping();
+  }
+
+  updateMapping() {
+    let existing = this.type.mapping || {};
+    let mapping: Record<string, string> = {};
+    this.children = this.findTypesWithParent(this.type);
+    for (let i = 0; i < this.children.length; i++) {
+      mapping[this.children[i]] = this.children[i] in existing ? existing[this.children[i]] : '';
+    }
+    this.type.mapping = mapping;
+  }
+
+  updateGenerics() {
+    let existing = this.type.template || {};
+    let template: Record<string, string> = {};
+    this.generics = this.findGenerics(this.findTypeByName(this.type.parent || ''));
+    for (let i = 0; i < this.generics.length; i++) {
+      template[this.generics[i]] = this.generics[i] in existing ? existing[this.generics[i]] : '';
+    }
+    this.type.template = template;
+  }
+
+  updatePropertyReference() {
+    if (this.property.reference !== 'generic') {
+      this.property.generic = undefined;
+    }
   }
 
   deleteOperation(operationIndex: number): void {
