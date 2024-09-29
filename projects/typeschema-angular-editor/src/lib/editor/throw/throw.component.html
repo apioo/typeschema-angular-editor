@@ -9,11 +9,12 @@
       <option [ngValue]="undefined">Object</option>
       <option ngValue="map">Map</option>
       <option ngValue="array">Array</option>
+      <option ngValue="mime">Content-Type</option>
     </select>
   </div>
   <div class="col-6">
     <div class="input-group">
-      <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
+      <select *ngIf="row.typeShape !== 'mime'" [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
         <optgroup label="self">
           <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
         </optgroup>
@@ -22,6 +23,9 @@
             <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
           </ng-container>
         </optgroup>
+      </select>
+      <select *ngIf="row.typeShape === 'mime'" [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
+        <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
       </select>
       <button class="btn btn-outline-secondary" (click)="remove(row.code); changeValue()"><i class="bi bi-x"></i></button>
     </div>

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Specification} from "../../model/Specification";
 import {Throw} from "../../model/Throw";
 
@@ -7,10 +7,11 @@ import {Throw} from "../../model/Throw";
   templateUrl: './throw.component.html',
   styleUrls: ['./throw.component.css']
 })
-export class ThrowComponent {
+export class ThrowComponent implements OnInit {
 
   @Input() data: Array<Throw> = [];
   @Input() specification!: Specification;
+  @Input() contentTypes!: Array<{name: string, value: string}>;
   @Output() dataChange = new EventEmitter<Array<Throw>>();
 
   result: Array<Throw> = [];
@@ -34,6 +35,7 @@ export class ThrowComponent {
     {key: 423, value: 'Locked'},
     {key: 424, value: 'Failed Dependency'},
     {key: 429, value: 'Too Many Requests'},
+    {key: 499, value: '4xx'},
     {key: 500, value: 'Internal Server Error'},
     {key: 501, value: 'Not Implemented'},
     {key: 502, value: 'Bad Gateway'},
@@ -41,6 +43,8 @@ export class ThrowComponent {
     {key: 504, value: 'Gateway Timeout'},
     {key: 507, value: 'Insufficient Storage'},
     {key: 508, value: 'Loop Detected'},
+    {key: 599, value: '5xx'},
+    {key: 999, value: 'Any Error'},
   ]
 
   ngOnInit() {
