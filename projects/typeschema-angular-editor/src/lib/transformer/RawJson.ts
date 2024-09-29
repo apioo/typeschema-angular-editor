@@ -104,8 +104,8 @@ export class RawJson implements TransformerInterface {
       const property = await this.transformValue('', firstValue);
 
       let ref = '';
-      if (property?.refs) {
-        ref = property?.refs[0] || '';
+      if (property?.reference) {
+        ref = property?.reference || '';
       } else if (property?.type) {
         ref = property?.type;
       }
@@ -114,7 +114,7 @@ export class RawJson implements TransformerInterface {
         name: name,
         description: '',
         type: 'array',
-        refs: [ref]
+        reference: ref
       };
     } else if (typeof data === 'object') {
       const typeName = await this.buildName(data);
@@ -138,7 +138,7 @@ export class RawJson implements TransformerInterface {
         name: name,
         description: '',
         type: 'object',
-        refs: [typeName]
+        reference: typeName
       };
     } else {
       return null;
