@@ -35,7 +35,7 @@ export class ExportService {
         }
       });
 
-      schema['$import'] = imports;
+      schema['import'] = imports;
     }
 
     if (spec.operations && Array.isArray(spec.operations) && spec.operations.length > 0) {
@@ -84,17 +84,24 @@ export class ExportService {
         if (argument.in === 'path') {
           args[argument.name] = {
             in: 'path',
-            schema: this.resolveType([argument.type]),
+            schema: this.resolveType(argument.type),
           };
         }
       });
     }
 
     if (this.isset(operation.payload) && operation.payload) {
-      args['payload'] = {
+      const payload: any = {
         in: 'body',
-        schema: this.getSchemaForShape(operation.payload, operation.payloadShape),
       };
+
+      if (operation.payloadShape === 'mime') {
+        payload.contentType = operation.payload;
+      } else {
+        payload.schema = this.getSchemaForShape(operation.payload, operation.payloadShape);
+      }
+
+      args['payload'] = payload;
     }
 
     if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
@@ -102,7 +109,7 @@ export class ExportService {
         if (argument.in === 'query' || argument.in === 'header') {
           args[argument.name] = {
             in: argument.in,
-            schema: this.resolveType([argument.type]),
+            schema: this.resolveType(argument.type),
           };
         }
       });
@@ -115,10 +122,17 @@ export class ExportService {
     if (this.isset(operation.throws) && Array.isArray(operation.throws)) {
       const throws: Array<any> = [];
       operation.throws.forEach((throw_) => {
-        throws.push({
+        const ret: any = {
           code: throw_.code,
-          schema: this.getSchemaForShape(throw_.type, throw_.typeShape),
-        });
+        };
+
+        if (throw_.typeShape === 'mime') {
+          ret.contentType = throw_.type;
+        } else {
+          ret.schema = this.getSchemaForShape(throw_.type, throw_.typeShape);
+        }
+
+        throws.push(ret);
       });
       result.throws = throws;
     }
@@ -131,7 +145,11 @@ export class ExportService {
     if (this.isset(operation.return) && httpCode !== 204) {
       const ret: any = {};
       ret.code = httpCode;
-      ret.schema = this.getSchemaForShape(operation.return, operation.returnShape);
+      if (operation.returnShape === 'mime') {
+        ret.contentType = operation.return;
+      } else {
+        ret.schema = this.getSchemaForShape(operation.return, operation.returnShape);
+      }
       result.return = ret;
     }
 
@@ -142,21 +160,24 @@ export class ExportService {
   {
     if (shape === 'map') {
       return {
-        type: 'object',
+        type: 'map',
         additionalProperties: {
-          $ref: type
+          type: 'reference',
+          reference: type
         }
       };
     } else if (shape === 'array') {
       return {
         type: 'array',
         items: {
-          $ref: type
+          type: 'reference',
+          reference: type
         }
       };
     } else {
       return {
-        $ref: type
+        type: 'reference',
+        reference: type
       };
     }
   }
@@ -169,30 +190,45 @@ export class ExportService {
     }
 
     if (type.type === 'reference') {
-      result['$ref'] = type.ref;
+      result['type'] = 'reference';
+      result['reference'] = type.reference;
 
       if (this.isset(type.template)) {
-        result['$template'] = {
-          T: type.template
-        };
+        result['template'] = type.template;
       }
     } else if (type.type === 'map') {
-      result.type = 'object';
-      result.additionalProperties = {};
+      result.type = 'map';
+      result.reference = {};
 
-      if (type.ref) {
-        const props = this.resolveType([type.ref]);
+      if (type.reference) {
+        const props = this.resolveType(type.reference);
         for (const [key, value] of Object.entries(props)) {
           result.additionalProperties[key] = value;
         }
       } else {
         throw new Error('Type must contain a reference');
       }
+    } else if (type.type === 'abstract') {
+      if (this.isset(type.discriminator)) {
+        result['discriminator'] = type.discriminator;
+      }
+
+      if (this.isset(type.mapping)) {
+        result['mapping'] = type.mapping;
+      }
+
+      if (type.properties && type.properties.length > 0) {
+        const props: any = {};
+        type.properties.forEach((property) => {
+          props[property.name] = this.generateProperty(property);
+        })
+        result.properties = props;
+      }
     } else {
       result.type = 'object';
 
       if (this.isset(type.parent)) {
-        result['$extends'] = type.parent;
+        result['extends'] = type.parent;
       }
 
       if (type.properties && type.properties.length > 0) {
@@ -223,98 +259,59 @@ export class ExportService {
       result.readonly = property.readonly;
     }
 
-    const refs = property.refs;
+    const reference = property.reference;
+    const generic = property.generic;
     if (property.type === 'object') {
-      const props = this.resolveType(refs);
+      const props = this.resolveType(reference, generic);
       for (const [key, value] of Object.entries(props)) {
         result[key] = value;
       }
     } else if (property.type === 'map') {
-      result.type = 'object';
-      result.additionalProperties = this.resolveType(refs);
+      result.type = 'map';
+      result.reference = this.resolveType(reference, generic);
     } else if (property.type === 'array') {
       result.type = 'array';
-      result.items = this.resolveType(refs);
+      result.reference = this.resolveType(reference);
     } else if (property.type === 'string') {
       result.type = 'string';
       if (this.isset(property.format)) {
         result.format = property.format;
       }
-      if (this.isset(property.pattern)) {
-        result.pattern = property.pattern;
-      }
-      if (this.isset(property.minLength)) {
-        result.minLength = property.minLength;
-      }
-      if (this.isset(property.maxLength)) {
-        result.maxLength = property.maxLength;
-      }
     } else if (property.type === 'integer') {
       result.type = 'integer';
-      if (this.isset(property.minimum)) {
-        result.minimum = property.minimum;
-      }
-      if (this.isset(property.maximum)) {
-        result.maximum = property.maximum;
-      }
     } else if (property.type === 'number') {
       result.type = 'number';
-      if (this.isset(property.minimum)) {
-        result.minimum = property.minimum;
-      }
-      if (this.isset(property.maximum)) {
-        result.maximum = property.maximum;
-      }
     } else if (property.type === 'boolean') {
       result.type = 'boolean';
     } else if (property.type === 'any') {
       result.type = 'any';
-    } else if (property.type === 'union') {
-      result.oneOf = [];
-      refs?.forEach((ref) => {
-        result.oneOf.push(this.resolveType([ref]))
-      });
-    } else if (property.type === 'intersection') {
-      result.allOf = [];
-      refs?.forEach((ref) => {
-        result.allOf.push(this.resolveType([ref]))
-      });
+    } else if (property.type === 'generic') {
+      result.type = 'generic';
+      result.name = property.generic;
     }
 
     return result;
   }
 
-  private resolveType(refs?: Array<string>): object {
-    if (!refs || refs.length === 0) {
+  private resolveType(reference?: string, generic?: string): object {
+    if (!reference) {
       throw new Error('Type must contain a reference');
     }
 
-    if (refs.length === 1) {
-      const ref = refs[0];
-      if (['string', 'integer', 'number', 'boolean', 'any'].includes(ref)) {
-        return {
-          type: ref
-        };
-      } else if (ref === 'T') {
-        return {
-          $generic: 'T'
-        };
-      } else {
-        return {
-          $ref: ref
-        };
-      }
-    } else if (refs.length > 1) {
-      const types: Array<object> = [];
-      refs.forEach((type) => {
-        types.push(this.resolveType([type]));
-      });
-
+    if (['string', 'integer', 'number', 'boolean', 'any'].includes(reference)) {
       return {
-        oneOf: types
+        type: reference
+      };
+    } else if (reference === 'generic') {
+      return {
+        type: 'generic',
+        name: generic
       };
     } else {
-      throw new Error('Type must contain a reference');
+      return {
+        type: 'reference',
+        reference: reference
+      };
     }
   }
 
