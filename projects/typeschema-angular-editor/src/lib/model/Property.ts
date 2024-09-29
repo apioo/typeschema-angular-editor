@@ -12,5 +12,6 @@ export interface Property {
   deprecated?: boolean;
   nullable?: boolean;
   readonly?: boolean;
-  refs?: Array<string>;
+  reference?: string;
+  generic?: string;
 }
