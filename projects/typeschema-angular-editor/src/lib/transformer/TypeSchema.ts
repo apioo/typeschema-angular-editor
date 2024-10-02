@@ -149,7 +149,7 @@ export class TypeSchema implements TransformerInterface {
         type: 'reference',
         name: name,
         description: data['description'] && typeof data['description'] === 'string' ? data['description'] : '',
-        reference: data['$ref']
+        //reference: data['$ref']
       };
 
       if (this.isset(data['$template'])) {
@@ -164,7 +164,7 @@ export class TypeSchema implements TransformerInterface {
 
       const refs = this.parseRef(data['additionalProperties']);
       if (refs.length > 0) {
-        type.reference = refs[0];
+        //type.reference = refs[0];
       }
     } else {
       if (this.isset(data['type']) && typeof data['type'] === 'string' && this.scalarTypes.includes(data['type'])) {

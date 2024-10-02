@@ -4,11 +4,13 @@ export interface Type {
   type: string;
   name: string;
   description: string;
-  abstract?: boolean;
+  deprecated?: boolean;
   parent?: string;
+  base?: boolean;
   properties?: Array<Property>;
-  reference?: string;
-  template?: Record<string, string>;
   discriminator?: string;
   mapping?: Record<string, string>;
+  template?: Record<string, string>;
+  reference?: string;
+  generic?: string;
 }

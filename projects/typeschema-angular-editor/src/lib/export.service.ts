@@ -50,14 +50,18 @@ export class ExportService {
     if (spec.types && Array.isArray(spec.types) && spec.types.length > 0) {
       const definitions: any = {};
       spec.types.forEach((type) => {
-        definitions[type.name] = this.transformType(type);
+        if (type.type === 'map') {
+          definitions[type.name] = this.transformMap(type);
+        } else {
+          definitions[type.name] = this.transformStruct(type);
+        }
       });
 
       schema.definitions = definitions;
     }
 
     if (spec.root !== undefined && spec.types[spec.root]) {
-      schema['$ref'] = spec.types[spec.root].name;
+      schema['root'] = spec.types[spec.root].name;
     }
 
     return schema;
@@ -161,133 +165,133 @@ export class ExportService {
     if (shape === 'map') {
       return {
         type: 'map',
-        additionalProperties: {
+        schema: {
           type: 'reference',
-          reference: type
+          target: type
         }
       };
     } else if (shape === 'array') {
       return {
         type: 'array',
-        items: {
+        schema: {
           type: 'reference',
-          reference: type
+          target: type
         }
       };
     } else {
       return {
         type: 'reference',
-        reference: type
+        target: type
       };
     }
   }
 
-  private transformType(type: Type): object {
-    const result: any = {};
+  private transformStruct(type: Type): object {
+    const result: Record<string, any> = {};
 
     if (this.isset(type.description)) {
-      result.description = type.description;
+      result['description'] = type.description;
     }
 
-    if (type.type === 'reference') {
-      result['type'] = 'reference';
-      result['reference'] = type.reference;
+    if (this.isset(type.deprecated)) {
+      result['deprecated'] = type.deprecated;
+    }
 
-      if (this.isset(type.template)) {
-        result['template'] = type.template;
-      }
-    } else if (type.type === 'map') {
-      result.type = 'map';
-      result.reference = {};
+    result['type'] = 'struct';
 
-      if (type.reference) {
-        const props = this.resolveType(type.reference);
-        for (const [key, value] of Object.entries(props)) {
-          result.additionalProperties[key] = value;
-        }
-      } else {
-        throw new Error('Type must contain a reference');
-      }
-    } else if (type.type === 'abstract') {
-      if (this.isset(type.discriminator)) {
-        result['discriminator'] = type.discriminator;
-      }
+    if (this.isset(type.parent)) {
+      result['parent'] = type.parent;
+    }
 
-      if (this.isset(type.mapping)) {
-        result['mapping'] = type.mapping;
-      }
+    if (this.isset(type.base)) {
+      result['base'] = type.base;
+    }
 
-      if (type.properties && type.properties.length > 0) {
-        const props: any = {};
-        type.properties.forEach((property) => {
-          props[property.name] = this.generateProperty(property);
-        })
-        result.properties = props;
-      }
-    } else {
-      result.type = 'object';
+    if (type.properties && type.properties.length > 0) {
+      const props: any = {};
+      type.properties.forEach((property) => {
+        props[property.name] = this.generateProperty(property);
+      })
+      result['properties'] = props;
+    }
 
-      if (this.isset(type.parent)) {
-        result['extends'] = type.parent;
-      }
+    if (this.isset(type.discriminator)) {
+      result['discriminator'] = type.discriminator;
+    }
 
-      if (type.properties && type.properties.length > 0) {
-        const props: any = {};
-        type.properties.forEach((property) => {
-          props[property.name] = this.generateProperty(property);
-        })
-        result.properties = props;
-      }
+    if (this.isset(type.mapping) && type.mapping && Object.keys(type.mapping).length > 0) {
+      result['mapping'] = type.mapping;
+    }
+
+    if (this.isset(type.template) && type.template && Object.keys(type.template).length > 0) {
+      result['template'] = type.template;
+    }
+
+    return result;
+  }
+
+  private transformMap(type: Type): object {
+    const result: Record<string, any> = {};
+
+    if (this.isset(type.description)) {
+      result['description'] = type.description;
+    }
+
+    if (this.isset(type.deprecated)) {
+      result['deprecated'] = type.deprecated;
+    }
+
+    result['type'] = 'map';
+
+    if (this.isset(type.reference)) {
+      result['schema'] = this.resolveType(type.reference);
     }
 
     return result;
   }
 
   private generateProperty(property: Property): object {
-    const result: any = {};
+    const result: Record<string, any> = {};
 
     if (this.isset(property.description)) {
-      result.description = property.description;
+      result['description'] = property.description;
     }
-    if (this.isset(property.nullable)) {
-      result.nullable = property.nullable;
-    }
+
     if (this.isset(property.deprecated)) {
-      result.deprecated = property.deprecated;
+      result['deprecated'] = property.deprecated;
     }
-    if (this.isset(property.readonly)) {
-      result.readonly = property.readonly;
+
+    if (this.isset(property.nullable)) {
+      result['nullable'] = property.nullable;
     }
 
     const reference = property.reference;
     const generic = property.generic;
-    if (property.type === 'object') {
-      const props = this.resolveType(reference, generic);
-      for (const [key, value] of Object.entries(props)) {
-        result[key] = value;
-      }
+    if (property.type === 'reference') {
+      result['type'] = 'reference';
+      result['target'] = property.reference;
     } else if (property.type === 'map') {
-      result.type = 'map';
-      result.reference = this.resolveType(reference, generic);
+      result['type'] = 'map';
+      result['schema'] = this.resolveType(reference, generic);
     } else if (property.type === 'array') {
-      result.type = 'array';
-      result.reference = this.resolveType(reference);
+      result['type'] = 'array';
+      result['schema'] = this.resolveType(reference);
     } else if (property.type === 'string') {
-      result.type = 'string';
+      result['type'] = 'string';
       if (this.isset(property.format)) {
-        result.format = property.format;
+        result['format'] = property.format;
       }
     } else if (property.type === 'integer') {
-      result.type = 'integer';
+      result['type'] = 'integer';
     } else if (property.type === 'number') {
-      result.type = 'number';
+      result['type'] = 'number';
     } else if (property.type === 'boolean') {
-      result.type = 'boolean';
+      result['type'] = 'boolean';
     } else if (property.type === 'any') {
-      result.type = 'any';
+      result['type'] = 'any';
     } else if (property.type === 'generic') {
-      result.type = 'generic';
-      result.name = property.generic;
+      result['type'] = 'generic';
+      result['name'] = property.generic;
     }
 
     return result;
@@ -310,7 +314,7 @@ export class ExportService {
     } else {
       return {
         type: 'reference',
-        reference: reference
+        target: reference
       };
     }
   }

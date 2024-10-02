@@ -187,8 +187,7 @@
   </div>
   <div class="card-body">
     <div [ngSwitch]="type.type">
-      <ng-container *ngSwitchCase="'reference'">
-        <div class="editor-type-description">Reference: {{ type.reference }}</div>
+      <ng-container *ngSwitchCase="'map'">
         <table class="table table table-striped editor-type-properties">
           <colgroup>
             <col class="w-25">
@@ -198,28 +197,21 @@
           </colgroup>
           <thead>
           <tr>
-            <th>Generic</th>
+            <th>Name</th>
             <th>Type</th>
-            <th></th>
+            <th>Format</th>
             <th></th>
           </tr>
           </thead>
-          <tbody *ngIf="type.template">
-          <tr *ngFor="let kv of type.template | keyvalue">
-            <td>
-              <div class="editor-type-property-name">{{ kv.key }}</div>
-            </td>
-            <td>
-              <span class="badge text-bg-primary">{{ kv.value }}</span><br>
-            </td>
+          <tbody>
+          <tr>
+            <td><div class="editor-type-property-name">*</div></td>
+            <td><span class="badge text-bg-primary">{{ type.reference }}</span></td>
             <td></td>
             <td></td>
           </tr>
           </tbody>
         </table>
-      </ng-container>
-      <ng-container *ngSwitchCase="'map'">
-        <div class="editor-type-description">Reference: {{ type.reference }}</div>
       </ng-container>
       <ng-container *ngSwitchDefault>
         <table class="table table table-striped editor-type-properties">
@@ -416,6 +408,15 @@
   </div>
   <div class="modal-body">
     <div class="mb-3 row">
+      <label for="typeType" class="col-sm-2 col-form-label fw-bold">Type</label>
+      <div class="col-sm-10">
+        <select id="typeType" name="typeType" class="form-select" [(ngModel)]="type.type">
+          <option ngValue="struct">Struct</option>
+          <option ngValue="map">Map</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-3 row">
       <label for="typeName" class="col-sm-2 col-form-label fw-bold">Name</label>
       <div class="col-sm-10">
         <input id="typeName" name="typeName" class="form-control" [(ngModel)]="type.name">
@@ -427,22 +428,19 @@
         <input id="typeDescription" name="typeDescription" class="form-control" [(ngModel)]="type.description">
       </div>
     </div>
-    <div class="mb-3 row">
-      <label for="typeAbstract" class="col-sm-2 col-form-label fw-bold">Abstract</label>
+    <div class="mb-3 row" *ngIf="type.type === 'struct'">
+      <label for="typeBase" class="col-sm-2 col-form-label fw-bold">Abstract</label>
       <div class="col-sm-10">
         <div class="form-check form-switch mt-2">
-          <input class="form-check-input" type="checkbox" role="switch" id="typeAbstract" [(ngModel)]="type.abstract">
+          <input class="form-check-input" type="checkbox" role="switch" id="typeBase" [(ngModel)]="type.base">
         </div>
       </div>
     </div>
-    <div class="mb-3 row">
+    <div class="mb-3 row" *ngIf="type.type === 'struct'">
       <label for="typeParent" class="col-sm-2 col-form-label fw-bold">Parent</label>
       <div class="col-sm-10">
         <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent" (ngModelChange)="updateGenerics()">
           <option [ngValue]="undefined">No parent</option>
-          <optgroup label="Internal">
-            <option ngValue="typeapi:map">Map</option>
-          </optgroup>
           <optgroup label="Self">
             <ng-container *ngFor="let parentType of specification.types">
               <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
@@ -456,32 +454,7 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.parent === 'typeapi:map'">
-      <label for="mapReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
-      <div class="col-sm-10">
-        <select id="mapReference" name="mapReference" class="form-select" [(ngModel)]="type.reference">
-          <optgroup label="scalar">
-            <option ngValue="string">String</option>
-            <option ngValue="integer">Integer</option>
-            <option ngValue="number">Number</option>
-            <option ngValue="boolean">Boolean</option>
-            <option ngValue="any">Any</option>
-            <option ngValue="generic">Generic</option>
-          </optgroup>
-          <optgroup label="self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.abstract && type.parent !== 'typeapi:map'">
+    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.base">
       <label for="typeDiscriminator" class="col-sm-2 col-form-label fw-bold">Discriminator</label>
       <div class="col-sm-10">
         <select id="typeDiscriminator" name="typeDiscriminator" class="form-select" [(ngModel)]="type.discriminator" (ngModelChange)="updateDiscriminator()">
@@ -492,7 +465,7 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.parent !== 'typeapi:map' && type.mapping && (type.mapping | keyvalue)?.length">
+    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.mapping && (type.mapping | keyvalue)?.length">
       <label class="col-sm-2 col-form-label fw-bold">Mapping</label>
       <div class="col-sm-10">
         <div *ngFor="let child of children">
@@ -503,7 +476,7 @@
         </div>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.template && (type.template | keyvalue)?.length">
+    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.template && (type.template | keyvalue)?.length">
       <label class="col-sm-2 col-form-label fw-bold">Template</label>
       <div class="col-sm-10">
         <div *ngFor="let generic of generics">
@@ -517,6 +490,29 @@
             <span class="input-group-text">{{ generic }}</span>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="type.type === 'map'">
+      <label for="typeReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+      <div class="col-sm-10">
+        <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.reference">
+          <optgroup label="scalar">
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
+            <option ngValue="any">Any</option>
+            <option ngValue="generic">Generic</option>
+          </optgroup>
+          <optgroup label="self">
+            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+          </optgroup>
+          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+            <ng-container *ngFor="let parentType of include.types">
+              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+            </ng-container>
+          </optgroup>
+        </select>
       </div>
     </div>
   </div>

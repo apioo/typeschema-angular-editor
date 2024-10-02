@@ -270,7 +270,7 @@ export class EditorComponent implements OnInit {
 
   openType(content: any): void {
     this.type = {
-      type: 'object',
+      type: 'struct',
       name: '',
       description: '',
     };
@@ -395,7 +395,7 @@ export class EditorComponent implements OnInit {
     for (let i = 0; i < this.specification.types.length; i++) {
       const type = this.specification?.types[i];
       if (type?.parent === parent.name) {
-        if (type?.type === 'abstract') {
+        if (type?.base) {
           const mapping = type?.mapping;
           if (mapping) {
             result = result.concat(Object.keys(mapping));
