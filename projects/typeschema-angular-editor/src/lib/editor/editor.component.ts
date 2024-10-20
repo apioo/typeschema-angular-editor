@@ -166,6 +166,8 @@ export class EditorComponent implements OnInit {
 
   setRoot(typeIndex: number) {
     this.specification.root = typeIndex;
+    this.dirty = true;
+    this.doChange();
   }
 
   upOperation(operationIndex: number): void {
