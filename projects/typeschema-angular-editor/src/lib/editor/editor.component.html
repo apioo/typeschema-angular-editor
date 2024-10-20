@@ -465,7 +465,7 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.mapping && (type.mapping | keyvalue)?.length">
+    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.discriminator && type.mapping && (type.mapping | keyvalue)?.length">
       <label class="col-sm-2 col-form-label fw-bold">Mapping</label>
       <div class="col-sm-10">
         <div *ngFor="let child of children">

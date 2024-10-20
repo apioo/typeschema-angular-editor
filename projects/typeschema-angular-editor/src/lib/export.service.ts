@@ -283,7 +283,7 @@ export class ExportService {
       result['schema'] = this.resolveType(reference, generic);
     } else if (property.type === 'array') {
       result['type'] = 'array';
-      result['schema'] = this.resolveType(reference);
+      result['schema'] = this.resolveType(reference, generic);
     } else if (property.type === 'string') {
       result['type'] = 'string';
       if (this.isset(property.format)) {
