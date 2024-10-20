@@ -14,4 +14,5 @@ export interface Property {
   readonly?: boolean;
   reference?: string;
   generic?: string;
+  template?: Record<string, string>;
 }
