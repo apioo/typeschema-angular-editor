@@ -200,7 +200,15 @@ export class ExportService {
     result['type'] = 'struct';
 
     if (this.isset(type.parent)) {
-      result['parent'] = type.parent;
+      const parent: Record<string, any> = {};
+      parent['type'] = 'reference';
+      parent['target'] = type.parent;
+
+      if (this.isset(type.template) && type.template && Object.keys(type.template).length > 0) {
+        parent['template'] = type.template;
+      }
+
+      result['parent'] = parent;
     }
 
     if (this.isset(type.base)) {
@@ -221,10 +229,6 @@ export class ExportService {
 
     if (this.isset(type.mapping) && type.mapping && Object.keys(type.mapping).length > 0) {
       result['mapping'] = type.mapping;
-    }
-
-    if (this.isset(type.template) && type.template && Object.keys(type.template).length > 0) {
-      result['template'] = type.template;
     }
 
     return result;
@@ -270,6 +274,10 @@ export class ExportService {
     if (property.type === 'reference') {
       result['type'] = 'reference';
       result['target'] = property.reference;
+
+      if (this.isset(property.template) && property.template && Object.keys(property.template).length > 0) {
+        result['template'] = property.template;
+      }
     } else if (property.type === 'map') {
       result['type'] = 'map';
       result['schema'] = this.resolveType(reference, generic);
