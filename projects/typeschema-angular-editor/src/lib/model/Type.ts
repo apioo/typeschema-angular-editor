@@ -1,8 +1,8 @@
 import {Property} from "./Property";
 
 export interface Type {
-  type: string;
   name: string;
+  type: string;
   description: string;
   deprecated?: boolean;
   parent?: string;

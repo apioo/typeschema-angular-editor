@@ -276,36 +276,8 @@ export class TypeSchema implements TransformerInterface {
       property.deprecated = data['deprecated'];
     }
 
-    if (this.isset(data['nullable']) && typeof data['nullable'] === 'boolean') {
-      property.nullable = data['nullable'];
-    }
-
-    if (this.isset(data['readonly']) && typeof data['readonly'] === 'boolean') {
-      property.readonly = data['readonly'];
-    }
-
     if (this.isset(format) && typeof format === 'string') {
       property.format = format;
-    }
-
-    if (this.isset(pattern) && typeof pattern === 'string') {
-      property.pattern = pattern;
-    }
-
-    if (this.isset(minLength) && typeof minLength === 'number') {
-      property.minLength = minLength;
-    }
-
-    if (this.isset(maxLength) && typeof maxLength === 'number') {
-      property.maxLength = maxLength;
-    }
-
-    if (this.isset(minimum) && typeof minimum === 'number') {
-      property.minimum = minimum;
-    }
-
-    if (this.isset(maximum) && typeof maximum === 'number') {
-      property.maximum = maximum;
     }
 
     if (refs.length > 0) {

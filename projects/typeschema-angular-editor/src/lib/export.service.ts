@@ -265,10 +265,6 @@ export class ExportService {
       result['deprecated'] = property.deprecated;
     }
 
-    if (this.isset(property.nullable)) {
-      result['nullable'] = property.nullable;
-    }
-
     const reference = property.reference;
     const generic = property.generic;
     if (property.type === 'reference') {
