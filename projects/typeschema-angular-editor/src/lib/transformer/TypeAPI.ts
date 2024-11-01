@@ -4,8 +4,8 @@ import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
 import {TypeHubService} from "../typehub.service";
-import {TypeApi} from "typeapi-model";
-import {Operation as TypeApiOperation} from "typeapi-model";
+import {TypeAPI as TypeAPISpec} from "typeapi-model/dist/TypeAPI";
+import {Operation as TypeAPIOperation} from "typeapi-model/dist/Operation";
 
 export class TypeAPI extends TypeSchema {
 
@@ -14,7 +14,7 @@ export class TypeAPI extends TypeSchema {
   }
 
   override async transform(schema: string): Promise<Specification> {
-    const data = JSON.parse(schema) as TypeApi;
+    const data = JSON.parse(schema) as TypeAPISpec;
     const spec = await this.build(data);
 
     if (this.isset(data.operations) && typeof data.operations === 'object') {
@@ -26,7 +26,7 @@ export class TypeAPI extends TypeSchema {
     return spec;
   }
 
-  private transformOperation(name: string, data: TypeApiOperation): Operation {
+  private transformOperation(name: string, data: TypeAPIOperation): Operation {
     let operation: Operation = {
       name: name,
       description: data.description && typeof data.description === 'string' ? data.description : '',

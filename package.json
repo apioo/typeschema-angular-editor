@@ -26,7 +26,7 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "typehub-javascript-sdk": "^1.1.8",
-    "typeapi-model": "^0.1.0",
+    "typeapi-model": "^1.0.0",
     "yaml": "^2.3.1",
     "zone.js": "~0.13.0"
   },
