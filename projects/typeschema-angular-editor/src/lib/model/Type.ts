@@ -12,5 +12,4 @@ export interface Type {
   mapping?: Record<string, string>;
   template?: Record<string, string>;
   reference?: string;
-  generic?: string;
 }
