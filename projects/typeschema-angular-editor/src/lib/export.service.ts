@@ -86,9 +86,14 @@ export class ExportService {
     if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
       operation.arguments.forEach((argument) => {
         if (argument.in === 'path') {
+          const schema = this.resolveType(argument.type);
+          if (schema === null) {
+            return;
+          }
+
           args[argument.name] = {
             in: 'path',
-            schema: this.resolveType(argument.type),
+            schema: schema,
           };
         }
       });
@@ -111,9 +116,14 @@ export class ExportService {
     if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
       operation.arguments.forEach((argument) => {
         if (argument.in === 'query' || argument.in === 'header') {
+          const schema = this.resolveType(argument.type);
+          if (schema === null) {
+            return;
+          }
+
           args[argument.name] = {
             in: argument.in,
-            schema: this.resolveType(argument.type),
+            schema: schema,
           };
         }
       });
@@ -274,10 +284,10 @@ export class ExportService {
       if (this.isset(property.template) && property.template && Object.keys(property.template).length > 0) {
         result['template'] = property.template;
       }
-    } else if (property.type === 'map') {
+    } else if (property.type === 'map' && reference) {
       result['type'] = 'map';
       result['schema'] = this.resolveType(reference, generic);
-    } else if (property.type === 'array') {
+    } else if (property.type === 'array' && reference) {
       result['type'] = 'array';
       result['schema'] = this.resolveType(reference, generic);
     } else if (property.type === 'string') {
@@ -301,9 +311,9 @@ export class ExportService {
     return result;
   }
 
-  private resolveType(reference?: string, generic?: string): object {
+  private resolveType(reference?: string, generic?: string): object|null {
     if (!reference) {
-      throw new Error('Type must contain a reference');
+      return null;
     }
 
     if (['string', 'integer', 'number', 'boolean', 'any'].includes(reference)) {
