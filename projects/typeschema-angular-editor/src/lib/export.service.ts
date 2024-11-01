@@ -267,7 +267,7 @@ export class ExportService {
 
     const reference = property.reference;
     const generic = property.generic;
-    if (property.type === 'reference') {
+    if (property.type === 'reference' || property.type === 'object') {
       result['type'] = 'reference';
       result['target'] = property.reference;
 
