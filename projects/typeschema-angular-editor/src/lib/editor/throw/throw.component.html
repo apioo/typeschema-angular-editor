@@ -1,6 +1,6 @@
-<div class="row mb-3" *ngFor="let row of result;">
+<div class="row mb-3" *ngFor="let row of result; index as throwIndex">
   <div class="col-3">
-    <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" (ngModelChange)="remove(); changeValue()" class="form-select">
+    <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" [disabled]="true" class="form-select">
       <option *ngFor="let code of errorStatusCodes" [ngValue]="code.key">{{code.value}}</option>
     </select>
   </div>
@@ -27,7 +27,7 @@
       <select *ngIf="row.typeShape === 'mime'" [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
         <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
       </select>
-      <button class="btn btn-outline-secondary" (click)="remove(row.code); changeValue()"><i class="bi bi-x"></i></button>
+      <button class="btn btn-outline-secondary" (click)="removeByIndex(throwIndex); changeValue()"><i class="bi bi-x"></i></button>
     </div>
   </div>
 </div>

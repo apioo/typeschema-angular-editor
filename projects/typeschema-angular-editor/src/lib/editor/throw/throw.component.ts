@@ -70,14 +70,12 @@ export class ThrowComponent implements OnInit {
     this.newType = undefined;
   }
 
-  remove(code?: number) {
-    this.result = this.result.filter((row) => {
-      if (code) {
-        return row.code === code;
-      } else {
-        return row.code !== 0;
-      }
-    });
+  removeByIndex(throwIndex: number) {
+    if (!this.result[throwIndex]) {
+      return;
+    }
+
+    this.result.splice(throwIndex, 1);
   }
 
   getNotUsedCodes() {
