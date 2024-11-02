@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
 import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
 import {Observable, of, OperatorFunction} from 'rxjs';
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
@@ -72,6 +72,9 @@ export class EditorComponent implements OnInit {
   import: string = '';
   importType: SchemaType = 'internal';
   export: string = '';
+
+  selectedType?: number;
+  selectedOperation?: number;
 
   loading = false;
   dirty = false;
@@ -170,24 +173,28 @@ export class EditorComponent implements OnInit {
     this.doChange();
   }
 
-  upOperation(operationIndex: number): void {
+  upOperation(operationIndex: number): number {
     const operation = this.specification.operations.splice(operationIndex, 1)[0];
     if (!operation) {
-      return;
+      return operationIndex;
     }
     this.specification.operations.splice(operationIndex - 1, 0, operation);
     this.dirty = true;
     this.doChange();
+    this.viewportScroller.scrollToAnchor('operation-' + this.specification.operations[operationIndex - 1].name);
+    return operationIndex - 1;
   }
 
-  downOperation(operationIndex: number): void {
+  downOperation(operationIndex: number): number {
     const operation = this.specification.operations.splice(operationIndex, 1)[0];
     if (!operation) {
-      return;
+      return operationIndex;
     }
     this.specification.operations.splice(operationIndex + 1, 0, operation);
     this.dirty = true;
     this.doChange();
+    this.viewportScroller.scrollToAnchor('operation-' + this.specification.operations[operationIndex + 1].name);
+    return operationIndex + 1;
   }
 
   openOperation(content: any): void {
@@ -250,24 +257,36 @@ export class EditorComponent implements OnInit {
     });
   }
 
-  upType(typeIndex: number): void {
+  selectOperation(operationIndex: number): void {
+    if (this.readonly) {
+      return;
+    }
+
+    this.selectedOperation = operationIndex;
+  }
+
+  upType(typeIndex: number): number {
     const type = this.specification.types.splice(typeIndex, 1)[0];
     if (!type) {
-      return;
+      return typeIndex;
     }
     this.specification.types.splice(typeIndex - 1, 0, type);
     this.dirty = true;
     this.doChange();
+    this.viewportScroller.scrollToAnchor('type-' + this.specification.types[typeIndex].name);
+    return typeIndex - 1;
   }
 
-  downType(typeIndex: number): void {
+  downType(typeIndex: number): number {
     const type = this.specification.types.splice(typeIndex, 1)[0];
     if (!type) {
-      return;
+      return typeIndex;
     }
     this.specification.types.splice(typeIndex + 1, 0, type);
     this.dirty = true;
     this.doChange();
+    this.viewportScroller.scrollToAnchor('type-' + this.specification.types[typeIndex].name);
+    return typeIndex + 1;
   }
 
   openType(content: any): void {
@@ -320,6 +339,31 @@ export class EditorComponent implements OnInit {
       this.doChange();
     }, (reason) => {
     });
+  }
+
+  selectType(typeIndex: number): void {
+    if (this.readonly) {
+      return;
+    }
+
+    this.selectedType = typeIndex;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (this.readonly) {
+      return;
+    }
+
+    if (event.key === 'w' && this.selectedOperation) {
+      this.selectedOperation = this.upOperation(this.selectedOperation);
+    } else if (event.key === 's' && this.selectedOperation) {
+      this.selectedOperation = this.downOperation(this.selectedOperation);
+    } else if (event.key === 'e' && this.selectedType) {
+      this.selectedType = this.upType(this.selectedType);
+    } else if (event.key === 'd' && this.selectedType) {
+      this.selectedType = this.downType(this.selectedType);
+    }
   }
 
   findGenerics(type?: Type|null): Array<string> {
