@@ -193,13 +193,11 @@
             <col class="w-25">
             <col class="w-25">
             <col class="w-25">
-            <col class="w-25">
           </colgroup>
           <thead>
           <tr>
             <th>Name</th>
             <th>Type</th>
-            <th>Format</th>
             <th></th>
           </tr>
           </thead>
@@ -208,16 +206,46 @@
             <td><div class="editor-type-property-name">*</div></td>
             <td><span class="badge text-bg-primary">{{ type.reference }}</span></td>
             <td></td>
-            <td></td>
           </tr>
           </tbody>
         </table>
       </ng-container>
       <ng-container *ngSwitchDefault>
+        <div *ngIf="type.discriminator">
+          <div>Discriminator: <span class="badge text-bg-primary">{{ type.discriminator }}</span></div>
+          <table class="table table table-striped editor-type-properties" *ngIf="type.mapping">
+            <colgroup>
+              <col class="w-50">
+              <col class="w-25">
+              <col class="w-25">
+            </colgroup>
+            <thead>
+            <tr>
+              <th>Value</th>
+              <th>Type</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let mapping of type.mapping|keyvalue">
+              <td><code>{{ mapping.value }}</code></td>
+              <td>
+                <div class="editor-type-property-name">
+                  <span class="badge text-bg-primary">{{ mapping.key }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="btn-group float-end" role="group" *ngIf="!readonly">
+                  <button type="button" class="btn btn-danger" (click)="deleteTypeMapping(typeIndex, mapping.key)">Remove</button>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
         <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col class="w-25">
-            <col class="w-25">
+            <col class="w-50">
             <col class="w-25">
             <col class="w-25">
           </colgroup>
@@ -225,7 +253,6 @@
           <tr>
             <th>Name</th>
             <th>Type</th>
-            <th>Format</th>
             <th></th>
           </tr>
           </thead>
@@ -239,8 +266,8 @@
               <span class="badge text-bg-primary">{{ property.type }}</span><br>
               <span class="badge text-bg-secondary me-1" *ngIf="property.reference">{{ property.reference }}</span>
               <span class="badge text-bg-secondary me-1" *ngIf="property.generic">{{ property.generic }}</span>
+              <span class="badge text-bg-secondary me-1" *ngIf="property.format">{{ property.format }}</span>
             </td>
-            <td><span class="badge text-bg-secondary">{{ property.format }}</span></td>
             <td>
               <div class="btn-group float-end" role="group" *ngIf="!readonly">
                 <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
@@ -769,5 +796,22 @@
       <li class="list-group-item disabled">Types</li>
       <li *ngFor="let type of specification.types" class="list-group-item"><a (click)="offcanvas.close('type-' + type.name)" role="button" class="link-underline-primary">{{type.name}}</a></li>
     </ul>
+    <div class="mt-4 text-secondary font-monospace" *ngIf="!readonly">
+      <p>Shortcuts:</p>
+      <ul class="list-unstyled">
+        <ng-container *ngIf="operationEnabled">
+          <li><kbd>q</kbd> Edit selected operation</li>
+          <li><kbd>a</kbd> Delete selected operation</li>
+          <li><kbd>y</kbd> New operation</li>
+          <li><kbd>w</kbd> Move up selected operation</li>
+          <li><kbd>s</kbd> Move down selected operation</li>
+        </ng-container>
+        <li><kbd>e</kbd> Edit selected type</li>
+        <li><kbd>d</kbd> Delete selected type</li>
+        <li><kbd>c</kbd> New type</li>
+        <li><kbd>r</kbd> Move up selected type</li>
+        <li><kbd>f</kbd> Move down selected type</li>
+      </ul>
+    </div>
   </div>
 </ng-template>

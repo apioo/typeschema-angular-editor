@@ -1,4 +1,4 @@
-import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
 import {Observable, of, OperatorFunction} from 'rxjs';
 import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
@@ -36,6 +36,9 @@ export class EditorComponent implements OnInit {
 
   @Output() save = new EventEmitter<Specification>();
   @Output() change = new EventEmitter<Specification>();
+
+  @ViewChild('operationModal') operationModalRef!: ElementRef;
+  @ViewChild('typeModal') typeModalRef!: ElementRef;
 
   operation: Operation = {
     name: '',
@@ -75,9 +78,10 @@ export class EditorComponent implements OnInit {
 
   selectedType?: number;
   selectedOperation?: number;
+  openModal: boolean = false;
 
-  loading = false;
-  dirty = false;
+  loading: boolean = false;
+  dirty: boolean = false;
   response?: Message;
 
   baseUrl?: string;
@@ -198,6 +202,7 @@ export class EditorComponent implements OnInit {
   }
 
   openOperation(content: any): void {
+    this.openModal = true;
     this.operation = {
       name: '',
       description: '',
@@ -225,12 +230,15 @@ export class EditorComponent implements OnInit {
 
       this.specification.operations.push(operation);
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
   editOperation(content: any, operationIndex: number): void {
+    this.openModal = true;
     this.operation = Object.assign({}, this.specification.operations[operationIndex]);
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
@@ -252,6 +260,7 @@ export class EditorComponent implements OnInit {
 
       this.specification.operations[operationIndex] = operation;
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
     });
@@ -290,6 +299,7 @@ export class EditorComponent implements OnInit {
   }
 
   openType(content: any): void {
+    this.openModal = true;
     this.type = {
       type: 'struct',
       name: '',
@@ -310,13 +320,17 @@ export class EditorComponent implements OnInit {
 
       this.specification.types.push(type);
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
   editType(content: any, typeIndex: number): void {
+    this.openModal = true;
     this.type = Object.assign({}, this.specification.types[typeIndex]);
+
     this.updateMapping();
     this.updateGenerics();
 
@@ -336,9 +350,28 @@ export class EditorComponent implements OnInit {
 
       this.specification.types[typeIndex] = type;
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
+  }
+
+  deleteTypeMapping(typeIndex: number, mappingKey: string): void {
+    if (!this.specification.types[typeIndex]) {
+      return;
+    }
+
+    const mapping = this.specification.types[typeIndex].mapping;
+    if (!mapping) {
+      return;
+    }
+
+    if (!mapping[mappingKey]) {
+      return;
+    }
+
+    delete mapping[mappingKey];
   }
 
   selectType(typeIndex: number): void {
@@ -351,17 +384,29 @@ export class EditorComponent implements OnInit {
 
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if (this.readonly) {
+    if (this.readonly || this.openModal) {
       return;
     }
 
-    if (event.key === 'w' && this.selectedOperation) {
+    if (event.key === 'q' && this.selectedOperation !== undefined) {
+      this.editOperation(this.operationModalRef, this.selectedOperation);
+    } else if (event.key === 'a' && this.selectedOperation !== undefined) {
+      this.deleteOperation(this.selectedOperation);
+    } else if (event.key === 'y') {
+      this.openOperation(this.operationModalRef);
+    } else if (event.key === 'w' && this.selectedOperation !== undefined) {
       this.selectedOperation = this.upOperation(this.selectedOperation);
-    } else if (event.key === 's' && this.selectedOperation) {
+    } else if (event.key === 's' && this.selectedOperation !== undefined) {
       this.selectedOperation = this.downOperation(this.selectedOperation);
-    } else if (event.key === 'e' && this.selectedType) {
+    } else if (event.key === 'e' && this.selectedType !== undefined) {
+      this.editType(this.typeModalRef, this.selectedType);
+    } else if (event.key === 'd' && this.selectedType !== undefined) {
+      this.deleteType(this.selectedType);
+    } else if (event.key === 'c') {
+      this.openType(this.typeModalRef);
+    } else if (event.key === 'r' && this.selectedType !== undefined) {
       this.selectedType = this.upType(this.selectedType);
-    } else if (event.key === 'd' && this.selectedType) {
+    } else if (event.key === 'f' && this.selectedType !== undefined) {
       this.selectedType = this.downType(this.selectedType);
     }
   }
@@ -615,6 +660,7 @@ export class EditorComponent implements OnInit {
   }
 
   openProperty(content: any, typeIndex: number): void {
+    this.openModal = true;
     this.property = {
       name: '',
       description: '',
@@ -634,8 +680,10 @@ export class EditorComponent implements OnInit {
 
       this.specification.types[typeIndex].properties?.push(property);
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
@@ -645,6 +693,7 @@ export class EditorComponent implements OnInit {
       return;
     }
 
+    this.openModal = true;
     this.property = Object.assign({}, props[propertyIndex]);
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
@@ -660,6 +709,7 @@ export class EditorComponent implements OnInit {
 
       props[propertyIndex] = property;
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
     });
@@ -699,6 +749,7 @@ export class EditorComponent implements OnInit {
   }
 
   openSettings(content: any): void {
+    this.openModal = true;
     this.baseUrl = this.specification.baseUrl || '';
     this.security = this.specification.security || {
       type: 'none'
@@ -715,12 +766,15 @@ export class EditorComponent implements OnInit {
       }
 
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
   openInclude(content: any): void {
+    this.openModal = true;
     this.include = {
       alias: '',
       version: '',
@@ -734,8 +788,10 @@ export class EditorComponent implements OnInit {
       this.specification.imports.push(include);
 
       this.dirty = true;
+      this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
@@ -767,6 +823,7 @@ export class EditorComponent implements OnInit {
   }
 
   openImport(content: any): void {
+    this.openModal = true;
     this.import = '';
 
     this.modalService.open(content).result.then(async (result) => {
@@ -781,26 +838,35 @@ export class EditorComponent implements OnInit {
 
       this.loading = false;
       this.dirty = true;
+      this.openModal = false;
       this.import = '';
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
   openExport(content: any): void {
+    this.openModal = true;
     this.export = JSON.stringify(this.specification, null, 2);
 
     this.modalService.open(content).result.then((result) => {
+      this.openModal = false;
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
   openToc(content: any) {
+    this.openModal = true;
+
     this.offCanvasService.open(content, { ariaLabelledBy: 'offcanvas-basic-title' }).result.then(
       (result) => {
+        this.openModal = false;
         this.viewportScroller.scrollToAnchor(result);
       },
       (reason) => {
+        this.openModal = false;
       },
     );
   }
