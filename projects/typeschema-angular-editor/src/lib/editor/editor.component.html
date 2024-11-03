@@ -92,7 +92,7 @@
             <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
           </td>
           <td>
-            <span class="badge text-bg-primary">{{ argument.type }}</span>
+            <span class="badge text-bg-primary"><typeschema-link [type]="argument.type" [linkable]="isLinkableType(argument.type)"></typeschema-link></span>
             <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
           </td>
           <td>
@@ -107,10 +107,10 @@
           <td>payload</td>
           <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;{{ operation.payload }}&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, {{ operation.payload }}&gt;</ng-container>
+              <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;<typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link>&gt;</ng-container>
+              <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, <typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link>&gt;</ng-container>
               <ng-container *ngIf="operation.payloadShape === 'mime'">{{ operation.payload }}</ng-container>
-              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map' && operation.payloadShape !== 'mime'">{{ operation.payload }}</ng-container>
+              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map' && operation.payloadShape !== 'mime'"><typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link></ng-container>
             </span>
           </td>
           <td><span class="badge text-bg-secondary">body</span></td>
@@ -141,10 +141,10 @@
           <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
           <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.returnShape === 'array'">Array&lt;{{ operation.return }}&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape === 'map'">Map&lt;string, {{ operation.return }}&gt;</ng-container>
+              <ng-container *ngIf="operation.returnShape === 'array'">Array&lt;<typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link>&gt;</ng-container>
+              <ng-container *ngIf="operation.returnShape === 'map'">Map&lt;string, <typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link>&gt;</ng-container>
               <ng-container *ngIf="operation.returnShape === 'mime'">{{ operation.return }}</ng-container>
-              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map' && operation.returnShape !== 'mime'">{{ operation.return }}</ng-container>
+              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map' && operation.returnShape !== 'mime'"><typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link></ng-container>
             </span>
           </td>
           <td></td>
@@ -153,10 +153,10 @@
           <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
           <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;{{ throw_.type }}&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, {{ throw_.type }}&gt;</ng-container>
+              <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;<typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link>&gt;</ng-container>
+              <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, <typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link>&gt;</ng-container>
               <ng-container *ngIf="throw_.typeShape === 'mime'">{{ throw_.type }}</ng-container>
-              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map' && throw_.typeShape !== 'mime'">{{ throw_.type }}</ng-container>
+              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map' && throw_.typeShape !== 'mime'"><typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link></ng-container>
             </span>
           </td>
           <td>
@@ -184,7 +184,10 @@
 
 <div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex, 'border-black': selectedType === typeIndex}" id="type-{{ type.name }}" (click)="selectType(typeIndex)">
   <div class="card-header">
-    <div class="editor-type-name font-monospace"><span class="badge text-bg-dark"><span class="codicon codicon-symbol-structure"></span></span> {{ type.name }} <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary">{{ type.parent }}</span></span></div>
+    <div class="editor-type-name font-monospace"><span class="badge text-bg-dark">
+      <span class="codicon codicon-symbol-structure"></span></span> {{ type.name }}
+      <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary"><typeschema-link [type]="type.parent" [linkable]="isLinkableType(type.parent)"></typeschema-link></span></span>
+    </div>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
   </div>
   <div class="card-body">
@@ -206,7 +209,7 @@
           <tbody>
           <tr>
             <td><div class="editor-type-property-name font-monospace">*</div></td>
-            <td><span class="badge text-bg-primary">{{ type.reference }}</span></td>
+            <td><span class="badge text-bg-primary" *ngIf="type.reference"><typeschema-link [type]="type.reference" [linkable]="isLinkableType(type.reference)"></typeschema-link></span></td>
             <td></td>
           </tr>
           </tbody>
@@ -233,7 +236,9 @@
               <td><code>{{ mapping.value }}</code></td>
               <td>
                 <div class="editor-type-property-name">
-                  <span class="badge text-bg-primary">{{ mapping.key }}</span>
+                  <span class="badge text-bg-primary">
+                    <typeschema-link [type]="mapping.key" [linkable]="isLinkableType(mapping.key)"></typeschema-link>
+                  </span>
                 </div>
               </td>
               <td>
@@ -266,7 +271,9 @@
             </td>
             <td>
               <span class="badge text-bg-primary">{{ property.type }}</span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.reference">{{ property.reference }}</span>
+              <span class="badge text-bg-secondary ms-1" *ngIf="property.reference">
+                <typeschema-link [type]="property.reference" [linkable]="isLinkableType(property.reference)"></typeschema-link>
+              </span>
               <span class="badge text-bg-secondary ms-1" *ngIf="property.generic">{{ property.generic }}</span>
               <span class="badge text-bg-secondary ms-1" *ngIf="property.format">{{ property.format }}</span>
             </td>

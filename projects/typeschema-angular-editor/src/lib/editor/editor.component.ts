@@ -451,6 +451,20 @@ export class EditorComponent implements OnInit {
     return null;
   }
 
+  isLinkableType(typeName: string): boolean {
+    if (typeName === 'string' || typeName === 'number' || typeName === 'integer' || typeName === 'boolean' || typeName === 'generic' || typeName === 'any') {
+      return false;
+    }
+
+    for (let i = 0; i < this.specification.types.length; i++) {
+      if (this.specification.types[i].name === typeName) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   findTypeByName(typeName: string): Type|null {
     for (let i = 0; i < this.specification.types.length; i++) {
       if (this.specification.types[i].name === typeName) {

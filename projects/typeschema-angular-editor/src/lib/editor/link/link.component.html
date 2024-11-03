@@ -1,0 +1,7 @@
+
+<ng-container *ngIf="linkable">
+  <a href="#type-{{ type }}" class="text-white text-decoration-none">{{ type }}</a>
+</ng-container>
+<ng-container *ngIf="!linkable">
+  {{ type }}
+</ng-container>
