@@ -53,7 +53,7 @@
         <td><span class="badge bg-primary editor-import-version">{{ include.version }}</span></td>
         <td>
           <div class="btn-group float-end" role="group" *ngIf="!readonly">
-            <a class="btn btn-danger" (click)="deleteInclude(includeIndex)">Remove</a>
+            <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
           </div>
         </td>
       </tr>
@@ -64,19 +64,18 @@
 
 <ng-container *ngIf="operationEnabled">
   <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" [ngClass]="{'border-black': selectedOperation === operationIndex}" id="operation-{{ operation.name }}" (click)="selectOperation(operationIndex)">
-    <div class="card-header editor-type-name">
+    <div class="card-header">
       <div class="float-end text-end">
         <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code><br>
         <span *ngFor="let tag of operation.tags" class="badge text-bg-dark ms-1">{{ tag }}</span>
       </div>
-      {{ operation.name }}<br>
-      <div class="text-secondary editor-type-description">{{ operation.description }}</div>
+      <div class="editor-operation-name font-monospace"><span class="badge text-bg-dark"><span class="codicon codicon-symbol-method"></span></span> {{ operation.name }}</div>
+      <div class="text-secondary editor-operation-description">{{ operation.description }}</div>
     </div>
     <div class="card-body">
       <table class="table table-striped" *ngIf="operation.arguments.length > 0 || operation.payload">
         <colgroup>
-          <col class="w-25">
-          <col class="w-25">
+          <col class="w-50">
           <col class="w-25">
           <col class="w-25">
         </colgroup>
@@ -84,20 +83,23 @@
         <tr>
           <th>Name</th>
           <th>Type</th>
-          <th>In</th>
           <th></th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let argument of operation.arguments; index as argumentIndex">
-          <td>{{ argument.name }}</td>
-          <td><span class="badge text-bg-primary">{{ argument.type }}</span></td>
-          <td><span class="badge text-bg-secondary">{{ argument.in }}</span></td>
+          <td>
+            <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
+          </td>
+          <td>
+            <span class="badge text-bg-primary">{{ argument.type }}</span>
+            <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
+          </td>
           <td>
             <div class="btn-group float-end" role="group" *ngIf="!readonly">
               <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
               <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
-              <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)">Remove</button>
+              <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)"><span class="codicon codicon-close"></span></button>
             </div>
           </td>
         </tr>
@@ -118,8 +120,8 @@
       </table>
       <table class="table table-striped" *ngIf="operation.httpCode || operation.throws.length > 0">
         <colgroup>
-          <col class="w-25">
           <col class="w-50">
+          <col class="w-25">
           <col class="w-25">
         </colgroup>
         <thead>
@@ -161,7 +163,7 @@
             <div class="btn-group float-end" role="group" *ngIf="!readonly">
               <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
               <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
-              <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)">Remove</button>
+              <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)"><span class="codicon codicon-close"></span></button>
             </div>
           </td>
         </tr>
@@ -172,17 +174,17 @@
       <div class="btn-group" role="group">
         <button type="button" class="btn btn-secondary" (click)="upOperation(operationIndex)"><i class="bi bi-arrow-up"></i></button>
         <button type="button" class="btn btn-secondary" (click)="downOperation(operationIndex)"><i class="bi bi-arrow-down"></i></button>
-        <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)">Edit</button>
-        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)">Remove</button>
-        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)">Copy</button>
+        <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)"><span class="codicon codicon-edit"></span></button>
+        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
+        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
       </div>
     </div>
   </div>
 </ng-container>
 
 <div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex, 'border-black': selectedType === typeIndex}" id="type-{{ type.name }}" (click)="selectType(typeIndex)">
-  <div class="card-header editor-type-name">
-    <div class="editor-type-name">{{ type.name }} <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary">{{ type.parent }}</span></span></div>
+  <div class="card-header">
+    <div class="editor-type-name font-monospace"><span class="badge text-bg-dark"><span class="codicon codicon-symbol-structure"></span></span> {{ type.name }} <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary">{{ type.parent }}</span></span></div>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
   </div>
   <div class="card-body">
@@ -190,7 +192,7 @@
       <ng-container *ngSwitchCase="'map'">
         <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col class="w-25">
+            <col class="w-50">
             <col class="w-25">
             <col class="w-25">
           </colgroup>
@@ -203,7 +205,7 @@
           </thead>
           <tbody>
           <tr>
-            <td><div class="editor-type-property-name">*</div></td>
+            <td><div class="editor-type-property-name font-monospace">*</div></td>
             <td><span class="badge text-bg-primary">{{ type.reference }}</span></td>
             <td></td>
           </tr>
@@ -236,7 +238,7 @@
               </td>
               <td>
                 <div class="btn-group float-end" role="group" *ngIf="!readonly">
-                  <button type="button" class="btn btn-danger" (click)="deleteTypeMapping(typeIndex, mapping.key)">Remove</button>
+                  <button type="button" class="btn btn-danger" (click)="deleteTypeMapping(typeIndex, mapping.key)"><span class="codicon codicon-close"></span></button>
                 </div>
               </td>
             </tr>
@@ -259,21 +261,21 @@
           <tbody>
           <tr *ngFor="let property of type.properties; index as propertyIndex">
             <td>
-              <div class="editor-type-property-name">{{ property.name }}</div>
+              <div class="editor-type-property-name font-monospace">{{ property.name }}</div>
               <div class="editor-type-property-description text-secondary">{{ property.description }}</div>
             </td>
             <td>
-              <span class="badge text-bg-primary">{{ property.type }}</span><br>
-              <span class="badge text-bg-secondary me-1" *ngIf="property.reference">{{ property.reference }}</span>
-              <span class="badge text-bg-secondary me-1" *ngIf="property.generic">{{ property.generic }}</span>
-              <span class="badge text-bg-secondary me-1" *ngIf="property.format">{{ property.format }}</span>
+              <span class="badge text-bg-primary">{{ property.type }}</span>
+              <span class="badge text-bg-secondary ms-1" *ngIf="property.reference">{{ property.reference }}</span>
+              <span class="badge text-bg-secondary ms-1" *ngIf="property.generic">{{ property.generic }}</span>
+              <span class="badge text-bg-secondary ms-1" *ngIf="property.format">{{ property.format }}</span>
             </td>
             <td>
               <div class="btn-group float-end" role="group" *ngIf="!readonly">
                 <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
                 <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
-                <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)">Edit</button>
-                <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)">Remove</button>
+                <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)"><span class="codicon codicon-edit"></span></button>
+                <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)"><span class="codicon codicon-close"></span></button>
               </div>
             </td>
           </tr>
@@ -289,9 +291,9 @@
     <div class="btn-group" role="group">
       <button type="button" class="btn btn-secondary" (click)="upType(typeIndex)"><i class="bi bi-arrow-up"></i></button>
       <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
-      <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)">Edit</button>
-      <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)">Remove</button>
-      <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)">Copy</button>
+      <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)"><span class="codicon codicon-edit"></span></button>
+      <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
+      <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>
       <button *ngIf="specification.root !== typeIndex" type="button" class="btn btn-secondary" (click)="setRoot(typeIndex)">Primary</button>
     </div>
   </div>
