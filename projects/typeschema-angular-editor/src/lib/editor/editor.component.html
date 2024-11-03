@@ -63,7 +63,7 @@
 </div>
 
 <ng-container *ngIf="operationEnabled">
-  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" [ngClass]="{'border-2': selectedType === operationIndex}" id="operation-{{ operation.name }}" (click)="selectOperation(operationIndex)">
+  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" [ngClass]="{'border-2': selectedOperation === operationIndex}" id="operation-{{ operation.name }}" (click)="selectOperation(operationIndex)">
     <div class="card-header editor-type-name">
       <div class="float-end text-end">
         <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code><br>
