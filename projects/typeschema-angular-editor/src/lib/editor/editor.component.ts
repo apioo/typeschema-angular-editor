@@ -263,6 +263,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
@@ -712,6 +713,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
       this.doChange();
     }, (reason) => {
+      this.openModal = false;
     });
   }
 
