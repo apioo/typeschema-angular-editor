@@ -66,8 +66,7 @@
   <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" [ngClass]="{'border-black': selectedOperation === operationIndex}" id="operation-{{ operation.name }}" (click)="selectOperation(operationIndex)">
     <div class="card-header">
       <div class="float-end text-end">
-        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code><br>
-        <span *ngFor="let tag of operation.tags" class="badge text-bg-dark ms-1">{{ tag }}</span>
+        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
       </div>
       <div class="editor-operation-name font-monospace"><span class="badge text-bg-dark"><span class="codicon codicon-symbol-method"></span></span> {{ operation.name }}</div>
       <div class="text-secondary editor-operation-description">{{ operation.description }}</div>
@@ -423,12 +422,6 @@
             </select>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="operationTags" class="col-sm-2 col-form-label fw-bold">Tags</label>
-      <div class="col-sm-10">
-        <typeschema-tags [data]="operation.tags" (dataChange)="operation.tags = $event"></typeschema-tags>
       </div>
     </div>
   </div>

@@ -5,16 +5,12 @@ import {CommonModule} from "@angular/common";
 import {FormsModule} from "@angular/forms";
 import {ArgumentComponent} from "./editor/argument/argument.component";
 import {LinkComponent} from "./editor/link/link.component";
-import {TagsComponent} from "./editor/tags/tags.component";
-import {CsvPipe} from "./editor/tags/csv.pipe";
 import {ThrowComponent} from "./editor/throw/throw.component";
 
 @NgModule({
   declarations: [
     ArgumentComponent,
-    CsvPipe,
     LinkComponent,
-    TagsComponent,
     ThrowComponent,
     EditorComponent
   ],
