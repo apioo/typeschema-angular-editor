@@ -1,4 +1,9 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {TypeHubService} from "../../typehub.service";
+import {ImportService} from "../../import.service";
+import {BCLayerService} from "../../bclayer.service";
+import {NgbModal, NgbOffcanvas} from "@ng-bootstrap/ng-bootstrap";
+import {ViewportScroller} from "@angular/common";
 
 @Component({
   selector: 'typeschema-link',
@@ -10,9 +15,13 @@ export class LinkComponent implements OnInit {
   @Input() type!: string;
   @Input() linkable!: boolean;
 
-  constructor() { }
+  constructor(private viewportScroller: ViewportScroller) { }
 
   ngOnInit(): void {
+  }
+
+  scrollTo(type: string): void {
+    this.viewportScroller.scrollToAnchor('type-' + type);
   }
 
 }
