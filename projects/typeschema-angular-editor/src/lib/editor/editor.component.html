@@ -182,7 +182,7 @@
 
 <div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex, 'border-2': selectedType === typeIndex}" id="type-{{ type.name }}" (click)="selectType(typeIndex)">
   <div class="card-header editor-type-name">
-    {{ type.name }}<br>
+    <div class="editor-type-name">{{ type.name }} <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary">{{ type.parent }}</span></span></div>
     <div class="text-secondary editor-type-description">{{ type.description }}</div>
   </div>
   <div class="card-body">
