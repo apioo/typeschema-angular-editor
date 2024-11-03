@@ -272,7 +272,11 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    this.selectedOperation = operationIndex;
+    if (this.selectedOperation === operationIndex) {
+      this.selectedOperation = undefined;
+    } else {
+      this.selectedOperation = operationIndex;
+    }
   }
 
   upType(typeIndex: number): number {
@@ -380,7 +384,11 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    this.selectedType = typeIndex;
+    if (this.selectedType === typeIndex) {
+      this.selectedType = undefined;
+    } else {
+      this.selectedType = typeIndex;
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
