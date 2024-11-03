@@ -1,8 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {TypeHubService} from "../../typehub.service";
-import {ImportService} from "../../import.service";
-import {BCLayerService} from "../../bclayer.service";
-import {NgbModal, NgbOffcanvas} from "@ng-bootstrap/ng-bootstrap";
+import {Component, Input, OnInit} from '@angular/core';
 import {ViewportScroller} from "@angular/common";
 
 @Component({
