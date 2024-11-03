@@ -113,7 +113,7 @@ export class ExportService {
       args['payload'] = payload;
     }
 
-    if (this.isset(operation.arguments) && Array.isArray(operation.arguments)) {
+    if (this.isset(operation.arguments) && Array.isArray(operation.arguments) && operation.arguments.length > 0) {
       operation.arguments.forEach((argument) => {
         if (argument.in === 'query' || argument.in === 'header') {
           const schema = this.resolveType(argument.type);
@@ -133,7 +133,7 @@ export class ExportService {
       result.arguments = args;
     }
 
-    if (this.isset(operation.throws) && Array.isArray(operation.throws)) {
+    if (this.isset(operation.throws) && Array.isArray(operation.throws) && operation.throws.length > 0) {
       const throws: Array<any> = [];
       operation.throws.forEach((throw_) => {
         const ret: any = {
