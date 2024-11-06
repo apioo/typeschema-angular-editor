@@ -5,7 +5,7 @@
       <typeschema-editor [specification]="spec" [operationEnabled]="true" (change)="change($event)"></typeschema-editor>
     </div>
     <div class="col-md-6">
-      <pre *ngIf="preview"><code [highlight]="preview"></code></pre>
+      <pre *ngIf="preview"><code [highlight]="preview" [language]="'json'"></code></pre>
     </div>
   </div>
 </div>
