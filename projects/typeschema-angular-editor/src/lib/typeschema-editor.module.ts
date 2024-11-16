@@ -6,11 +6,13 @@ import {FormsModule} from "@angular/forms";
 import {ArgumentComponent} from "./editor/argument/argument.component";
 import {LinkComponent} from "./editor/link/link.component";
 import {ThrowComponent} from "./editor/throw/throw.component";
+import {ImportComponent} from "./editor/import/import.component";
 
 @NgModule({
   declarations: [
     ArgumentComponent,
     LinkComponent,
+    ImportComponent,
     ThrowComponent,
     EditorComponent
   ],

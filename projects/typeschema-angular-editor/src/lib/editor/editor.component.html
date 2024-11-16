@@ -29,7 +29,11 @@
 </div>
 
 <div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
-  <div class="card-header">Import</div>
+  <div class="card-header">
+    <div class="editor-type-name font-monospace">
+      <span class="badge text-bg-dark"><span class="codicon codicon-cloud-download"></span></span> Import
+    </div>
+  </div>
   <div class="card-body">
     <table class="table table table-striped">
       <colgroup>
@@ -47,7 +51,7 @@
       <tbody>
       <tr *ngFor="let include of specification.imports; index as includeIndex">
         <td><span class="editor-import-alias">{{ include.alias }}</span></td>
-        <td><span class="editor-import-url">{{ include.url }}</span></td>
+        <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
         <td>
           <div class="btn-group float-end" role="group" *ngIf="!readonly">
             <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
