@@ -1,4 +1,4 @@
-# TypeschemaAngularEditor
+# TypeSchemaAngularEditor
 
 This package provides an Angular Editor Component which provides a visual editor to design a
 [TypeSchema](https://typeschema.org/) or [TypeAPI](https://typeapi.org) specification.
@@ -57,13 +57,13 @@ The specification object
 
 Default: false
 
-Whether it is possible to create operations
+Whether it is possible to manage operations
 
 ### `importEnabled`
 
 Default: true
 
-Whether it is possible to import specifications from the TypeHub cloud platform
+Whether it is possible to import specifications from remote sources
 
 ### `readonly`
 
