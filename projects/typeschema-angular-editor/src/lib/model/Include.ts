@@ -3,7 +3,6 @@ import {Type} from "./Type";
 
 export interface Include {
   alias: string;
-  version: string;
-  document?: Document;
+  url: string;
   types?: Array<Type>;
 }

@@ -1,21 +1,17 @@
 import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
-import {Observable, of, OperatorFunction} from 'rxjs';
-import {catchError, debounceTime, distinctUntilChanged, map, switchMap, tap} from 'rxjs/operators';
-import {fromPromise} from "rxjs/internal/observable/innerFrom";
-import {Document} from "typehub-javascript-sdk/dist/src/Document";
 import {Message} from "typehub-javascript-sdk/dist/src/Message";
 import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {Include} from "../model/Include";
 import {ImportService, SchemaType} from "../import.service";
-import {TypeHubService} from "../typehub.service";
 import {Operation} from "../model/Operation";
 import {Throw} from "../model/Throw";
 import {ViewportScroller} from "@angular/common";
 import {Security} from "../model/Security";
 import {BCLayerService} from "../bclayer.service";
+import {ResolverService} from "../resolver.service";
 
 @Component({
   selector: 'typeschema-editor',
@@ -109,38 +105,11 @@ export class EditorComponent implements OnInit {
 
   include: Include = {
     alias: '',
-    version: '0.1.0',
-    document: undefined,
+    url: '',
     types: []
   };
-  includeVersions: Array<string> = [];
-  searching = false;
-  searchFailed = false;
-  search: OperatorFunction<string, Array<Document>> = (text$: Observable<string>) =>
-    text$.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-      tap(() => (this.searching = true)),
-      switchMap((term) =>
-        fromPromise(this.typeHubService.findDocuments(term)).pipe(
-          map((response) => {
-            return response.entry ? response.entry : [];
-          }),
-          tap(() => (this.searchFailed = false)),
-          catchError(() => {
-            this.searchFailed = true;
-            return of([]);
-          }),
-        ),
-      ),
-      tap(() => (this.searching = false)),
-    );
 
-  formatter = (document: Document) => {
-    return document.user?.name + ' / ' + document.name;
-  }
-
-  constructor(private typeHubService: TypeHubService, private importService: ImportService, private bcLayerService: BCLayerService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
+  constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   async ngOnInit(): Promise<void> {
     if (!Array.isArray(this.specification.operations)) {
@@ -151,7 +120,7 @@ export class EditorComponent implements OnInit {
       for (let i = 0; i < this.specification.imports.length; i++) {
         const include = this.specification.imports[i];
         if (include && !include.types) {
-          this.specification.imports[i].types = await this.resolveIncludeTypes(include);
+          this.specification.imports[i].types = await this.resolverService.resolveIncludeTypes(include);
         }
       }
     }
@@ -754,24 +723,6 @@ export class EditorComponent implements OnInit {
     this.doChange();
   }
 
-  async loadIncludeVersions(): Promise<void> {
-    const document = this.include.document;
-    if (!document || !document.user?.name || !document.name) {
-      return;
-    }
-
-    this.includeVersions = [];
-
-    const tags = await this.typeHubService.findTags(document.user?.name, document.name);
-    tags.entry?.forEach((tag) => {
-      if (!tag.version) {
-        return;
-      }
-
-      this.includeVersions.push(tag.version);
-    });
-  }
-
   openSettings(content: any): void {
     this.openModal = true;
     this.baseUrl = this.specification.baseUrl || '';
@@ -801,14 +752,13 @@ export class EditorComponent implements OnInit {
     this.openModal = true;
     this.include = {
       alias: '',
-      version: '',
-      document: undefined,
+      url: '',
       types: []
     };
 
     this.modalService.open(content, {size: 'lg'}).result.then(async (result) => {
       const include = this.include;
-      include.types = await this.resolveIncludeTypes(include);
+      include.types = await this.resolverService.resolveIncludeTypes(include);
       this.specification.imports.push(include);
 
       this.dirty = true;
@@ -817,33 +767,6 @@ export class EditorComponent implements OnInit {
     }, (reason) => {
       this.openModal = false;
     });
-  }
-
-  private async resolveIncludeTypes(include: Include|undefined): Promise<Array<Type>|undefined> {
-    if (!include || !include.document || !include.version) {
-      return;
-    }
-
-    if (!include.document.user?.name || !include.document.name) {
-      return;
-    }
-
-    const doc = await this.typeHubService.findDocument(include.document.user?.name, include.document.name);
-    if (!doc) {
-      return;
-    }
-
-    const typeApi = await this.typeHubService.export(include.document.user?.name, include.document.name, include.version);
-    if (!typeApi) {
-      return;
-    }
-
-    const spec = await this.importService.transform('typeapi', typeApi);
-    if (!spec) {
-      return;
-    }
-
-    return spec.types;
   }
 
   openImport(content: any): void {

@@ -29,7 +29,7 @@ export class TypeHubService {
   public async export(user: string, name: string, version: string): Promise<string|undefined> {
     const response = await this.client.document().export(user, name, {
       version: version,
-      format: 'spec-typeapi'
+      format: 'model-typeschema'
     });
 
     if (!response.href) {

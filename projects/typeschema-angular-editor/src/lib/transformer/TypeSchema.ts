@@ -5,6 +5,7 @@ import {Type} from "../model/Type";
 import {Property} from "../model/Property";
 import {pascalCase} from "pascal-case";
 import {TransformerInterface} from "./TransformerInterface";
+import {ResolverService} from "../resolver.service";
 
 export class TypeSchema implements TransformerInterface {
 
@@ -12,7 +13,7 @@ export class TypeSchema implements TransformerInterface {
 
   protected scalarTypes = ['string', 'integer', 'number', 'boolean', 'any'];
 
-  constructor(protected typeHubService: TypeHubService) {
+  constructor(protected typeHubService: TypeHubService, protected resolverService: ResolverService) {
   }
 
   async transform(schema: string): Promise<Specification> {
@@ -102,44 +103,19 @@ export class TypeSchema implements TransformerInterface {
     return spec;
   }
 
-  private async transformImport(alias: string, data: any): Promise<Include|undefined> {
-    if (typeof data !== 'string') {
+  private async transformImport(alias: string, url: any): Promise<Include|undefined> {
+    if (typeof url !== 'string') {
       return;
     }
 
-    if (!data.startsWith('typehub://')) {
-      return;
-    }
-
-    const source = data.substring(10);
-    const parts = source.split(':');
-    const nameAndVersion = parts[1] || '';
-    const nv = nameAndVersion.split('@')
-    const user = parts[0] || '';
-    const name = nv[0] || '';
-    const version = nv[1] || '';
-
-    const doc = await this.typeHubService.findDocument(user, name);
-    if (!doc) {
-      return;
-    }
-
-    const typeSchema = await this.typeHubService.export(user, name, version);
-    if (!typeSchema) {
-      return;
-    }
-
-    const spec = await this.transform(typeSchema);
-    if (!spec) {
-      return;
-    }
-
-    return {
+    let include: Include = {
       alias: alias,
-      version: version,
-      document: doc,
-      types: spec.types ?? [],
+      url: url,
     };
+
+    include.types = await this.resolverService.resolveIncludeTypes(include);
+
+    return include;
   }
 
   protected async transformType(name: string, data: Record<string, any>): Promise<Type> {

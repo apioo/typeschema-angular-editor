@@ -6,11 +6,12 @@ import {Throw} from "../model/Throw";
 import {TypeHubService} from "../typehub.service";
 import {TypeAPI as TypeAPISpec} from "typeapi-model/dist/TypeAPI";
 import {Operation as TypeAPIOperation} from "typeapi-model/dist/Operation";
+import {ResolverService} from "../resolver.service";
 
 export class TypeAPI extends TypeSchema {
 
-  constructor(typeHubService: TypeHubService) {
-    super(typeHubService);
+  constructor(typeHubService: TypeHubService, resolverService: ResolverService) {
+    super(typeHubService, resolverService);
   }
 
   override async transform(schema: string): Promise<Specification> {

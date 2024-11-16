@@ -34,23 +34,20 @@
     <table class="table table table-striped">
       <colgroup>
         <col class="w-25">
-        <col class="w-25">
-        <col class="w-25">
+        <col class="w-50">
         <col class="w-25">
       </colgroup>
       <thead>
       <tr>
         <th>Alias</th>
-        <th>Document</th>
-        <th>Version</th>
+        <th>Url</th>
         <th></th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let include of specification.imports; index as includeIndex">
         <td><span class="editor-import-alias">{{ include.alias }}</span></td>
-        <td><span class="editor-import-document"><a href="https://app.typehub.cloud/d/{{ include.document?.user?.name }}">{{ include.document?.user?.name }}</a> / <a href="https://app.typehub.cloud/d/{{ include.document?.user?.name }}/{{ include.document?.name }}">{{ include.document?.name }}</a></span></td>
-        <td><span class="badge bg-primary editor-import-version">{{ include.version }}</span></td>
+        <td><span class="editor-import-url">{{ include.url }}</span></td>
         <td>
           <div class="btn-group float-end" role="group" *ngIf="!readonly">
             <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
@@ -718,17 +715,13 @@
       </div>
     </div>
     <div class="mb-3 row">
-      <label for="includeDocument" class="col-sm-2 col-form-label fw-bold">Document</label>
+      <label for="includeUrl" class="col-sm-2 col-form-label fw-bold">Url</label>
       <div class="col-sm-10">
-        <input id="includeDocument" name="includeDocument" type="text" class="form-control" [class.is-invalid]="searchFailed" [(ngModel)]="include.document" [ngbTypeahead]="search" [inputFormatter]="formatter" [resultFormatter]="formatter" [editable]="false" (ngModelChange)="loadIncludeVersions()" placeholder="Document search ..." />
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="includeVersion" class="col-sm-2 col-form-label fw-bold">Version</label>
-      <div class="col-sm-10">
-        <select id="includeVersion" name="includeVersion" class="form-select" [(ngModel)]="include.version">
-          <option *ngFor="let version of includeVersions" [ngValue]="version">{{ version }}</option>
-        </select>
+        <input id="includeUrl" name="includeUrl" type="url" class="form-control" [(ngModel)]="include.url" aria-describedby="includeUrlHelpBlock" />
+        <div id="includeUrlHelpBlock" class="form-text">
+          The url to include an external specification, this can be either a url <code>https://typeschema.org/specification.json</code>
+          or a document from the TypeHub platform <code>typehub://apioo:developer&#64;1.0.1</code>.
+        </div>
       </div>
     </div>
   </div>

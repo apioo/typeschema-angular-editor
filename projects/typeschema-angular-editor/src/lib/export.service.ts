@@ -25,13 +25,8 @@ export class ExportService {
     if (spec.imports && Array.isArray(spec.imports) && spec.imports.length > 0) {
       const imports: Record<string, string> = {};
       spec.imports.forEach((include) => {
-        const alias = include.alias;
-        const user = include.document?.user?.name;
-        const document = include.document?.name;
-        const version = include.version;
-
-        if (alias && user && document && version) {
-          imports[alias] = 'typehub://' + user + ':' + document + '@' + version;
+        if (include.alias && include.url) {
+          imports[include.alias] = include.url;
         }
       });
 
