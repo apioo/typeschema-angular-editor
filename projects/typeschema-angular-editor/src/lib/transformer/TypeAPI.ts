@@ -4,8 +4,8 @@ import {Operation} from "../model/Operation";
 import {Argument} from "../model/Argument";
 import {Throw} from "../model/Throw";
 import {TypeHubService} from "../typehub.service";
-import {TypeAPI as TypeAPISpec} from "typeapi-model/dist/TypeAPI";
-import {Operation as TypeAPIOperation} from "typeapi-model/dist/Operation";
+import {TypeAPI as TypeAPISpec} from "typeapi-model";
+import {Operation as TypeAPIOperation} from "typeapi-model";
 import {ResolverService} from "../resolver.service";
 
 export class TypeAPI extends TypeSchema {
@@ -76,10 +76,6 @@ export class TypeAPI extends TypeSchema {
 
     if (data.authorization && typeof data.authorization === 'boolean') {
       operation.authorization = data.authorization;
-    }
-
-    if (data.tags && Array.isArray(data.tags)) {
-      operation.tags = data.tags;
     }
 
     return operation;
