@@ -16,7 +16,7 @@
     "@angular/common": "^18.2.0",
     "@angular/core": "^18.2.0",
     "typehub-javascript-sdk": "^1.1.8",
-    "typeapi-model": "^1.0.0",
+    "typeapi-model": "^0.1.1",
     "pascal-case": "^3.0.0",
     "yaml": "^2.0.0"
   },
