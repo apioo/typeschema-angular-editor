@@ -366,25 +366,25 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    if (event.key === 'q' && this.selectedOperation !== undefined) {
+    if (event.altKey && event.key === 'q' && this.selectedOperation !== undefined) {
       this.editOperation(this.operationModalRef, this.selectedOperation);
-    } else if (event.key === 'a' && this.selectedOperation !== undefined) {
+    } else if (event.altKey && event.key === 'a' && this.selectedOperation !== undefined) {
       this.deleteOperation(this.selectedOperation);
-    } else if (event.key === 'y') {
+    } else if (event.altKey && event.key === 'y') {
       this.openOperation(this.operationModalRef);
-    } else if (event.key === 'w' && this.selectedOperation !== undefined) {
+    } else if (event.altKey && event.key === 'w' && this.selectedOperation !== undefined) {
       this.selectedOperation = this.upOperation(this.selectedOperation);
-    } else if (event.key === 's' && this.selectedOperation !== undefined) {
+    } else if (event.altKey && event.key === 's' && this.selectedOperation !== undefined) {
       this.selectedOperation = this.downOperation(this.selectedOperation);
-    } else if (event.key === 'e' && this.selectedType !== undefined) {
+    } else if (event.altKey && event.key === 'e' && this.selectedType !== undefined) {
       this.editType(this.typeModalRef, this.selectedType);
-    } else if (event.key === 'd' && this.selectedType !== undefined) {
+    } else if (event.altKey && event.key === 'd' && this.selectedType !== undefined) {
       this.deleteType(this.selectedType);
-    } else if (event.key === 'c') {
+    } else if (event.altKey && event.key === 'c') {
       this.openType(this.typeModalRef);
-    } else if (event.key === 'r' && this.selectedType !== undefined) {
+    } else if (event.altKey && event.key === 'r' && this.selectedType !== undefined) {
       this.selectedType = this.upType(this.selectedType);
-    } else if (event.key === 'f' && this.selectedType !== undefined) {
+    } else if (event.altKey && event.key === 'f' && this.selectedType !== undefined) {
       this.selectedType = this.downType(this.selectedType);
     }
   }
