@@ -637,6 +637,27 @@
         <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
       </div>
     </div>
+    <ng-container *ngIf="objectRef && property.type == 'object'">
+      <ng-container [ngTemplateOutlet]="objectRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="mapRef && property.type == 'map'">
+      <ng-container [ngTemplateOutlet]="mapRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="arrayRef && property.type == 'array'">
+      <ng-container [ngTemplateOutlet]="arrayRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="stringRef && property.type == 'string'">
+      <ng-container [ngTemplateOutlet]="stringRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="integerRef && property.type == 'integer'">
+      <ng-container [ngTemplateOutlet]="integerRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="numberRef && property.type == 'number'">
+      <ng-container [ngTemplateOutlet]="numberRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="booleanRef && property.type == 'boolean'">
+      <ng-container [ngTemplateOutlet]="booleanRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
+    </ng-container>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
@@ -801,17 +822,17 @@
       <p>Shortcuts:</p>
       <ul class="list-unstyled">
         <ng-container *ngIf="operationEnabled">
-          <li><kbd>q</kbd> Edit selected operation</li>
-          <li><kbd>a</kbd> Delete selected operation</li>
-          <li><kbd>y</kbd> New operation</li>
-          <li><kbd>w</kbd> Move up selected operation</li>
-          <li><kbd>s</kbd> Move down selected operation</li>
+          <li><kbd>ALT</kbd> + <kbd>q</kbd> Edit selected operation</li>
+          <li><kbd>ALT</kbd> + <kbd>a</kbd> Delete selected operation</li>
+          <li><kbd>ALT</kbd> + <kbd>y</kbd> New operation</li>
+          <li><kbd>ALT</kbd> + <kbd>w</kbd> Move up selected operation</li>
+          <li><kbd>ALT</kbd> + <kbd>s</kbd> Move down selected operation</li>
         </ng-container>
-        <li><kbd>e</kbd> Edit selected type</li>
-        <li><kbd>d</kbd> Delete selected type</li>
-        <li><kbd>c</kbd> New type</li>
-        <li><kbd>r</kbd> Move up selected type</li>
-        <li><kbd>f</kbd> Move down selected type</li>
+        <li><kbd>ALT</kbd> + <kbd>e</kbd> Edit selected type</li>
+        <li><kbd>ALT</kbd> + <kbd>d</kbd> Delete selected type</li>
+        <li><kbd>ALT</kbd> + <kbd>c</kbd> New type</li>
+        <li><kbd>ALT</kbd> + <kbd>r</kbd> Move up selected type</li>
+        <li><kbd>ALT</kbd> + <kbd>f</kbd> Move down selected type</li>
       </ul>
     </div>
   </div>

@@ -1,4 +1,4 @@
-import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild} from '@angular/core';
 import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
 import {Message} from "typehub-javascript-sdk/dist/src/Message";
 import {Specification} from "../model/Specification";
@@ -29,6 +29,14 @@ export class EditorComponent implements OnInit {
   @Input() importEnabled: boolean = true;
   @Input() readonly: boolean = false;
   @Input() id: string = '';
+
+  @Input() objectRef?: TemplateRef<any>;
+  @Input() arrayRef?: TemplateRef<any>;
+  @Input() mapRef?: TemplateRef<any>;
+  @Input() stringRef?: TemplateRef<any>;
+  @Input() integerRef?: TemplateRef<any>;
+  @Input() numberRef?: TemplateRef<any>;
+  @Input() booleanRef?: TemplateRef<any>;
 
   @Output() save = new EventEmitter<Specification>();
   @Output() change = new EventEmitter<Specification>();
@@ -657,6 +665,7 @@ export class EditorComponent implements OnInit {
       name: '',
       description: '',
       type: 'string',
+      metadata: {},
     };
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
@@ -687,6 +696,10 @@ export class EditorComponent implements OnInit {
 
     this.openModal = true;
     this.property = Object.assign({}, props[propertyIndex]);
+
+    if (this.property.metadata === undefined) {
+      this.property.metadata = {};
+    }
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);

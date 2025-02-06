@@ -8,4 +8,5 @@ export interface Property {
   reference?: string;
   generic?: string;
   template?: Record<string, string>;
+  metadata?: Record<string, string>;
 }
