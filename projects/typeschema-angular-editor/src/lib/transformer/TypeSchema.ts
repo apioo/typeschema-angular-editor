@@ -30,8 +30,9 @@ export class TypeSchema implements TransformerInterface {
       types: []
     };
 
-    if (this.isset(data['$import']) && typeof data['$import'] === 'object') {
-      for (const [key, value] of Object.entries(data['$import'])) {
+    const rawImport = this.get(data, ['import', '$import']);
+    if (typeof rawImport === 'object') {
+      for (const [key, value] of Object.entries(rawImport)) {
         const include = await this.transformImport(key, value);
         if (include) {
           spec.imports.push(include);
@@ -39,8 +40,9 @@ export class TypeSchema implements TransformerInterface {
       }
     }
 
-    if (this.isset(data['$defs']) && typeof data['$defs'] === 'object') {
-      for (const [key, value] of Object.entries(data['$defs'])) {
+    const definitions = this.get(data, ['definitions', '$defs']);
+    if (typeof definitions === 'object') {
+      for (const [key, value] of Object.entries(definitions)) {
         try {
           spec.types.push(await this.transformType(key, value as Record<string, any>));
           typeNames.push(key);
@@ -51,16 +53,6 @@ export class TypeSchema implements TransformerInterface {
 
     if (this.isset(data['components']) && this.isset(data['components']['schemas']) && typeof data['components']['schemas'] === 'object') {
       for (const [key, value] of Object.entries(data['components']['schemas'])) {
-        try {
-          spec.types.push(await this.transformType(key, value as Record<string, any>));
-          typeNames.push(key);
-        } catch (error) {
-        }
-      }
-    }
-
-    if (this.isset(data['definitions']) && typeof data['definitions'] === 'object') {
-      for (const [key, value] of Object.entries(data['definitions'])) {
         try {
           spec.types.push(await this.transformType(key, value as Record<string, any>));
           typeNames.push(key);
@@ -93,8 +85,9 @@ export class TypeSchema implements TransformerInterface {
       spec.root = spec.types.length - 1;
     }
 
-    if (this.isset(data['$ref']) && typeof data['$ref'] === 'string') {
-      const index = typeNames.indexOf(data['$ref']);
+    const root = this.get(data, ['root', '$ref']);
+    if (root === 'string') {
+      const index = typeNames.indexOf(root);
       if (index !== -1) {
         spec.root = index;
       }
@@ -120,41 +113,61 @@ export class TypeSchema implements TransformerInterface {
 
   protected async transformType(name: string, data: Record<string, any>): Promise<Type> {
     let type: Type;
+
     if (this.isset(data['$ref'])) {
+      data['type'] = 'reference';
+      data['target'] = data['$ref'];
+    } else if (this.isset(data['additionalProperties'])) {
+      data['type'] = 'map';
+      data['schema'] = data['additionalProperties'];
+    } else if (this.isset(data['items'])) {
+      data['type'] = 'array';
+      data['schema'] = data['items'];
+    }
+
+    if (this.isset(data['$extends'])) {
+      data['extends'] = {
+        type: 'reference',
+        target: data['$extends'],
+      }
+    }
+
+    if (this.isset(data['$template'])) {
+      data['template'] = data['$template'];
+    }
+
+    const typeName = data['type'];
+    if (typeName === 'reference') {
       type = {
         type: 'reference',
         name: name,
         description: data['description'] && typeof data['description'] === 'string' ? data['description'] : '',
-        //reference: data['$ref']
+        reference: data['target']
       };
 
-      if (this.isset(data['$template'])) {
-        type.template = data['$template'];
+      if (this.isset(data['template'])) {
+        type.template = data['template'];
       }
-    } else if (this.isset(data['additionalProperties'])) {
+    } else if (typeName === 'map' || typeName === 'array') {
       type = {
-        type: 'map',
+        type: typeName,
         name: name,
         description: data['description'] && typeof data['description'] === 'string' ? data['description'] : '',
+        reference: this.parseRef(data['schema'])
       };
-
-      const refs = this.parseRef(data['additionalProperties']);
-      if (refs.length > 0) {
-        //type.reference = refs[0];
-      }
     } else {
-      if (this.isset(data['type']) && typeof data['type'] === 'string' && this.scalarTypes.includes(data['type'])) {
+      if (typeName && this.scalarTypes.includes(typeName)) {
         throw new Error('Can not create scalar object');
       }
 
       type = {
-        type: 'object',
+        type: 'struct',
         name: name,
         description: data['description'] && typeof data['description'] === 'string' ? data['description'] : '',
       };
 
-      if (this.isset(data['$extends']) && typeof data['$extends'] === 'string') {
-        type.parent = data['$extends'];
+      if (this.isset(data['extends']) && this.isset(data['extends'].target) && typeof data['extends'].target === 'string') {
+        type.parent = data['extends'].target;
       }
 
       if (this.isset(data['properties']) && typeof data['properties'] === 'object') {
@@ -172,10 +185,22 @@ export class TypeSchema implements TransformerInterface {
   }
 
   private async transformProperty(name: string, data: Record<string, any>): Promise<Property> {
-    let refs: Array<string> = [];
+    if (this.isset(data['$ref'])) {
+      data['type'] = 'reference';
+      data['target'] = data['$ref'];
+    } else if (this.isset(data['additionalProperties'])) {
+      data['type'] = 'map';
+      data['schema'] = data['additionalProperties'];
+    } else if (this.isset(data['items'])) {
+      data['type'] = 'array';
+      data['schema'] = data['items'];
+    }
+
+    const typeName = data['type'];
+
     let type;
-    let format, pattern, minLength, maxLength, minimum, maximum;
-    let i;
+    let ref: string|undefined;
+    let format;
     if (this.isset(data['properties'])) {
       // in this case we have a nested object which is not supported at TypeAPI we automatically create an anonymous
       // object and use a reference
@@ -184,59 +209,25 @@ export class TypeSchema implements TransformerInterface {
       this.anonymousObjects[anonymousName] = data;
 
       type = 'object';
-      refs = refs.concat([anonymousName]);
-    } else if (this.isset(data['additionalProperties'])) {
-      type = 'map';
-      refs = refs.concat(this.parseRef(data['additionalProperties']));
-    } else if (this.isset(data['items'])) {
-      type = 'array';
-      refs = refs.concat(this.parseRef(data['items']));
-    } else if (this.isset(data['oneOf']) && Array.isArray(data['oneOf'])) {
-      type = 'union';
-      for (i = 0; i < data['oneOf'].length; i++) {
-        refs = refs.concat(this.parseRef(data['oneOf'][i]));
-      }
-    } else if (this.isset(data['allOf']) && Array.isArray(data['allOf'])) {
-      type = 'intersection';
-      for (i = 0; i < data['allOf'].length; i++) {
-        refs = refs.concat(this.parseRef(data['allOf'][i]));
-      }
-    } else if (this.isset(data['$ref'])) {
+      ref = anonymousName;
+    } else if (typeName === 'map' || typeName === 'array') {
+      type = typeName;
+      ref = this.parseRef(data['additionalProperties']);
+    } else if (typeName === 'reference') {
       type = 'object';
-      refs = refs.concat(this.parseRef(data));
-    } else if (data['type'] === 'string') {
+      ref = data['target'];
+    } else if (typeName === 'string') {
       type = 'string';
       if (this.isset(data['format'])) {
         format = data['format'];
       }
-      if (this.isset(data['pattern'])) {
-        pattern = data['pattern'];
-      }
-      if (this.isset(data['minLength'])) {
-        minLength = data['minLength'];
-      }
-      if (this.isset(data['maxLength'])) {
-        maxLength = data['maxLength'];
-      }
-    } else if (data['type'] === 'integer') {
+    } else if (typeName === 'integer') {
       type = 'integer';
-      if (this.isset(data['minimum'])) {
-        minimum = data['minimum'];
-      }
-      if (this.isset(data['maximum'])) {
-        maximum = data['maximum'];
-      }
-    } else if (data['type'] === 'number') {
+    } else if (typeName === 'number') {
       type = 'number';
-      if (this.isset(data['minimum'])) {
-        minimum = data['minimum'];
-      }
-      if (this.isset(data['maximum'])) {
-        maximum = data['maximum'];
-      }
-    } else if (data['type'] === 'boolean') {
+    } else if (typeName === 'boolean') {
       type = 'boolean';
-    } else if (data['type'] === 'any') {
+    } else if (typeName === 'any') {
       type = 'any';
     } else {
       throw new Error('Could not resolve type: ' + JSON.stringify(data));
@@ -256,26 +247,22 @@ export class TypeSchema implements TransformerInterface {
       property.format = format;
     }
 
-    if (refs.length > 0) {
-      property.reference = refs[0];
+    if (ref) {
+      property.reference = ref;
     }
 
     return property;
   }
 
-  protected parseRef(data: any): Array<string> {
-    if (this.isset(data.$ref) && typeof data.$ref === 'string') {
-      return [this.normalizeRef(data.$ref)];
+  protected parseRef(data: any): string {
+    if (this.isset(data.target) && typeof data.target === 'string') {
+      return data.target;
+    } else if (this.isset(data.$ref) && typeof data.$ref === 'string') {
+      return this.normalizeRef(data.$ref);
     } else if (this.isset(data.$generic)) {
-      return ['T'];
-    } else if (this.isset(data.oneOf) && Array.isArray(data.oneOf)) {
-      let result = new Array<string>();
-      for (let i = 0; i < data.oneOf.length; i++) {
-        result = result.concat(this.parseRef(data.oneOf[i]));
-      }
-      return result;
+      return 'T';
     } else if (this.scalarTypes.includes(data.type)) {
-      return [data.type];
+      return data.type;
     } else if (data.type === 'array') {
       // at the moment we can not handle array inside maps but we simply return the array type
       return this.parseRef(data.items);
@@ -286,6 +273,16 @@ export class TypeSchema implements TransformerInterface {
 
   protected isset(value: any): boolean {
     return typeof value !== 'undefined' && value !== null;
+  }
+
+  protected get(object: any, keys: Array<string>): any {
+    for (const key of keys) {
+      if (this.isset(object[key])) {
+        return object[key];
+      }
+    }
+
+    return undefined;
   }
 
   protected normalizeRef(ref: string): string {

@@ -45,7 +45,7 @@ export class TypeAPI extends TypeSchema {
     if (data.arguments) {
       for (const [key, value] of Object.entries(data.arguments)) {
         if (value.in === 'body') {
-          operation.payload = this.parseRef(value.schema)[0];
+          operation.payload = this.parseRef(value.schema);
           operation.payloadShape = this.parseShape(value.schema);
         } else {
           operation.arguments.push(this.transformArgument(key, value));
@@ -60,7 +60,7 @@ export class TypeAPI extends TypeSchema {
     }
 
     if (data.return && data.return.schema) {
-      operation.return = this.parseRef(data.return.schema)[0];
+      operation.return = this.parseRef(data.return.schema);
       operation.returnShape = this.parseShape(data.return.schema);
     }
 
@@ -85,21 +85,22 @@ export class TypeAPI extends TypeSchema {
     return {
       name: name,
       in: data.in && typeof data.in === 'string' ? data.in : 'query',
-      type: this.parseRef(data.schema)[0],
+      type: this.parseRef(data.schema),
     };
   }
 
   private transformThrow(name: string, data: any): Throw {
     return {
       code: data.code && typeof data.code === 'number' ? data.code : 500,
-      type: this.parseRef(data.schema)[0],
+      type: this.parseRef(data.schema),
     };
   }
 
   private parseShape(data: any): string|undefined {
-    if (this.isset(data.type) && data.type === 'object' && this.isset(data.additionalProperties)) {
+    const typeName = data.type;
+    if (this.isset(data.type) && (typeName === 'map' || (data.type === 'object' && this.isset(data.additionalProperties)))) {
       return 'map';
-    } else if (this.isset(data.type) && data.type === 'array' && this.isset(data.items)) {
+    } else if (this.isset(data.type) && (typeName === 'array' || (data.type === 'array' && this.isset(data.items)))) {
       return 'array';
     } else {
       return;
