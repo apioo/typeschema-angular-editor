@@ -213,7 +213,7 @@ export class EditorComponent implements OnInit {
       if (!operation.name.match(/^[A-Za-z0-9_.]{1,32}$/)) {
         this.response = {
           success: false,
-          message: 'Type name must match the regular expression [A-Za-z0-9_.]{1,32}'
+          message: 'Operation name must match the regular expression [A-Za-z0-9_.]{1,32}'
         };
         return;
       }
