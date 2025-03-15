@@ -24,7 +24,7 @@
     "bootstrap-icons": "^1.10.5",
     "ngx-highlightjs": "^12.0.0",
     "typeapi-model": "^0.1.1",
-    "typehub-javascript-sdk": "^1.1.8",
+    "typehub-javascript-sdk": "^1.2.0",
     "pascal-case": "^3.1.2",
     "yaml": "^2.3.1",
     "rxjs": "~7.8.0",

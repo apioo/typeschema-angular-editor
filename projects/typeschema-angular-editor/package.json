@@ -1,6 +1,6 @@
 {
   "name": "ngx-typeschema-editor",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Editor to model and design a TypeAPI/TypeSchema specification",
   "keywords": [
     "TypeAPI",
@@ -15,7 +15,7 @@
   "peerDependencies": {
     "@angular/common": "^18.2.0",
     "@angular/core": "^18.2.0",
-    "typehub-javascript-sdk": "^1.1.8",
+    "typehub-javascript-sdk": "^1.2.0",
     "typeapi-model": "^0.1.1",
     "pascal-case": "^3.0.0",
     "yaml": "^2.0.0"
