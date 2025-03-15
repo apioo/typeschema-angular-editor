@@ -219,6 +219,7 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.operations[operationIndex] = operation;
+      this.orderOperations();
       this.dirty = true;
       this.openModal = false;
       this.doChange();
@@ -297,6 +298,7 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.types[typeIndex] = type;
+      this.orderTypes();
       this.dirty = true;
       this.openModal = false;
       this.doChange();
@@ -491,6 +493,7 @@ export class EditorComponent implements OnInit {
 
   deleteOperation(operationIndex: number): void {
     this.specification.operations.splice(operationIndex, 1);
+    this.orderOperations();
     this.dirty = true;
     this.doChange();
   }
@@ -574,6 +577,7 @@ export class EditorComponent implements OnInit {
 
   deleteType(typeIndex: number): void {
     this.specification.types.splice(typeIndex, 1);
+    this.orderTypes();
     this.dirty = true;
     this.doChange();
   }
