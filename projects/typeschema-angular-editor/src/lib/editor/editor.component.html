@@ -174,8 +174,6 @@
     </div>
     <div class="card-footer" *ngIf="!readonly">
       <div class="btn-group" role="group">
-        <button type="button" class="btn btn-secondary" (click)="upOperation(operationIndex)"><i class="bi bi-arrow-up"></i></button>
-        <button type="button" class="btn btn-secondary" (click)="downOperation(operationIndex)"><i class="bi bi-arrow-down"></i></button>
         <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)"><span class="codicon codicon-edit"></span></button>
         <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
         <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
@@ -298,8 +296,6 @@
   </div>
   <div class="card-footer" *ngIf="!readonly">
     <div class="btn-group" role="group">
-      <button type="button" class="btn btn-secondary" (click)="upType(typeIndex)"><i class="bi bi-arrow-up"></i></button>
-      <button type="button" class="btn btn-secondary" (click)="downType(typeIndex)"><i class="bi bi-arrow-down"></i></button>
       <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)"><span class="codicon codicon-edit"></span></button>
       <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
       <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>

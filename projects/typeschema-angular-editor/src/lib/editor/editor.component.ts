@@ -154,28 +154,10 @@ export class EditorComponent implements OnInit {
     this.doChange();
   }
 
-  upOperation(operationIndex: number): number {
-    const operation = this.specification.operations.splice(operationIndex, 1)[0];
-    if (!operation) {
-      return operationIndex;
-    }
-    this.specification.operations.splice(operationIndex - 1, 0, operation);
-    this.dirty = true;
-    this.doChange();
-    this.viewportScroller.scrollToAnchor('operation-' + this.specification.operations[operationIndex - 1].name);
-    return operationIndex - 1;
-  }
-
-  downOperation(operationIndex: number): number {
-    const operation = this.specification.operations.splice(operationIndex, 1)[0];
-    if (!operation) {
-      return operationIndex;
-    }
-    this.specification.operations.splice(operationIndex + 1, 0, operation);
-    this.dirty = true;
-    this.doChange();
-    this.viewportScroller.scrollToAnchor('operation-' + this.specification.operations[operationIndex + 1].name);
-    return operationIndex + 1;
+  orderOperations() {
+    this.specification.operations.sort((left: Operation, right: Operation) => {
+      return left.name.localeCompare(right.name);
+    });
   }
 
   openOperation(content: any): void {
@@ -206,6 +188,7 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.operations.push(operation);
+      this.orderOperations();
       this.dirty = true;
       this.openModal = false;
       this.doChange();
@@ -256,28 +239,10 @@ export class EditorComponent implements OnInit {
     }
   }
 
-  upType(typeIndex: number): number {
-    const type = this.specification.types.splice(typeIndex, 1)[0];
-    if (!type) {
-      return typeIndex;
-    }
-    this.specification.types.splice(typeIndex - 1, 0, type);
-    this.dirty = true;
-    this.doChange();
-    this.viewportScroller.scrollToAnchor('type-' + this.specification.types[typeIndex].name);
-    return typeIndex - 1;
-  }
-
-  downType(typeIndex: number): number {
-    const type = this.specification.types.splice(typeIndex, 1)[0];
-    if (!type) {
-      return typeIndex;
-    }
-    this.specification.types.splice(typeIndex + 1, 0, type);
-    this.dirty = true;
-    this.doChange();
-    this.viewportScroller.scrollToAnchor('type-' + this.specification.types[typeIndex].name);
-    return typeIndex + 1;
+  orderTypes() {
+    this.specification.types.sort((left: Type, right: Type) => {
+      return left.name.localeCompare(right.name);
+    });
   }
 
   openType(content: any): void {
@@ -301,6 +266,7 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.types.push(type);
+      this.orderTypes();
       this.dirty = true;
       this.openModal = false;
       this.doChange();
@@ -380,20 +346,12 @@ export class EditorComponent implements OnInit {
       this.deleteOperation(this.selectedOperation);
     } else if (event.altKey && event.key === 'y') {
       this.openOperation(this.operationModalRef);
-    } else if (event.altKey && event.key === 'w' && this.selectedOperation !== undefined) {
-      this.selectedOperation = this.upOperation(this.selectedOperation);
-    } else if (event.altKey && event.key === 's' && this.selectedOperation !== undefined) {
-      this.selectedOperation = this.downOperation(this.selectedOperation);
     } else if (event.altKey && event.key === 'e' && this.selectedType !== undefined) {
       this.editType(this.typeModalRef, this.selectedType);
     } else if (event.altKey && event.key === 'd' && this.selectedType !== undefined) {
       this.deleteType(this.selectedType);
     } else if (event.altKey && event.key === 'c') {
       this.openType(this.typeModalRef);
-    } else if (event.altKey && event.key === 'r' && this.selectedType !== undefined) {
-      this.selectedType = this.upType(this.selectedType);
-    } else if (event.altKey && event.key === 'f' && this.selectedType !== undefined) {
-      this.selectedType = this.downType(this.selectedType);
     }
   }
 
