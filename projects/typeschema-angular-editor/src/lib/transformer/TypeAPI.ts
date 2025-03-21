@@ -45,8 +45,13 @@ export class TypeAPI extends TypeSchema {
     if (data.arguments) {
       for (const [key, value] of Object.entries(data.arguments)) {
         if (value.in === 'body') {
-          operation.payload = this.parseRef(value.schema);
-          operation.payloadShape = this.parseShape(value.schema);
+          if (value.contentType) {
+            operation.payload = value.contentType;
+            operation.payloadShape = 'mime';
+          } else if (value.schema) {
+            operation.payload = this.parseRef(value.schema);
+            operation.payloadShape = this.parseShape(value.schema);
+          }
         } else {
           operation.arguments.push(this.transformArgument(key, value));
         }
@@ -59,9 +64,14 @@ export class TypeAPI extends TypeSchema {
       }
     }
 
-    if (data.return && data.return.schema) {
-      operation.return = this.parseRef(data.return.schema);
-      operation.returnShape = this.parseShape(data.return.schema);
+    if (data.return) {
+      if (data.return.contentType) {
+        operation.return = data.return.contentType;
+        operation.returnShape = 'mime';
+      } else if (data.return.schema) {
+        operation.return = this.parseRef(data.return.schema);
+        operation.returnShape = this.parseShape(data.return.schema);
+      }
     }
 
     if (data.stability && typeof data.stability === 'number') {
