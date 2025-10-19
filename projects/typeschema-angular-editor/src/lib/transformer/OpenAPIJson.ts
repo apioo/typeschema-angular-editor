@@ -184,8 +184,8 @@ export class OpenAPIJson extends JsonSchemaJson {
     if (typeof ref === 'string') {
       return this.normalizeRef(ref);
     } else {
-      const hash = await this.hash(JSON.stringify(schema));
-      const anonymousName = 'Object' + hash.substring(0, 8);
+      const hash = await this.namingService.hash(JSON.stringify(schema));
+      const anonymousName = 'Object_' + hash;
       this.inlineObjects[anonymousName] = schema;
 
       return anonymousName;

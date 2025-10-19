@@ -1,16 +1,15 @@
 import {Specification} from "../model/Specification";
 import {TypeHubService} from "../typehub.service";
-import {Include} from "../model/Include";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
-import {pascalCase} from "pascal-case";
 import {TransformerInterface} from "./TransformerInterface";
+import {NamingService} from "../naming.service";
 
 export class RawJson implements TransformerInterface {
 
   nestedObjects: Array<Type> = [];
 
-  constructor(protected typeHubService: TypeHubService) {
+  constructor(protected typeHubService: TypeHubService, protected namingService: NamingService) {
   }
 
   async transform(schema: string): Promise<Specification> {
@@ -146,18 +145,8 @@ export class RawJson implements TransformerInterface {
   }
 
   private async buildName(data: any): Promise<string> {
-    const hash = await this.hash(JSON.stringify(data));
-    return 'Type' + hash.substring(0, 8);
-  }
-
-  protected hash(data: string): string {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      let char = data.charCodeAt(i);
-      hash += char;
-    }
-
-    return '' + hash;
+    const hash = await this.namingService.hash(JSON.stringify(data));
+    return 'Type_' + hash;
   }
 
 }

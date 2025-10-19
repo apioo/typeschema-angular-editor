@@ -6,6 +6,7 @@ import {Property} from "../model/Property";
 import {pascalCase} from "pascal-case";
 import {TransformerInterface} from "./TransformerInterface";
 import {ResolverService} from "../resolver.service";
+import {NamingService} from "../naming.service";
 
 export class TypeSchema implements TransformerInterface {
 
@@ -13,7 +14,7 @@ export class TypeSchema implements TransformerInterface {
 
   protected scalarTypes = ['string', 'integer', 'number', 'boolean', 'any'];
 
-  constructor(protected typeHubService: TypeHubService, protected resolverService: ResolverService) {
+  constructor(protected typeHubService: TypeHubService, protected resolverService: ResolverService, protected namingService: NamingService) {
   }
 
   async transform(schema: string): Promise<Specification> {
@@ -201,11 +202,12 @@ export class TypeSchema implements TransformerInterface {
     let type;
     let ref: string|undefined;
     let format;
+    let defaultValue;
     if (this.isset(data['properties'])) {
       // in this case we have a nested object which is not supported at TypeAPI we automatically create an anonymous
       // object and use a reference
-      const hash = await this.hash(JSON.stringify(data));
-      const anonymousName = 'Object' + hash.substring(0, 8);
+      const hash = await this.namingService.hash(JSON.stringify(data));
+      const anonymousName = 'Object_' + hash;
       this.anonymousObjects[anonymousName] = data;
 
       type = 'object';
@@ -220,6 +222,9 @@ export class TypeSchema implements TransformerInterface {
       type = 'string';
       if (this.isset(data['format'])) {
         format = data['format'];
+      }
+      if (this.isset(data['default'])) {
+        defaultValue = data['default'];
       }
     } else if (typeName === 'integer') {
       type = 'integer';
@@ -243,8 +248,16 @@ export class TypeSchema implements TransformerInterface {
       property.deprecated = data['deprecated'];
     }
 
+    if (this.isset(data['nullable']) && typeof data['nullable'] === 'boolean') {
+      property.nullable = data['nullable'];
+    }
+
     if (this.isset(format) && typeof format === 'string') {
       property.format = format;
+    }
+
+    if (this.isset(defaultValue) && typeof defaultValue === 'string') {
+      property.default = defaultValue;
     }
 
     if (ref) {
@@ -289,13 +302,6 @@ export class TypeSchema implements TransformerInterface {
     return ref
       .replace('#/definitions/', '')
       .replace('#/$defs/', '');
-  }
-
-  protected async hash(data: string): Promise<string> {
-    const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(data));
-    return Array.from(new Uint8Array(buffer))
-      .map((bytes) => bytes.toString(16).padStart(2, '0'))
-      .join('');
   }
 
 }
