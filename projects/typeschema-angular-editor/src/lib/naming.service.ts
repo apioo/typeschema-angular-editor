@@ -16,7 +16,8 @@ export class NamingService {
       .join('');
 
     for (let i = 0; i < 10; i++) {
-      hash.replaceAll('' + i, String.fromCharCode(103 + i));
+      const char = '' + i;
+      hash = hash.replaceAll(char, String.fromCharCode(103 + i));
     }
 
     return hash.substring(0, 12);
