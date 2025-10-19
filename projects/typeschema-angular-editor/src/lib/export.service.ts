@@ -270,6 +270,10 @@ export class ExportService {
       result['deprecated'] = property.deprecated;
     }
 
+    if (this.isset(property.nullable)) {
+      result['nullable'] = property.nullable;
+    }
+
     const reference = property.reference;
     const generic = property.generic;
     if (property.type === 'reference' || property.type === 'object') {
@@ -289,6 +293,9 @@ export class ExportService {
       result['type'] = 'string';
       if (this.isset(property.format)) {
         result['format'] = property.format;
+      }
+      if (this.isset(property.default)) {
+        result['default'] = property.default;
       }
     } else if (property.type === 'integer') {
       result['type'] = 'integer';

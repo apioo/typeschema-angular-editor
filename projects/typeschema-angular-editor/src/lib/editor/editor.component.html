@@ -568,6 +568,22 @@
       </div>
     </div>
     <div class="mb-3 row">
+      <label for="propertyDeprecated" class="col-sm-2 col-form-label fw-bold">Deprecated</label>
+      <div class="col-sm-10">
+        <div class="form-check form-switch mt-2">
+          <input class="form-check-input" type="checkbox" role="switch" id="propertyDeprecated" [(ngModel)]="property.deprecated">
+        </div>
+      </div>
+    </div>
+    <div class="mb-3 row">
+      <label for="propertyNullable" class="col-sm-2 col-form-label fw-bold">Nullable</label>
+      <div class="col-sm-10">
+        <div class="form-check form-switch mt-2">
+          <input class="form-check-input" type="checkbox" role="switch" id="propertyNullable" [(ngModel)]="property.nullable">
+        </div>
+      </div>
+    </div>
+    <div class="mb-3 row">
       <label for="propertyType" class="col-sm-2 col-form-label fw-bold">Type</label>
       <div class="col-sm-10">
         <select id="propertyType" name="propertyType" class="form-select" [(ngModel)]="property.type">
@@ -596,6 +612,12 @@
           <option *ngIf="property.type == 'string'" ngValue="date-time">Date-Time</option>
           <option *ngIf="property.type == 'string'" ngValue="time">Time</option>
         </select>
+      </div>
+    </div>
+    <div class="mb-3 row" *ngIf="property.type == 'string'">
+      <label for="propertyDefault" class="col-sm-2 col-form-label fw-bold">Default</label>
+      <div class="col-sm-10">
+        <input id="propertyDefault" name="propertyDefault" class="form-control" [(ngModel)]="property.default">
       </div>
     </div>
     <div class="mb-3 row" *ngIf="property.type == 'generic'">

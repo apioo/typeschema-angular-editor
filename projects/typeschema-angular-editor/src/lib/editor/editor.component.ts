@@ -117,6 +117,10 @@ export class EditorComponent implements OnInit {
     types: []
   };
 
+  operationValidator = /^[A-Za-z0-9_.]{1,128}$/;
+  typeValidator = /^[A-Za-z0-9_]{1,128}$/;
+  propertyValidator = /^[A-Za-z0-9_.$]{1,128}$/;
+
   constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
 
   async ngOnInit(): Promise<void> {
@@ -179,10 +183,10 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const operation = Object.assign({}, this.operation);
 
-      if (!operation.name.match(/^[A-Za-z0-9_.]{1,32}$/)) {
+      if (!operation.name.match(this.operationValidator)) {
         this.response = {
           success: false,
-          message: 'Operation name must match the regular expression [A-Za-z0-9_.]{1,32}'
+          message: 'Operation name must match the regular expression: ' + this.operationValidator.source
         };
         return;
       }
@@ -210,10 +214,10 @@ export class EditorComponent implements OnInit {
         operation.throws = [];
       }
 
-      if (!operation.name.match(/^[A-Za-z0-9_.]{1,32}$/)) {
+      if (!operation.name.match(this.operationValidator)) {
         this.response = {
           success: false,
-          message: 'Operation name must match the regular expression [A-Za-z0-9_.]{1,32}'
+          message: 'Operation name must match the regular expression: ' + this.operationValidator.source
         };
         return;
       }
@@ -258,10 +262,10 @@ export class EditorComponent implements OnInit {
       const type = Object.assign({}, this.type);
       type.properties = [];
 
-      if (!type.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
+      if (!type.name.match(this.typeValidator)) {
         this.response = {
           success: false,
-          message: 'Type name must match the regular expression [A-Za-z0-9_]{1,32}'
+          message: 'Type name must match the regular expression: ' + this.typeValidator.source
         };
         return;
       }
@@ -289,10 +293,10 @@ export class EditorComponent implements OnInit {
         type.properties = [];
       }
 
-      if (!type.name.match(/^[A-Za-z0-9_]{1,32}$/)) {
+      if (!type.name.match(this.typeValidator)) {
         this.response = {
           success: false,
-          message: 'Type name must match the regular expression [A-Za-z0-9_]{1,32}'
+          message: 'Type name must match the regular expression: ' + this.typeValidator.source
         };
         return;
       }
@@ -626,6 +630,7 @@ export class EditorComponent implements OnInit {
     this.property = {
       name: '',
       description: '',
+      nullable: true,
       type: 'string',
       metadata: {},
     };
@@ -633,10 +638,10 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
-      if (!property.name.match(/^[A-Za-z0-9_.$]{1,32}$/)) {
+      if (!property.name.match(this.propertyValidator)) {
         this.response = {
           success: false,
-          message: 'Property name must match the regular expression [A-Za-z0-9_.$]{1,32}'
+          message: 'Property name must match the regular expression: ' + this.propertyValidator.source
         };
         return;
       }
@@ -659,6 +664,10 @@ export class EditorComponent implements OnInit {
     this.openModal = true;
     this.property = Object.assign({}, props[propertyIndex]);
 
+    if (typeof this.property.nullable !== 'boolean') {
+      this.property.nullable = true;
+    }
+
     if (this.property.metadata === undefined) {
       this.property.metadata = {};
     }
@@ -666,10 +675,10 @@ export class EditorComponent implements OnInit {
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const property = Object.assign({}, this.property);
 
-      if (!property.name.match(/^[A-Za-z0-9_.$]{1,32}$/)) {
+      if (!property.name.match(this.propertyValidator)) {
         this.response = {
           success: false,
-          message: 'Property name must match the regular expression [A-Za-z0-9_.$]{1,32}'
+          message: 'Property name must match the regular expression: ' + this.propertyValidator.source
         };
         return;
       }

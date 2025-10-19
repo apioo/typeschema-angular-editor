@@ -2,9 +2,11 @@
 export interface Property {
   name: string;
   description: string;
+  deprecated?: boolean;
+  nullable?: boolean;
   type?: string;
   format?: string;
-  deprecated?: boolean;
+  default?: string;
   reference?: string;
   generic?: string;
   template?: Record<string, string>;
