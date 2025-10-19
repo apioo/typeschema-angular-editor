@@ -6,6 +6,7 @@ import {TypeHubService} from "./typehub.service";
 import {HttpClient} from "@angular/common/http";
 import {TypeSchema} from "./transformer/TypeSchema";
 import {TransformerInterface} from "./transformer/TransformerInterface";
+import {NamingService} from "./naming.service";
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,8 @@ import {TransformerInterface} from "./transformer/TransformerInterface";
 export class ResolverService {
 
   private transformer: TransformerInterface;
-  constructor(private typeHubService: TypeHubService, private httpClient: HttpClient) {
-    this.transformer = new TypeSchema(typeHubService, this);
+  constructor(private typeHubService: TypeHubService, private httpClient: HttpClient, namingService: NamingService) {
+    this.transformer = new TypeSchema(typeHubService, this, namingService);
   }
 
   public async resolveIncludeTypes(include: Include|undefined): Promise<Array<Type>|undefined> {
