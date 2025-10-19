@@ -79,7 +79,7 @@ export class TypeSchema implements TransformerInterface {
 
       spec.types.push(await this.transformType(key, {
         description: data['description'],
-        type: 'object',
+        type: 'struct',
         properties: data['properties'],
       }));
       typeNames.push(key);
