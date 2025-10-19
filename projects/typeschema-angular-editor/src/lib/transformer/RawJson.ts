@@ -26,7 +26,7 @@ export class RawJson implements TransformerInterface {
     };
 
     const root: Type = {
-      type: 'object',
+      type: 'struct',
       name: await this.buildName(data),
       description: '',
       properties: [],
@@ -118,7 +118,7 @@ export class RawJson implements TransformerInterface {
     } else if (typeof data === 'object') {
       const typeName = await this.buildName(data);
       const type: Type = {
-        type: 'object',
+        type: 'struct',
         name: typeName,
         description: '',
         properties: [],
@@ -136,7 +136,7 @@ export class RawJson implements TransformerInterface {
       return {
         name: name,
         description: '',
-        type: 'object',
+        type: 'struct',
         reference: typeName
       };
     } else {
