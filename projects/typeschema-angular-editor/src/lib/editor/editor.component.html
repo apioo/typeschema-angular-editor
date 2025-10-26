@@ -11,14 +11,12 @@
     <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
     <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
     <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
-    <button type="button" class="btn btn-light" (click)="openToc(tocOffCanvas)">TOC</button>
     <button type="button" class="btn btn-light" (click)="loadFromLocalStorage()">Restore</button>
   </div>
 </ng-container>
 <ng-container *ngIf="readonly">
   <div class="btn-group mb-3" role="group">
     <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
-    <button type="button" class="btn btn-light" (click)="openToc(tocOffCanvas)">TOC</button>
   </div>
 </ng-container>
 
@@ -28,279 +26,124 @@
   </div>
 </div>
 
-<div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
-  <div class="card-header">
-    <div class="editor-import-headline font-monospace">
-      <span class="badge text-bg-dark"><span class="codicon codicon-cloud-download"></span></span> Import
+<div class="row">
+  <div class="col-lg-3">
+    <div class="mb-3 overflow-auto d-none d-lg-block">
+      <ul class="list-group">
+        <input type="text" id="search" name="search" [(ngModel)]="search" (ngModelChange)="doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
+        <ng-container *ngFor="let result of searchFilteredList">
+          <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected && selected.name === result.item.name}">
+            <span><i class="codicon" [ngClass]="{'codicon-symbol-method': isOperation(result.item), 'codicon-symbol-misc': isType(result.item)}"></i> {{result.item.name}}</span>
+            <ng-container *ngIf="result.item.description">
+              <br>
+              <small [title]="result.item.description">{{result.item.description}}</small>
+            </ng-container>
+          </a>
+        </ng-container>
+      </ul>
+    </div>
+    <div class="mb-3 overflow-auto d-lg-none">
+      <input
+        id="typeahead-search"
+        type="text"
+        class="form-control"
+        placeholder="Search operation or type ..."
+        [(ngModel)]="typeaheadSearch"
+        [ngbTypeahead]="typeaheadOperator"
+        [inputFormatter]="typeaheadFormatter"
+        [resultTemplate]="typeaheadTemplate"
+      />
     </div>
   </div>
-  <div class="card-body">
-    <table class="table table table-striped">
-      <colgroup>
-        <col class="w-25">
-        <col class="w-50">
-        <col class="w-25">
-      </colgroup>
-      <thead>
-      <tr>
-        <th>Alias</th>
-        <th>Url</th>
-        <th></th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let include of specification.imports; index as includeIndex">
-        <td><span class="editor-import-alias">{{ include.alias }}</span></td>
-        <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
-        <td>
-          <div class="btn-group float-end" role="group" *ngIf="!readonly">
-            <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+  <div class="col-lg-9">
+    <ul ngbNav #nav="ngbNav" [(activeId)]="selectedTab" (activeIdChange)="selectTab($event)" class="nav-tabs">
+      @for (tab of tabs; track tab) {
+        <li [ngbNavItem]="tab.name">
+          <button ngbNavLink>
+            {{ tab.name }}
+            <span class="btn-close ms-3 fw-light" (click)="closeTab($event, tab.name)"></span>
+          </button>
+          <ng-template ngbNavContent>
+            @if (isOperation(tab)) {
+              <typeschema-operation
+                [operation]="tab"
+                [operationIndex]="findOperationIndexByName(tab.name)"
+                [readonly]="readonly"
+                (argumentUp)="upArgument($event.operationIndex, $event.argumentIndex)"
+                (argumentDown)="downArgument($event.operationIndex, $event.argumentIndex)"
+                (argumentDelete)="deleteArgument($event.operationIndex, $event.argumentIndex)"
+                (throwUp)="upThrow($event.operationIndex, $event.throwIndex)"
+                (throwDown)="downThrow($event.operationIndex, $event.throwIndex)"
+                (throwDelete)="deleteThrow($event.operationIndex, $event.throwIndex)"
+                (operationEdit)="editOperation(operationModal, $event)"
+                (operationDelete)="deleteOperation($event)"
+                (operationCopy)="copyOperation($event)"
+                (typeSelect)="selectTypeByName($event)"
+              >
+              </typeschema-operation>
+            } @else if (isType(tab)) {
+              <typeschema-type
+                [type]="tab"
+                [typeIndex]="findTypeIndexByName(tab.name)"
+                [readonly]="readonly"
+                [root]="specification.root"
+                (propertyUp)="upProperty($event.typeIndex, $event.propertyIndex)"
+                (propertyDown)="downProperty($event.typeIndex, $event.propertyIndex)"
+                (propertyNew)="openProperty(propertyModal, $event)"
+                (propertyEdit)="editProperty(propertyModal, $event.typeIndex, $event.propertyIndex)"
+                (propertyDelete)="deleteProperty($event.typeIndex, $event.propertyIndex)"
+                (typeEdit)="editType(typeModal, $event)"
+                (typeDelete)="deleteType($event)"
+                (typeCopy)="copyType($event)"
+                (typeSelect)="selectTypeByName($event)"
+                (rootSelect)="setRoot($event)"
+                (mappingDelete)="deleteTypeMapping($event.typeIndex, $event.mappingKey)"
+              >
+              </typeschema-type>
+            }
+          </ng-template>
+        </li>
+      }
+    </ul>
+    <div [ngbNavOutlet]="nav" class="mt-2"></div>
   </div>
-</div>
-
-<ng-container *ngIf="operationEnabled">
-  <div *ngFor="let operation of specification.operations; index as operationIndex" class="card editor-type mb-3" [ngClass]="{'border-black': selectedOperation === operationIndex}" id="operation-{{ operation.name }}" (click)="selectOperation(operationIndex)">
-    <div class="card-header">
-      <div class="float-end text-end">
-        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
-      </div>
-      <div class="editor-operation-name font-monospace"><span class="badge text-bg-dark"><span class="codicon codicon-symbol-method"></span></span> {{ operation.name }}</div>
-      <div class="text-secondary editor-operation-description mt-2" *ngIf="operation.description">{{ operation.description }}</div>
-    </div>
-    <div class="card-body">
-      <table class="table table-striped" *ngIf="operation.arguments.length > 0 || operation.payload">
-        <colgroup>
-          <col class="w-50">
-          <col class="w-25">
-          <col class="w-25">
-        </colgroup>
-        <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let argument of operation.arguments; index as argumentIndex">
-          <td>
-            <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
-          </td>
-          <td>
-            <span class="badge text-bg-primary"><typeschema-link [type]="argument.type" [linkable]="isLinkableType(argument.type)"></typeschema-link></span>
-            <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
-          </td>
-          <td>
-            <div class="btn-group float-end" role="group" *ngIf="!readonly">
-              <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
-              <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
-              <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)"><span class="codicon codicon-close"></span></button>
-            </div>
-          </td>
-        </tr>
-        <tr *ngIf="operation.payload">
-          <td>
-            <span class="editor-operation-argument-name font-monospace">payload</span>
-          </td>
-          <td>
-            <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;<typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, <typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape === 'mime'">{{ operation.payload }}</ng-container>
-              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map' && operation.payloadShape !== 'mime'"><typeschema-link [type]="operation.payload" [linkable]="isLinkableType(operation.payload)"></typeschema-link></ng-container>
-            </span>
-            <span class="badge text-bg-secondary ms-1">body</span>
-          </td>
-          <td></td>
-        </tr>
-        </tbody>
-      </table>
-      <table class="table table-striped" *ngIf="operation.httpCode || operation.throws.length > 0">
-        <colgroup>
-          <col class="w-50">
-          <col class="w-25">
-          <col class="w-25">
-        </colgroup>
-        <thead>
-        <tr>
-          <th>Code</th>
-          <th>Type</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngIf="operation.httpCode === 204">
-          <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-          <td><span class="badge text-bg-secondary">-</span></td>
-          <td></td>
-        </tr>
-        <tr *ngIf="operation.httpCode && operation.return">
-          <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-          <td>
-            <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.returnShape === 'array'">Array&lt;<typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape === 'map'">Map&lt;string, <typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape === 'mime'">{{ operation.return }}</ng-container>
-              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map' && operation.returnShape !== 'mime'"><typeschema-link [type]="operation.return" [linkable]="isLinkableType(operation.return)"></typeschema-link></ng-container>
-            </span>
-          </td>
-          <td></td>
-        </tr>
-        <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
-          <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
-          <td>
-            <span class="badge text-bg-primary">
-              <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;<typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, <typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link>&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape === 'mime'">{{ throw_.type }}</ng-container>
-              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map' && throw_.typeShape !== 'mime'"><typeschema-link [type]="throw_.type" [linkable]="isLinkableType(throw_.type)"></typeschema-link></ng-container>
-            </span>
-          </td>
-          <td>
-            <div class="btn-group float-end" role="group" *ngIf="!readonly">
-              <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
-              <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
-              <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)"><span class="codicon codicon-close"></span></button>
-            </div>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card-footer" *ngIf="!readonly">
-      <div class="btn-group" role="group">
-        <button type="button" class="btn btn-primary" (click)="editOperation(operationModal, operationIndex)"><span class="codicon codicon-edit"></span></button>
-        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
-        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
-      </div>
-    </div>
-  </div>
-</ng-container>
-
-<div *ngFor="let type of specification.types; index as typeIndex" class="card editor-type mb-3" [ngClass]="{'border-primary': specification.root === typeIndex, 'border-black': selectedType === typeIndex}" id="type-{{ type.name }}" (click)="selectType(typeIndex)">
-  <div class="card-header">
-    <div class="editor-type-name font-monospace"><span class="badge text-bg-dark">
-      <span class="codicon codicon-symbol-structure"></span></span> {{ type.name }}
-      <span *ngIf="type.parent" class="float-end"><span class="badge text-bg-primary"><typeschema-link [type]="type.parent" [linkable]="isLinkableType(type.parent)"></typeschema-link></span></span>
-    </div>
-    <div class="text-secondary editor-type-description mt-2" *ngIf="type.description">{{ type.description }}</div>
-  </div>
-  <div class="card-body">
-    <div [ngSwitch]="type.type">
-      <ng-container *ngSwitchCase="'map'">
-        <table class="table table table-striped editor-type-properties">
-          <colgroup>
-            <col class="w-50">
-            <col class="w-25">
-            <col class="w-25">
-          </colgroup>
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td><div class="editor-type-property-name font-monospace">*</div></td>
-            <td><span class="badge text-bg-primary" *ngIf="type.reference"><typeschema-link [type]="type.reference" [linkable]="isLinkableType(type.reference)"></typeschema-link></span></td>
-            <td></td>
-          </tr>
-          </tbody>
-        </table>
-      </ng-container>
-      <ng-container *ngSwitchDefault>
-        <div *ngIf="type.discriminator">
-          <div>Discriminator: <span class="badge text-bg-primary">{{ type.discriminator }}</span></div>
-          <table class="table table table-striped editor-type-properties" *ngIf="type.mapping">
-            <colgroup>
-              <col class="w-50">
-              <col class="w-25">
-              <col class="w-25">
-            </colgroup>
-            <thead>
-            <tr>
-              <th>Value</th>
-              <th>Type</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let mapping of type.mapping|keyvalue">
-              <td><code>{{ mapping.value }}</code></td>
-              <td>
-                <div class="editor-type-property-name">
-                  <span class="badge text-bg-primary">
-                    <typeschema-link [type]="mapping.key" [linkable]="isLinkableType(mapping.key)"></typeschema-link>
-                  </span>
-                </div>
-              </td>
-              <td>
-                <div class="btn-group float-end" role="group" *ngIf="!readonly">
-                  <button type="button" class="btn btn-danger" (click)="deleteTypeMapping(typeIndex, mapping.key)"><span class="codicon codicon-close"></span></button>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+  <div class="col-xl-12" *ngIf="operationEnabled">
+    <!--
+    <div class="card editor-import mb-3" *ngIf="specification.imports.length > 0">
+      <div class="card-header">
+        <div class="editor-import-headline font-monospace">
+          <span class="badge text-bg-dark"><span class="codicon codicon-cloud-download"></span></span> Import
         </div>
-        <table class="table table table-striped editor-type-properties">
+      </div>
+      <div class="card-body">
+        <table class="table table table-striped">
           <colgroup>
-            <col class="w-50">
             <col class="w-25">
+            <col class="w-50">
             <col class="w-25">
           </colgroup>
           <thead>
           <tr>
-            <th>Name</th>
-            <th>Type</th>
+            <th>Alias</th>
+            <th>Url</th>
             <th></th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let property of type.properties; index as propertyIndex">
-            <td>
-              <div class="editor-type-property-name font-monospace">{{ property.name }}</div>
-              <div class="editor-type-property-description text-secondary mt-2" *ngIf="property.description">{{ property.description }}</div>
-            </td>
-            <td>
-              <span class="badge text-bg-primary">{{ property.type }}</span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.reference">
-                <typeschema-link [type]="property.reference" [linkable]="isLinkableType(property.reference)"></typeschema-link>
-              </span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.generic">{{ property.generic }}</span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.format">{{ property.format }}</span>
-            </td>
+          <tr *ngFor="let include of specification.imports; index as includeIndex">
+            <td><span class="editor-import-alias">{{ include.alias }}</span></td>
+            <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
             <td>
               <div class="btn-group float-end" role="group" *ngIf="!readonly">
-                <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
-                <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
-                <button type="button" class="btn btn-primary" (click)="editProperty(propertyModal, typeIndex, propertyIndex)"><span class="codicon codicon-edit"></span></button>
-                <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)"><span class="codicon codicon-close"></span></button>
+                <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
               </div>
             </td>
           </tr>
           </tbody>
         </table>
-        <div class="btn-group" role="group" *ngIf="!readonly">
-          <a class="btn btn-success" (click)="openProperty(propertyModal, typeIndex)">New Property</a>
-        </div>
-      </ng-container>
+      </div>
     </div>
-  </div>
-  <div class="card-footer" *ngIf="!readonly">
-    <div class="btn-group" role="group">
-      <button type="button" class="btn btn-primary" (click)="editType(typeModal, typeIndex)"><span class="codicon codicon-edit"></span></button>
-      <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
-      <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>
-      <button *ngIf="specification.root !== typeIndex" type="button" class="btn btn-secondary" (click)="setRoot(typeIndex)">Primary</button>
-    </div>
+    -->
   </div>
 </div>
 
@@ -822,36 +665,12 @@
   </div>
 </ng-template>
 
-<ng-template #tocOffCanvas let-offcanvas>
-  <div class="offcanvas-header">
-    <h4 class="offcanvas-title" id="offcanvas-basic-title">TOC</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="offcanvas.dismiss('closed')"></button>
-  </div>
-  <div class="offcanvas-body">
-    <ul class="list-group">
-      <ng-container *ngIf="operationEnabled">
-        <li class="list-group-item disabled">Operations</li>
-        <li *ngFor="let operation of specification.operations" class="list-group-item"><a (click)="offcanvas.close('operation-' + operation.name)" role="button" class="link-underline-primary">{{operation.name}}</a></li>
-      </ng-container>
-      <li class="list-group-item disabled">Types</li>
-      <li *ngFor="let type of specification.types" class="list-group-item"><a (click)="offcanvas.close('type-' + type.name)" role="button" class="link-underline-primary">{{type.name}}</a></li>
-    </ul>
-    <div class="mt-4 text-secondary font-monospace" *ngIf="!readonly">
-      <p>Shortcuts:</p>
-      <ul class="list-unstyled">
-        <ng-container *ngIf="operationEnabled">
-          <li><kbd>ALT</kbd> + <kbd>q</kbd> Edit selected operation</li>
-          <li><kbd>ALT</kbd> + <kbd>a</kbd> Delete selected operation</li>
-          <li><kbd>ALT</kbd> + <kbd>y</kbd> New operation</li>
-          <li><kbd>ALT</kbd> + <kbd>w</kbd> Move up selected operation</li>
-          <li><kbd>ALT</kbd> + <kbd>s</kbd> Move down selected operation</li>
-        </ng-container>
-        <li><kbd>ALT</kbd> + <kbd>e</kbd> Edit selected type</li>
-        <li><kbd>ALT</kbd> + <kbd>d</kbd> Delete selected type</li>
-        <li><kbd>ALT</kbd> + <kbd>c</kbd> New type</li>
-        <li><kbd>ALT</kbd> + <kbd>r</kbd> Move up selected type</li>
-        <li><kbd>ALT</kbd> + <kbd>f</kbd> Move down selected type</li>
-      </ul>
-    </div>
-  </div>
+<ng-template #typeaheadTemplate let-result="result">
+  <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected && selected.name === result.item.name}">
+    <span><i class="codicon" [ngClass]="{'codicon-symbol-method': isOperation(result.item), 'codicon-symbol-misc': isType(result.item)}"></i> {{result.item.name}}</span>
+    <ng-container *ngIf="result.item.description">
+      <br>
+      <small [title]="result.item.description">{{result.item.description}}</small>
+    </ng-container>
+  </a>
 </ng-template>

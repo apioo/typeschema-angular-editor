@@ -1,5 +1,15 @@
-import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild} from '@angular/core';
-import {NgbModal, NgbOffcanvas} from '@ng-bootstrap/ng-bootstrap';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+  Output,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
+import {NgbModal, NgbTypeahead} from '@ng-bootstrap/ng-bootstrap';
 import {Message} from "typehub-javascript-sdk";
 import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
@@ -7,11 +17,11 @@ import {Property} from "../model/Property";
 import {Include} from "../model/Include";
 import {ImportService, SchemaType} from "../import.service";
 import {Operation} from "../model/Operation";
-import {Throw} from "../model/Throw";
-import {ViewportScroller} from "@angular/common";
 import {Security} from "../model/Security";
 import {BCLayerService} from "../bclayer.service";
 import {ResolverService} from "../resolver.service";
+import Fuse, {FuseResult} from "fuse.js";
+import {debounceTime, distinctUntilChanged, filter, map, merge, Observable, OperatorFunction, Subject} from "rxjs";
 
 @Component({
   selector: 'typeschema-editor',
@@ -55,11 +65,6 @@ export class EditorComponent implements OnInit {
     return: '',
   };
 
-  throw: Throw = {
-    code: 500,
-    type: '',
-  };
-
   type: Type = {
     type: 'object',
     name: '',
@@ -80,10 +85,32 @@ export class EditorComponent implements OnInit {
   importType: SchemaType = 'internal';
   export: string = '';
 
-  selectedType?: number;
-  selectedOperation?: number;
-  openModal: boolean = false;
+  search: string = '';
+  typeaheadSearch: string = '';
+  searchFilteredList: Array<FuseResult<Operation|Type>> = [];
 
+  typeaheadOperator: OperatorFunction<string, readonly FuseResult<Operation|Type>[]> = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(200),
+      distinctUntilChanged(),
+      map((term) => {
+        this.search = term;
+        this.doSearch();
+        return this.searchFilteredList;
+      }),
+    );
+
+  typeaheadFormatter = (result: FuseResult<Operation|Type>) => {
+    return result.item.name;
+  };
+
+  selectedTab?: string;
+  tabs: Array<Operation|Type> = [];
+
+  selected?: Operation|Type;
+  selectedIndex?: number;
+
+  openModal: boolean = false;
   loading: boolean = false;
   dirty: boolean = false;
   response?: Message;
@@ -121,7 +148,7 @@ export class EditorComponent implements OnInit {
   typeValidator = /^[A-Za-z0-9_]{1,128}$/;
   propertyValidator = /^[A-Za-z0-9_.$]{1,128}$/;
 
-  constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal, private offCanvasService: NgbOffcanvas, private viewportScroller: ViewportScroller) { }
+  constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal) { }
 
   async ngOnInit(): Promise<void> {
     if (!Array.isArray(this.specification.operations)) {
@@ -140,6 +167,14 @@ export class EditorComponent implements OnInit {
     this.specification = this.bcLayerService.transform(this.specification);
 
     this.doChange();
+    this.doSearch();
+
+    // automatically open the first 4 operations
+    this.searchFilteredList.forEach((result, index) => {
+      if (index < 4) {
+        this.select(result.item);
+      }
+    });
   }
 
   doSave(): void {
@@ -150,6 +185,44 @@ export class EditorComponent implements OnInit {
   doChange(): void {
     this.saveToLocalStorage();
     this.change.emit(this.specification);
+  }
+
+  doSearch(): void {
+    const allList: Array<Operation|Type> = [];
+
+    if (this.operationEnabled) {
+      this.specification.operations.forEach((operation) => {
+        allList.push(operation);
+      });
+    }
+
+    this.specification.types.forEach((type) => {
+      allList.push(type);
+    });
+
+    if (this.search) {
+      const fuse = new Fuse(allList, {
+        keys: [
+          'name',
+          'description',
+          'httpPath',
+          'arguments.name',
+          'arguments.description',
+          'properties.name',
+          'properties.description',
+        ]
+      });
+
+      this.searchFilteredList = fuse.search(this.search);
+    } else {
+      this.searchFilteredList = [];
+      allList.forEach((item, refIndex) => {
+        this.searchFilteredList.push({
+          item: item,
+          refIndex: refIndex,
+        });
+      });
+    }
   }
 
   setRoot(typeIndex: number) {
@@ -191,10 +264,22 @@ export class EditorComponent implements OnInit {
         return;
       }
 
+      if (this.findOperationIndexByName(operation.name) !== -1) {
+        this.response = {
+          success: false,
+          message: 'Operation name already exists, please select a different name'
+        };
+        return;
+      }
+
       this.specification.operations.push(operation);
+
       this.orderOperations();
+      this.selectOperation(operation.name);
+
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -232,16 +317,54 @@ export class EditorComponent implements OnInit {
     });
   }
 
-  selectOperation(operationIndex: number): void {
-    if (this.readonly) {
-      return;
-    }
+  selectOperation(operationName: string): void {
+    const activeIndex = this.tabs.findIndex((tab) => {
+      return this.isOperation(tab) && tab.name === operationName;
+    });
 
-    if (this.selectedOperation === operationIndex) {
-      this.selectedOperation = undefined;
+    if (activeIndex !== -1) {
+      this.selectedTab = this.tabs[activeIndex].name;
+      this.selectTab(this.selectedTab);
     } else {
-      this.selectedOperation = operationIndex;
+      const operationIndex = this.findOperationIndexByName(operationName)
+      if (operationIndex !== -1) {
+        const selected = this.specification.operations[operationIndex];
+        this.tabs.push(selected);
+        this.selectedTab = selected.name;
+        this.selectTab(this.selectedTab);
+      }
     }
+  }
+
+  searchOperations(): Array<FuseResult<Operation>> {
+    if (this.search) {
+      const fuse = new Fuse(this.specification.operations, {
+        keys: [
+          'name',
+          'description',
+          'httpPath',
+          'arguments.name',
+          'arguments.description',
+        ]
+      });
+
+      return fuse.search(this.search);
+    } else {
+      return this.specification.operations.map((operation, index) => {
+        return {
+          item: operation,
+          refIndex: index,
+        };
+      });
+    }
+  }
+
+  isOperation(object: Operation|Type): object is Operation {
+    return 'httpMethod' in object;
+  }
+
+  isType(object: Operation|Type): object is Type {
+    return !('httpMethod' in object);
   }
 
   orderTypes() {
@@ -270,10 +393,22 @@ export class EditorComponent implements OnInit {
         return;
       }
 
+      if (this.findTypeIndexByName(type.name) !== -1) {
+        this.response = {
+          success: false,
+          message: 'Type name already exists, please select a different name'
+        };
+        return;
+      }
+
       this.specification.types.push(type);
+
       this.orderTypes();
+      this.selectType(type.name);
+
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -328,15 +463,60 @@ export class EditorComponent implements OnInit {
     delete mapping[mappingKey];
   }
 
-  selectType(typeIndex: number): void {
-    if (this.readonly) {
+  select(object: Operation|Type): void {
+    if (this.isOperation(object)) {
+      this.selectOperation(object.name);
+    } else if (this.isType(object)) {
+      this.selectType(object.name);
+    }
+  }
+
+  selectType(typeName: string): void {
+    const activeIndex = this.tabs.findIndex((tab) => {
+      return this.isType(tab) && tab.name === typeName;
+    });
+
+    if (activeIndex !== -1) {
+      this.selectedTab = this.tabs[activeIndex].name;
+      this.selectTab(this.selectedTab);
+    } else {
+      const typeIndex = this.findTypeIndexByName(typeName)
+      if (typeIndex !== -1) {
+        const selected = this.specification.types[typeIndex];
+        this.tabs.push(selected);
+        this.selectedTab = selected.name;
+        this.selectTab(this.selectedTab);
+      }
+    }
+  }
+
+  selectTypeByName(name: string) {
+    if (name === 'string' || name === 'number' || name === 'integer' || name === 'boolean' || name === 'generic' || name === 'any') {
       return;
     }
 
-    if (this.selectedType === typeIndex) {
-      this.selectedType = undefined;
+    this.selectType(name);
+  }
+
+  searchTypes(): Array<FuseResult<Type>> {
+    if (this.search) {
+      const fuse = new Fuse(this.specification.types, {
+        keys: [
+          'name',
+          'description',
+          'properties.name',
+          'properties.description',
+        ]
+      });
+
+      return fuse.search(this.search);
     } else {
-      this.selectedType = typeIndex;
+      return this.specification.types.map((type, index) => {
+        return {
+          item: type,
+          refIndex: index,
+        };
+      });
     }
   }
 
@@ -346,16 +526,16 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    if (event.altKey && event.key === 'q' && this.selectedOperation !== undefined) {
-      this.editOperation(this.operationModalRef, this.selectedOperation);
-    } else if (event.altKey && event.key === 'a' && this.selectedOperation !== undefined) {
-      this.deleteOperation(this.selectedOperation);
+    if (event.altKey && event.key === 'q' && this.selectedIndex !== undefined && this.selected !== undefined && this.isOperation(this.selected)) {
+      this.editOperation(this.operationModalRef, this.selectedIndex);
+    } else if (event.altKey && event.key === 'a' && this.selectedIndex !== undefined && this.selected !== undefined && this.isOperation(this.selected)) {
+      this.deleteOperation(this.selectedIndex);
     } else if (event.altKey && event.key === 'y') {
       this.openOperation(this.operationModalRef);
-    } else if (event.altKey && event.key === 'e' && this.selectedType !== undefined) {
-      this.editType(this.typeModalRef, this.selectedType);
-    } else if (event.altKey && event.key === 'd' && this.selectedType !== undefined) {
-      this.deleteType(this.selectedType);
+    } else if (event.altKey && event.key === 'e' && this.selectedIndex !== undefined && this.selected !== undefined && this.isType(this.selected)) {
+      this.editType(this.typeModalRef, this.selectedIndex);
+    } else if (event.altKey && event.key === 'd' && this.selectedIndex !== undefined && this.selected !== undefined && this.isType(this.selected)) {
+      this.deleteType(this.selectedIndex);
     } else if (event.altKey && event.key === 'c') {
       this.openType(this.typeModalRef);
     }
@@ -382,28 +562,34 @@ export class EditorComponent implements OnInit {
     return result;
   }
 
-  findOperationByName(operationName: string): Operation|null {
-    for (let i = 0; i < this.specification.operations.length; i++) {
-      if (this.specification.operations[i].name === operationName) {
-        return this.specification.operations[i];
-      }
-    }
-
-    return null;
+  closeTab(event: MouseEvent, toRemove: string) {
+    this.tabs = this.tabs.filter((tab) => tab.name !== toRemove);
+    event.preventDefault();
+    event.stopImmediatePropagation();
   }
 
-  isLinkableType(typeName: string): boolean {
-    if (typeName === 'string' || typeName === 'number' || typeName === 'integer' || typeName === 'boolean' || typeName === 'generic' || typeName === 'any') {
-      return false;
+  selectTab(activeId: string) {
+    const operationIndex = this.findOperationIndexByName(activeId);
+    if (operationIndex !== -1) {
+      this.selectedIndex = operationIndex;
+      this.selected = this.specification.operations[operationIndex];
     }
 
-    for (let i = 0; i < this.specification.types.length; i++) {
-      if (this.specification.types[i].name === typeName) {
-        return true;
+    const typeIndex = this.findTypeIndexByName(activeId);
+    if (typeIndex !== -1) {
+      this.selectedIndex = typeIndex;
+      this.selected = this.specification.types[typeIndex];
+    }
+  }
+
+  findOperationIndexByName(operationName: string): number {
+    for (let i = 0; i < this.specification.operations.length; i++) {
+      if (this.specification.operations[i].name === operationName) {
+        return i;
       }
     }
 
-    return false;
+    return -1;
   }
 
   findTypeByName(typeName: string): Type|null {
@@ -439,6 +625,16 @@ export class EditorComponent implements OnInit {
     }
 
     return null;
+  }
+
+  findTypeIndexByName(typeName: string): number {
+    for (let i = 0; i < this.specification.types.length; i++) {
+      if (this.specification.types[i].name === typeName) {
+        return i;
+      }
+    }
+
+    return -1;
   }
 
   findTypesWithParent(parent?: Type): Array<string> {
@@ -510,14 +706,18 @@ export class EditorComponent implements OnInit {
     let newOperation = JSON.parse(JSON.stringify(this.specification.operations[operationIndex]));
     let newName = newOperation.name + '_copy';
     let i = 0;
-    while (this.findOperationByName(newName)) {
+    while (this.findOperationIndexByName(newName) !== -1) {
       i++;
       newName = newOperation.name + '_copy' + i;
     }
     newOperation.name = newName;
 
     this.specification.operations.push(newOperation);
+
+    this.selectOperation(newOperation.name);
+
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -594,14 +794,18 @@ export class EditorComponent implements OnInit {
     let newType = JSON.parse(JSON.stringify(this.specification.types[typeIndex]));
     let newName = newType.name + '_copy';
     let i = 0;
-    while (this.findTypeByName(newName)) {
+    while (this.findTypeIndexByName(newName) !== -1) {
       i++;
       newName = newType.name + '_copy' + i;
     }
     newType.name = newName;
 
     this.specification.types.push(newType);
+
+    this.selectType(newType.name);
+
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -701,12 +905,6 @@ export class EditorComponent implements OnInit {
     this.doChange();
   }
 
-  deleteInclude(includeIndex: number): void {
-    this.specification.imports.splice(includeIndex, 1);
-    this.dirty = true;
-    this.doChange();
-  }
-
   openSettings(content: any): void {
     this.openModal = true;
     this.baseUrl = this.specification.baseUrl || '';
@@ -772,6 +970,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
       this.import = '';
       this.doChange();
+      this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
@@ -788,26 +987,13 @@ export class EditorComponent implements OnInit {
     });
   }
 
-  openToc(content: any) {
-    this.openModal = true;
-
-    this.offCanvasService.open(content, { ariaLabelledBy: 'offcanvas-basic-title' }).result.then(
-      (result) => {
-        this.openModal = false;
-        this.viewportScroller.scrollToAnchor(result);
-      },
-      (reason) => {
-        this.openModal = false;
-      },
-    );
-  }
-
   loadFromLocalStorage() {
     let spec = localStorage.getItem(this.getLocalStorageName());
     if (spec) {
       this.specification = JSON.parse(spec);
       this.dirty = true;
       this.doChange();
+      this.doSearch();
     }
   }
 

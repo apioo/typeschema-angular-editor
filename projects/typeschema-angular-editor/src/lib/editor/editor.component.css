@@ -1,0 +1,15 @@
+
+.editor-action-item {
+  overflow:hidden;
+}
+
+.editor-action-item > span {
+  font-family:monospace;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+.editor-action-item > small {
+  font-size:14px;
+  white-space:nowrap;
+}

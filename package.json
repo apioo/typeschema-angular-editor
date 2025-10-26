@@ -22,13 +22,14 @@
     "@vscode/codicons": "^0.0.36",
     "bootstrap": "^5.2.3",
     "bootstrap-icons": "^1.10.5",
+    "fuse.js": "^7.1.0",
     "ngx-highlightjs": "^12.0.0",
-    "typeapi-model": "^0.1.1",
-    "typehub-javascript-sdk": "^1.2.0",
     "pascal-case": "^3.1.2",
-    "yaml": "^2.3.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "typeapi-model": "^0.1.1",
+    "typehub-javascript-sdk": "^1.2.0",
+    "yaml": "^2.3.1",
     "zone.js": "~0.14.10"
   },
   "devDependencies": {
@@ -42,7 +43,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.5.2",
-    "ng-packagr": "^18.2.0"
+    "ng-packagr": "^18.2.0",
+    "typescript": "~5.5.2"
   }
 }
