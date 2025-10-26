@@ -49,6 +49,7 @@
         class="form-control"
         placeholder="Search operation or type ..."
         [(ngModel)]="typeaheadSearch"
+        (selectItem)="select($event.item)"
         [ngbTypeahead]="typeaheadOperator"
         [inputFormatter]="typeaheadFormatter"
         [resultTemplate]="typeaheadTemplate"

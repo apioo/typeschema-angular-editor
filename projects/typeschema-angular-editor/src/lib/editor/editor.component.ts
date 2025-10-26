@@ -100,8 +100,12 @@ export class EditorComponent implements OnInit {
       }),
     );
 
-  typeaheadFormatter = (result: FuseResult<Operation|Type>) => {
-    return result.item.name;
+  typeaheadFormatter = (result: FuseResult<Operation|Type>|string) => {
+    if (typeof result === 'string') {
+      return result;
+    } else {
+      return result.item.name;
+    }
   };
 
   selectedTab?: string;
@@ -281,6 +285,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.doChange();
+      this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
@@ -410,6 +415,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.doChange();
+      this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
