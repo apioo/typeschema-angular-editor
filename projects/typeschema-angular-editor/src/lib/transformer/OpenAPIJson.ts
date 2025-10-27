@@ -1,7 +1,7 @@
 import {Specification} from "../model/Specification";
 import {JsonSchemaJson} from "./JsonSchemaJson";
 import {Operation} from "../model/Operation";
-import {pascalCase} from "pascal-case";
+import {pascalCase} from "change-case";
 import {Throw} from "../model/Throw";
 import {Argument} from "../model/Argument";
 

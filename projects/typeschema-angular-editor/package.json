@@ -1,6 +1,6 @@
 {
   "name": "ngx-typeschema-editor",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "Editor to model and design a TypeAPI/TypeSchema specification",
   "keywords": [
     "TypeAPI",
@@ -18,7 +18,7 @@
     "fuse.js": "^7.1.0",
     "typehub-javascript-sdk": "^1.2.0",
     "typeapi-model": "^0.1.1",
-    "pascal-case": "^3.0.0",
+    "change-case": "^5.0.0",
     "yaml": "^2.0.0"
   },
   "dependencies": {

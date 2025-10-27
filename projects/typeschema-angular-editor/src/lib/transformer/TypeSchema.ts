@@ -3,7 +3,7 @@ import {TypeHubService} from "../typehub.service";
 import {Include} from "../model/Include";
 import {Type} from "../model/Type";
 import {Property} from "../model/Property";
-import {pascalCase} from "pascal-case";
+import {pascalCase} from "change-case";
 import {TransformerInterface} from "./TransformerInterface";
 import {ResolverService} from "../resolver.service";
 import {NamingService} from "../naming.service";
