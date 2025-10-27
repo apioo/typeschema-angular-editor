@@ -2,9 +2,7 @@
 <div class="card editor-type mb-3" [ngClass]="{'border-primary': root === typeIndex}" id="type-{{ type.name }}">
   <div class="card-header">
     <div class="editor-type-name font-monospace">
-      <span class="badge text-bg-dark">
-        <span class="codicon codicon-symbol-misc"></span>
-      </span>
+      <i class="bi bi-disc"></i>
       {{ type.name }}
       <span *ngIf="type.parent" class="float-end">
         <span class="badge text-bg-primary">

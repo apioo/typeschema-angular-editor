@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Argument} from "../../model/Argument";
 import {Specification} from "../../model/Specification";
 
@@ -7,7 +7,7 @@ import {Specification} from "../../model/Specification";
   templateUrl: './argument.component.html',
   styleUrls: ['./argument.component.css']
 })
-export class ArgumentComponent {
+export class ArgumentComponent implements OnInit {
 
   @Input() data: Array<Argument> = [];
   @Input() specification!: Specification;

@@ -1,15 +1,5 @@
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  HostListener,
-  Input,
-  OnInit,
-  Output,
-  TemplateRef,
-  ViewChild
-} from '@angular/core';
-import {NgbModal, NgbTypeahead} from '@ng-bootstrap/ng-bootstrap';
+import {Component, ElementRef, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild} from '@angular/core';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Message} from "typehub-javascript-sdk";
 import {Specification} from "../model/Specification";
 import {Type} from "../model/Type";
@@ -21,7 +11,6 @@ import {Security} from "../model/Security";
 import {BCLayerService} from "../bclayer.service";
 import {ResolverService} from "../resolver.service";
 import Fuse, {FuseResult} from "fuse.js";
-import {debounceTime, distinctUntilChanged, filter, map, merge, Observable, OperatorFunction, Subject} from "rxjs";
 
 @Component({
   selector: 'typeschema-editor',
@@ -86,27 +75,7 @@ export class EditorComponent implements OnInit {
   export: string = '';
 
   search: string = '';
-  typeaheadSearch: string = '';
   searchFilteredList: Array<FuseResult<Operation|Type>> = [];
-
-  typeaheadOperator: OperatorFunction<string, readonly FuseResult<Operation|Type>[]> = (text$: Observable<string>) =>
-    text$.pipe(
-      debounceTime(200),
-      distinctUntilChanged(),
-      map((term) => {
-        this.search = term;
-        this.doSearch();
-        return this.searchFilteredList;
-      }),
-    );
-
-  typeaheadFormatter = (result: FuseResult<Operation|Type>|string) => {
-    if (typeof result === 'string') {
-      return result;
-    } else {
-      return result.item.name;
-    }
-  };
 
   selectedTab?: string;
   tabs: Array<Operation|Type> = [];
@@ -170,10 +139,14 @@ export class EditorComponent implements OnInit {
 
     this.specification = this.bcLayerService.transform(this.specification);
 
+    this.doInitialize();
+  }
+
+  doInitialize(): void {
     this.doChange();
     this.doSearch();
 
-    // automatically open the first 4 operations
+    this.tabs = [];
     this.searchFilteredList.forEach((result, index) => {
       if (index < 4) {
         this.select(result.item);
@@ -232,6 +205,7 @@ export class EditorComponent implements OnInit {
   setRoot(typeIndex: number) {
     this.specification.root = typeIndex;
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -277,13 +251,11 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.operations.push(operation);
-
-      this.orderOperations();
-      this.selectOperation(operation.name);
-
       this.dirty = true;
       this.openModal = false;
 
+      this.orderOperations();
+      this.selectOperation(operation.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -313,10 +285,13 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.operations[operationIndex] = operation;
-      this.orderOperations();
       this.dirty = true;
       this.openModal = false;
+
+      this.orderOperations();
+      this.refreshTab(operation);
       this.doChange();
+      this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
@@ -338,29 +313,6 @@ export class EditorComponent implements OnInit {
         this.selectedTab = selected.name;
         this.selectTab(this.selectedTab);
       }
-    }
-  }
-
-  searchOperations(): Array<FuseResult<Operation>> {
-    if (this.search) {
-      const fuse = new Fuse(this.specification.operations, {
-        keys: [
-          'name',
-          'description',
-          'httpPath',
-          'arguments.name',
-          'arguments.description',
-        ]
-      });
-
-      return fuse.search(this.search);
-    } else {
-      return this.specification.operations.map((operation, index) => {
-        return {
-          item: operation,
-          refIndex: index,
-        };
-      });
     }
   }
 
@@ -407,13 +359,11 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.types.push(type);
-
-      this.orderTypes();
-      this.selectType(type.name);
-
       this.dirty = true;
       this.openModal = false;
 
+      this.orderTypes();
+      this.selectType(type.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -443,10 +393,13 @@ export class EditorComponent implements OnInit {
       }
 
       this.specification.types[typeIndex] = type;
-      this.orderTypes();
       this.dirty = true;
       this.openModal = false;
+
+      this.orderTypes();
+      this.refreshTab(type);
       this.doChange();
+      this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
@@ -469,8 +422,9 @@ export class EditorComponent implements OnInit {
     delete mapping[mappingKey];
   }
 
-  select(object: Operation|Type): void {
-    if (this.isOperation(object)) {
+  select(object: Operation|Type|undefined): void {
+    if (object === undefined) {
+    } else if (this.isOperation(object)) {
       this.selectOperation(object.name);
     } else if (this.isType(object)) {
       this.selectType(object.name);
@@ -502,49 +456,6 @@ export class EditorComponent implements OnInit {
     }
 
     this.selectType(name);
-  }
-
-  searchTypes(): Array<FuseResult<Type>> {
-    if (this.search) {
-      const fuse = new Fuse(this.specification.types, {
-        keys: [
-          'name',
-          'description',
-          'properties.name',
-          'properties.description',
-        ]
-      });
-
-      return fuse.search(this.search);
-    } else {
-      return this.specification.types.map((type, index) => {
-        return {
-          item: type,
-          refIndex: index,
-        };
-      });
-    }
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
-    if (this.readonly || this.openModal) {
-      return;
-    }
-
-    if (event.altKey && event.key === 'q' && this.selectedIndex !== undefined && this.selected !== undefined && this.isOperation(this.selected)) {
-      this.editOperation(this.operationModalRef, this.selectedIndex);
-    } else if (event.altKey && event.key === 'a' && this.selectedIndex !== undefined && this.selected !== undefined && this.isOperation(this.selected)) {
-      this.deleteOperation(this.selectedIndex);
-    } else if (event.altKey && event.key === 'y') {
-      this.openOperation(this.operationModalRef);
-    } else if (event.altKey && event.key === 'e' && this.selectedIndex !== undefined && this.selected !== undefined && this.isType(this.selected)) {
-      this.editType(this.typeModalRef, this.selectedIndex);
-    } else if (event.altKey && event.key === 'd' && this.selectedIndex !== undefined && this.selected !== undefined && this.isType(this.selected)) {
-      this.deleteType(this.selectedIndex);
-    } else if (event.altKey && event.key === 'c') {
-      this.openType(this.typeModalRef);
-    }
   }
 
   findGenerics(type?: Type|null): Array<string> {
@@ -585,6 +496,26 @@ export class EditorComponent implements OnInit {
     if (typeIndex !== -1) {
       this.selectedIndex = typeIndex;
       this.selected = this.specification.types[typeIndex];
+    }
+  }
+
+  refreshTab(object: Operation|Type) {
+    const activeIndex = this.tabs.findIndex((tab) => {
+      return tab.name === object.name;
+    });
+
+    if (activeIndex !== -1) {
+      this.tabs[activeIndex] = object;
+    }
+  }
+
+  removeTab(object: Operation|Type) {
+    const activeIndex = this.tabs.findIndex((tab) => {
+      return tab.name === object.name;
+    });
+
+    if (activeIndex !== -1) {
+      this.tabs.splice(activeIndex, 1);
     }
   }
 
@@ -698,10 +629,18 @@ export class EditorComponent implements OnInit {
   }
 
   deleteOperation(operationIndex: number): void {
+    const operation = this.specification.operations[operationIndex];
+    if (!operation) {
+      return;
+    }
+
     this.specification.operations.splice(operationIndex, 1);
-    this.orderOperations();
     this.dirty = true;
+
+    this.orderOperations();
+    this.removeTab(operation);
     this.doChange();
+    this.doSearch();
   }
 
   copyOperation(operationIndex: number): void {
@@ -719,12 +658,11 @@ export class EditorComponent implements OnInit {
     newOperation.name = newName;
 
     this.specification.operations.push(newOperation);
-
-    this.selectOperation(newOperation.name);
-
     this.dirty = true;
 
+    this.selectOperation(newOperation.name);
     this.doChange();
+    this.doSearch();
   }
 
   upArgument(operationIndex: number, argumentIndex: number): void {
@@ -732,8 +670,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex - 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -742,8 +682,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex + 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -751,8 +693,10 @@ export class EditorComponent implements OnInit {
     if (!this.specification.operations[operationIndex]) {
       return;
     }
+
     this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -761,8 +705,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.operations[operationIndex].throws?.splice(throwIndex - 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -771,8 +717,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.operations[operationIndex].throws?.splice(throwIndex + 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -780,16 +728,26 @@ export class EditorComponent implements OnInit {
     if (!this.specification.operations[operationIndex]) {
       return;
     }
+
     this.specification.operations[operationIndex].throws?.splice(throwIndex, 1);
     this.dirty = true;
+
     this.doChange();
   }
 
   deleteType(typeIndex: number): void {
+    const type = this.specification.types[typeIndex];
+    if (!type) {
+      return;
+    }
+
     this.specification.types.splice(typeIndex, 1);
-    this.orderTypes();
     this.dirty = true;
+
+    this.orderTypes();
+    this.removeTab(type);
     this.doChange();
+    this.doSearch();
   }
 
   copyType(typeIndex: number): void {
@@ -807,12 +765,11 @@ export class EditorComponent implements OnInit {
     newType.name = newName;
 
     this.specification.types.push(newType);
-
-    this.selectType(newType.name);
-
     this.dirty = true;
 
+    this.selectType(newType.name);
     this.doChange();
+    this.doSearch();
   }
 
   upProperty(typeIndex: number, propertyIndex: number): void {
@@ -820,8 +777,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.types[typeIndex].properties?.splice(propertyIndex - 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -830,8 +789,10 @@ export class EditorComponent implements OnInit {
     if (!property) {
       return;
     }
+
     this.specification.types[typeIndex].properties?.splice(propertyIndex + 1, 0, property);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -859,6 +820,7 @@ export class EditorComponent implements OnInit {
       this.specification.types[typeIndex].properties?.push(property);
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -894,8 +856,10 @@ export class EditorComponent implements OnInit {
       }
 
       props[propertyIndex] = property;
+
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -906,8 +870,10 @@ export class EditorComponent implements OnInit {
     if (!this.specification.types[typeIndex]) {
       return;
     }
+
     this.specification.types[typeIndex].properties?.splice(propertyIndex, 1);
     this.dirty = true;
+
     this.doChange();
   }
 
@@ -930,6 +896,7 @@ export class EditorComponent implements OnInit {
 
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -951,6 +918,7 @@ export class EditorComponent implements OnInit {
 
       this.dirty = true;
       this.openModal = false;
+
       this.doChange();
     }, (reason) => {
       this.openModal = false;
@@ -975,8 +943,8 @@ export class EditorComponent implements OnInit {
       this.dirty = true;
       this.openModal = false;
       this.import = '';
-      this.doChange();
-      this.doSearch();
+
+      this.doInitialize();
     }, (reason) => {
       this.openModal = false;
     });
@@ -998,8 +966,8 @@ export class EditorComponent implements OnInit {
     if (spec) {
       this.specification = JSON.parse(spec);
       this.dirty = true;
-      this.doChange();
-      this.doSearch();
+
+      this.doInitialize();
     }
   }
 

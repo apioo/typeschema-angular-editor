@@ -5,13 +5,13 @@
 
   <div class="btn-group mb-3 sticky-top" role="group">
     <button type="button" class="btn btn-primary" (click)="doSave()" *ngIf="save.observed">Save</button>
-    <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled">New Operation</button>
-    <button type="button" class="btn btn-success" (click)="openType(typeModal)">New Type</button>
-    <button type="button" class="btn btn-light" (click)="openSettings(settingsModal)" *ngIf="importEnabled">Settings</button>
-    <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled">Include</button>
-    <button type="button" class="btn btn-light" (click)="openImport(importModal)">Import</button>
-    <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
-    <button type="button" class="btn btn-light" (click)="loadFromLocalStorage()">Restore</button>
+    <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" *ngIf="operationEnabled" title="New Operation"><i class="bi bi-box"></i></button>
+    <button type="button" class="btn btn-success" (click)="openType(typeModal)" title="New Type"><i class="bi bi-disc"></i></button>
+    <button type="button" class="btn btn-light" (click)="openSettings(settingsModal)" *ngIf="importEnabled" title="Settings"><i class="bi bi-gear"></i></button>
+    <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" *ngIf="importEnabled" title="Include"><i class="bi bi-cloud-arrow-down"></i></button>
+    <button type="button" class="btn btn-light" (click)="openImport(importModal)" title="Import"><i class="bi bi-arrow-down-circle"></i></button>
+    <button type="button" class="btn btn-light" (click)="openExport(exportModal)" title="Export"><i class="bi bi-arrow-up-circle"></i></button>
+    <button type="button" class="btn btn-light" (click)="loadFromLocalStorage()" title="Restore"><i class="bi bi-arrow-counterclockwise"></i></button>
   </div>
 </ng-container>
 <ng-container *ngIf="readonly">
@@ -33,7 +33,7 @@
         <input type="text" id="search" name="search" [(ngModel)]="search" (ngModelChange)="doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
         <ng-container *ngFor="let result of searchFilteredList">
           <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected && selected.name === result.item.name}">
-            <span><i class="codicon" [ngClass]="{'codicon-symbol-method': isOperation(result.item), 'codicon-symbol-misc': isType(result.item)}"></i> {{result.item.name}}</span>
+            <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>
             <ng-container *ngIf="result.item.description">
               <br>
               <small [title]="result.item.description">{{result.item.description}}</small>
@@ -41,23 +41,21 @@
           </a>
         </ng-container>
       </ul>
+      <div class="mb-3 mt-2 text-center">
+        <small class="text-muted font-monospace">
+          <i class="bi bi-box"></i> Operations: {{specification.operations.length}} /
+          <i class="bi bi-disc"></i> Types: {{specification.types.length}}
+        </small>
+      </div>
     </div>
     <div class="mb-3 overflow-auto d-lg-none">
-      <input
-        id="typeahead-search"
-        type="text"
-        class="form-control"
-        placeholder="Search operation or type ..."
-        [(ngModel)]="typeaheadSearch"
-        (selectItem)="select($event.item)"
-        [ngbTypeahead]="typeaheadOperator"
-        [inputFormatter]="typeaheadFormatter"
-        [resultTemplate]="typeaheadTemplate"
-      />
+      <select [(ngModel)]="selected" (ngModelChange)="select(selected)" class="form-select" *ngIf="searchFilteredList.length > 0">
+        <option *ngFor="let result of searchFilteredList" [ngValue]="result.item">{{ result.item.name }}</option>
+      </select>
     </div>
   </div>
   <div class="col-lg-9">
-    <ul ngbNav #nav="ngbNav" [(activeId)]="selectedTab" (activeIdChange)="selectTab($event)" class="nav-tabs">
+    <ul ngbNav #nav="ngbNav" [(activeId)]="selectedTab" (activeIdChange)="selectTab($event)" class="nav-tabs editor-tabs">
       @for (tab of tabs; track tab) {
         <li [ngbNavItem]="tab.name">
           <button ngbNavLink>
