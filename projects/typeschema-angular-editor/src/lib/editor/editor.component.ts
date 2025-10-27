@@ -75,10 +75,10 @@ export class EditorComponent implements OnInit {
   export: string = '';
 
   search: string = '';
-  searchFilteredList: Array<FuseResult<Operation|Type>> = [];
+  searchList: Array<FuseResult<Operation|Type>> = [];
 
-  selectedTab?: string;
-  tabs: Array<Operation|Type> = [];
+  historyBack: Array<string> = [];
+  historyForward: Array<string> = [];
 
   selected?: Operation|Type;
   selectedIndex?: number;
@@ -146,12 +146,9 @@ export class EditorComponent implements OnInit {
     this.doChange();
     this.doSearch();
 
-    this.tabs = [];
-    this.searchFilteredList.forEach((result, index) => {
-      if (index < 4) {
-        this.select(result.item);
-      }
-    });
+    if (this.searchList.length > 0) {
+      this.selectByName(this.searchList[0].item.name);
+    }
   }
 
   doSave(): void {
@@ -190,15 +187,41 @@ export class EditorComponent implements OnInit {
         ]
       });
 
-      this.searchFilteredList = fuse.search(this.search);
+      this.searchList = fuse.search(this.search);
     } else {
-      this.searchFilteredList = [];
+      this.searchList = [];
       allList.forEach((item, refIndex) => {
-        this.searchFilteredList.push({
+        this.searchList.push({
           item: item,
           refIndex: refIndex,
         });
       });
+    }
+  }
+
+  doHistoryBack() {
+    const name = this.historyBack.pop();
+    if (name) {
+      if (this.selected) {
+        this.historyForward.push(this.selected.name);
+      }
+
+      this.selectedIndex = undefined;
+      this.selected = undefined;
+      this.selectByName(name);
+    }
+  }
+
+  doHistoryForward() {
+    const name = this.historyForward.pop();
+    if (name) {
+      if (this.selected) {
+        this.historyBack.push(this.selected.name);
+      }
+
+      this.selectedIndex = undefined;
+      this.selected = undefined;
+      this.selectByName(name);
     }
   }
 
@@ -255,7 +278,6 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderOperations();
-      this.selectOperation(operation.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -289,31 +311,11 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderOperations();
-      this.refreshTab(operation);
       this.doChange();
       this.doSearch();
     }, (reason) => {
       this.openModal = false;
     });
-  }
-
-  selectOperation(operationName: string): void {
-    const activeIndex = this.tabs.findIndex((tab) => {
-      return this.isOperation(tab) && tab.name === operationName;
-    });
-
-    if (activeIndex !== -1) {
-      this.selectedTab = this.tabs[activeIndex].name;
-      this.selectTab(this.selectedTab);
-    } else {
-      const operationIndex = this.findOperationIndexByName(operationName)
-      if (operationIndex !== -1) {
-        const selected = this.specification.operations[operationIndex];
-        this.tabs.push(selected);
-        this.selectedTab = selected.name;
-        this.selectTab(this.selectedTab);
-      }
-    }
   }
 
   isOperation(object: Operation|Type): object is Operation {
@@ -363,7 +365,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderTypes();
-      this.selectType(type.name);
+      this.selectByName(type.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -397,7 +399,6 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderTypes();
-      this.refreshTab(type);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -425,28 +426,28 @@ export class EditorComponent implements OnInit {
   select(object: Operation|Type|undefined): void {
     if (object === undefined) {
     } else if (this.isOperation(object)) {
-      this.selectOperation(object.name);
+      this.selectByName(object.name);
     } else if (this.isType(object)) {
-      this.selectType(object.name);
+      this.selectByName(object.name);
     }
   }
 
-  selectType(typeName: string): void {
-    const activeIndex = this.tabs.findIndex((tab) => {
-      return this.isType(tab) && tab.name === typeName;
-    });
+  selectByName(name: string) {
+    if (this.selected) {
+      // in case we have already a selection add to history
+      this.historyBack.push(this.selected.name);
+    }
 
-    if (activeIndex !== -1) {
-      this.selectedTab = this.tabs[activeIndex].name;
-      this.selectTab(this.selectedTab);
-    } else {
-      const typeIndex = this.findTypeIndexByName(typeName)
-      if (typeIndex !== -1) {
-        const selected = this.specification.types[typeIndex];
-        this.tabs.push(selected);
-        this.selectedTab = selected.name;
-        this.selectTab(this.selectedTab);
-      }
+    const operationIndex = this.findOperationIndexByName(name);
+    if (operationIndex !== -1) {
+      this.selectedIndex = operationIndex;
+      this.selected = this.specification.operations[operationIndex];
+    }
+
+    const typeIndex = this.findTypeIndexByName(name);
+    if (typeIndex !== -1) {
+      this.selectedIndex = typeIndex;
+      this.selected = this.specification.types[typeIndex];
     }
   }
 
@@ -455,7 +456,7 @@ export class EditorComponent implements OnInit {
       return;
     }
 
-    this.selectType(name);
+    this.selectByName(name);
   }
 
   findGenerics(type?: Type|null): Array<string> {
@@ -477,46 +478,6 @@ export class EditorComponent implements OnInit {
     }
 
     return result;
-  }
-
-  closeTab(event: MouseEvent, toRemove: string) {
-    this.tabs = this.tabs.filter((tab) => tab.name !== toRemove);
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-
-  selectTab(activeId: string) {
-    const operationIndex = this.findOperationIndexByName(activeId);
-    if (operationIndex !== -1) {
-      this.selectedIndex = operationIndex;
-      this.selected = this.specification.operations[operationIndex];
-    }
-
-    const typeIndex = this.findTypeIndexByName(activeId);
-    if (typeIndex !== -1) {
-      this.selectedIndex = typeIndex;
-      this.selected = this.specification.types[typeIndex];
-    }
-  }
-
-  refreshTab(object: Operation|Type) {
-    const activeIndex = this.tabs.findIndex((tab) => {
-      return tab.name === object.name;
-    });
-
-    if (activeIndex !== -1) {
-      this.tabs[activeIndex] = object;
-    }
-  }
-
-  removeTab(object: Operation|Type) {
-    const activeIndex = this.tabs.findIndex((tab) => {
-      return tab.name === object.name;
-    });
-
-    if (activeIndex !== -1) {
-      this.tabs.splice(activeIndex, 1);
-    }
   }
 
   findOperationIndexByName(operationName: string): number {
@@ -638,7 +599,6 @@ export class EditorComponent implements OnInit {
     this.dirty = true;
 
     this.orderOperations();
-    this.removeTab(operation);
     this.doChange();
     this.doSearch();
   }
@@ -660,7 +620,7 @@ export class EditorComponent implements OnInit {
     this.specification.operations.push(newOperation);
     this.dirty = true;
 
-    this.selectOperation(newOperation.name);
+    this.selectByName(newOperation.name);
     this.doChange();
     this.doSearch();
   }
@@ -745,7 +705,6 @@ export class EditorComponent implements OnInit {
     this.dirty = true;
 
     this.orderTypes();
-    this.removeTab(type);
     this.doChange();
     this.doSearch();
   }
@@ -767,7 +726,7 @@ export class EditorComponent implements OnInit {
     this.specification.types.push(newType);
     this.dirty = true;
 
-    this.selectType(newType.name);
+    this.selectByName(newType.name);
     this.doChange();
     this.doSearch();
   }
