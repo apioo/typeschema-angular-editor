@@ -312,6 +312,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderOperations();
+      this.selectByName(operation.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
@@ -400,6 +401,7 @@ export class EditorComponent implements OnInit {
       this.openModal = false;
 
       this.orderTypes();
+      this.selectByName(type.name);
       this.doChange();
       this.doSearch();
     }, (reason) => {
