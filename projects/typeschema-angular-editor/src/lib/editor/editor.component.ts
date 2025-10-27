@@ -872,17 +872,35 @@ export class EditorComponent implements OnInit {
     };
 
     this.modalService.open(content, {size: 'lg'}).result.then(async (result) => {
-      const include = this.include;
-      include.types = await this.resolverService.resolveIncludeTypes(include);
-      this.specification.imports.push(include);
-
-      this.dirty = true;
       this.openModal = false;
-
-      this.doChange();
     }, (reason) => {
       this.openModal = false;
     });
+  }
+
+  async addInclude(include: Include): Promise<void> {
+    const newInclude = Object.assign({}, include);
+
+    this.include = {
+      alias: '',
+      url: '',
+      types: []
+    };
+
+    newInclude.types = await this.resolverService.resolveIncludeTypes(newInclude);
+    this.specification.imports.push(newInclude);
+
+    this.dirty = true;
+    this.openModal = false;
+
+    this.doChange();
+  }
+
+  deleteInclude(includeIndex: number): void {
+    this.specification.imports.splice(includeIndex, 1);
+    this.dirty = true;
+
+    this.doChange();
   }
 
   openImport(content: any): void {
