@@ -29,7 +29,9 @@
 
 @if (readonly) {
   <div class="btn-group mb-3" role="group">
-    <button type="button" class="btn btn-light" (click)="openExport(exportModal)">Export</button>
+    <button type="button" class="btn btn-light" (click)="doHistoryBack()" title="Back"><i class="bi bi-arrow-left"></i></button>
+    <button type="button" class="btn btn-light" (click)="doHistoryForward()" title="Forward"><i class="bi bi-arrow-right"></i></button>
+    <button type="button" class="btn btn-light" (click)="openExport(exportModal)" title="Export"><i class="bi bi-arrow-up-circle"></i></button>
   </div>
 }
 
