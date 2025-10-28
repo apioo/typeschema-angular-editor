@@ -1,11 +1,4 @@
 
-<div class="container-fluid p-3">
-  <div class="row">
-    <div class="col-md-8">
-      <typeschema-editor [specification]="spec" [operationEnabled]="true" (change)="change($event)"></typeschema-editor>
-    </div>
-    <div class="col-md-4">
-      <pre *ngIf="preview"><code [highlight]="preview" [language]="'json'"></code></pre>
-    </div>
-  </div>
+<div class="m-3">
+  <typeschema-editor [specification]="spec" [operationEnabled]="true" (change)="change($event)"></typeschema-editor>
 </div>

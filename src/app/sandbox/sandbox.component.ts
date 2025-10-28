@@ -1,10 +1,14 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {ExportService} from "../../../projects/typeschema-angular-editor/src/lib/export.service";
 import {Specification} from "../../../projects/typeschema-angular-editor/src/lib/model/Specification";
+import {TypeschemaEditorModule} from "../../../projects/typeschema-angular-editor/src/lib/typeschema-editor.module";
 
 @Component({
   selector: 'app-sandbox',
   templateUrl: './sandbox.component.html',
+  imports: [
+    TypeschemaEditorModule
+  ],
   styleUrls: ['./sandbox.component.css']
 })
 export class SandboxComponent {
