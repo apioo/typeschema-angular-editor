@@ -18,3 +18,9 @@
   font-family:monospace;
   font-size:14px;
 }
+
+.editor-sidebar {
+  max-height: 640px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
