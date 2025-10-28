@@ -1,21 +1,23 @@
 
 <div class="card editor-type mb-3" id="operation-{{ operation.name }}">
   <div class="card-header">
-    <div class="float-end text-end">
-      <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
-    </div>
     <div class="editor-operation-name font-monospace">
-      <i class="bi bi-box"></i>
-      {{ operation.name }}
+      <span class="text-nowrap">
+        <i class="bi bi-box"></i>
+        {{ operation.name }}
+      </span>
+      <div class="float-end text-end">
+        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
+      </div>
     </div>
     <div class="text-secondary editor-operation-description mt-2" *ngIf="operation.description">{{ operation.description }}</div>
   </div>
   <div class="card-body">
     <table class="table table-striped" *ngIf="operation.arguments.length > 0 || operation.payload">
       <colgroup>
-        <col class="w-50">
-        <col class="w-25">
-        <col class="w-25">
+        <col style="width:35%">
+        <col style="width:35%">
+        <col style="width:50px">
       </colgroup>
       <thead>
       <tr>
@@ -62,9 +64,9 @@
     </table>
     <table class="table table-striped" *ngIf="operation.httpCode || operation.throws.length > 0">
       <colgroup>
-        <col class="w-50">
-        <col class="w-25">
-        <col class="w-25">
+        <col style="width:35%">
+        <col style="width:35%">
+        <col style="width:50px">
       </colgroup>
       <thead>
       <tr>

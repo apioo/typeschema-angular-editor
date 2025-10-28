@@ -2,9 +2,11 @@
 <div class="card editor-type mb-3" [ngClass]="{'border-primary': root === typeIndex}" id="type-{{ type.name }}">
   <div class="card-header">
     <div class="editor-type-name font-monospace">
-      <i class="bi bi-disc"></i>
-      {{ type.name }}
-      <span *ngIf="type.parent" class="float-end">
+      <span class="text-nowrap">
+        <i class="bi bi-disc"></i>
+        {{ type.name }}
+      </span>
+      <span *ngIf="type.parent" class="float-end text-end">
         <span class="badge text-bg-primary">
           <a (click)="selectType(type.parent)" role="button" class="text-white text-decoration-none">{{ type.parent }}</a>
         </span>
@@ -17,9 +19,9 @@
       <ng-container *ngSwitchCase="'map'">
         <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col class="w-50">
-            <col class="w-25">
-            <col class="w-25">
+            <col style="width:35%">
+            <col style="width:35%">
+            <col style="width:50px">
           </colgroup>
           <thead>
           <tr>
@@ -46,9 +48,9 @@
           <div>Discriminator: <span class="badge text-bg-primary">{{ type.discriminator }}</span></div>
           <table class="table table table-striped editor-type-properties" *ngIf="type.mapping">
             <colgroup>
-              <col class="w-50">
-              <col class="w-25">
-              <col class="w-25">
+              <col style="width:35%">
+              <col style="width:35%">
+              <col style="width:50px">
             </colgroup>
             <thead>
             <tr>
@@ -78,9 +80,9 @@
         </div>
         <table class="table table table-striped editor-type-properties">
           <colgroup>
-            <col class="w-50">
-            <col class="w-25">
-            <col class="w-25">
+            <col style="width:35%">
+            <col style="width:35%">
+            <col style="width:50px">
           </colgroup>
           <thead>
           <tr>
