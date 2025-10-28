@@ -22,13 +22,13 @@
           </optgroup>
           @if (row.in === 'query') {
             <optgroup label="self">
-              @for (refType of specification.types; track refType.name) {
+              @for (refType of specification.types; track $index) {
                 <option [ngValue]="refType.name">{{ refType.name }}</option>
               }
             </optgroup>
             @for (include of specification.imports; track include.alias) {
               <optgroup label="{{ include.alias }}">
-                @for (parentType of include.types; track parentType.name) {
+                @for (parentType of include.types; track $index) {
                   @if (parentType.name != row.name) {
                     <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
                   }

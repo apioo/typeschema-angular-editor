@@ -3,7 +3,7 @@
   <div class="row mb-3">
     <div class="col-3">
       <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" [disabled]="true" class="form-select">
-        @for (code of errorStatusCodes; track code) {
+        @for (code of errorStatusCodes; track $index) {
           <option [ngValue]="code.key">{{code.value}}</option>
         }
       </select>
@@ -21,13 +21,13 @@
         @if (row.typeShape !== 'mime') {
           <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
             <optgroup label="self">
-              @for (refType of specification.types; track refType.name) {
+              @for (refType of specification.types; track $index) {
                 <option [ngValue]="refType.name">{{ refType.name }}</option>
               }
             </optgroup>
             @for (include of specification.imports; track include.alias) {
               <optgroup label="{{ include.alias }}">
-                @for (parentType of include.types; track parentType.name) {
+                @for (parentType of include.types; track $index) {
                   <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
                 }
               </optgroup>
@@ -36,7 +36,7 @@
         }
         @else {
           <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
-            @for (contentType of contentTypes; track contentType.name) {
+            @for (contentType of contentTypes; track contentType.value) {
               <option [ngValue]="contentType.value">{{ contentType.name }}</option>
             }
           </select>
@@ -50,7 +50,7 @@
 <div class="row">
   <div class="col-3">
     <select id="newThrowCode" name="newThrowCode" [(ngModel)]="newCode" class="form-select">
-      @for (code of getNotUsedCodes(); track code) {
+      @for (code of getNotUsedCodes(); track $index) {
         <option [ngValue]="code.key">{{code.value}}</option>
       }
     </select>
@@ -59,13 +59,13 @@
     <div class="input-group">
       <select id="newThrowType" name="newThrowType" class="form-select" [(ngModel)]="newType">
         <optgroup label="self">
-          @for (refType of specification.types; track refType.name) {
+          @for (refType of specification.types; track $index) {
             <option [ngValue]="refType.name">{{ refType.name }}</option>
           }
         </optgroup>
         @for (include of specification.imports; track include.alias) {
           <optgroup label="{{ include.alias }}">
-            @for (parentType of include.types; track parentType.name) {
+            @for (parentType of include.types; track $index) {
               <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
             }
           </optgroup>
