@@ -88,6 +88,7 @@ export class EditorComponent implements OnInit {
   loading: boolean = false;
   dirty: boolean = false;
   response?: Message;
+  includeResponse?: Message;
 
   baseUrl?: string;
   security?: Security;
@@ -868,6 +869,7 @@ export class EditorComponent implements OnInit {
 
   openInclude(content: any): void {
     this.openModal = true;
+    this.includeResponse = undefined;
     this.include = {
       alias: '',
       url: '',
@@ -890,13 +892,19 @@ export class EditorComponent implements OnInit {
       types: []
     };
 
-    newInclude.types = await this.resolverService.resolveIncludeTypes(newInclude);
-    this.specification.imports.push(newInclude);
+    try {
+      newInclude.types = await this.resolverService.resolveIncludeTypes(newInclude);
+      this.specification.imports.push(newInclude);
 
-    this.dirty = true;
-    this.openModal = false;
+      this.dirty = true;
 
-    this.doChange();
+      this.doChange();
+    } catch (error) {
+      this.includeResponse = {
+        success: false,
+        message: 'Could not include document: ' + error
+      };
+    }
   }
 
   deleteInclude(includeIndex: number): void {

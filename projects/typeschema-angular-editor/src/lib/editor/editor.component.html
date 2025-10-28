@@ -174,72 +174,100 @@
         <typeschema-arguments [data]="operation.arguments" [specification]="specification" (dataChange)="operation.arguments = $event"></typeschema-arguments>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="operation.httpMethod === 'POST' || operation.httpMethod === 'PUT' || operation.httpMethod === 'PATCH'">
-      <label for="operationPayload" class="col-sm-2 col-form-label fw-bold">Payload</label>
-      <div class="col-sm-10">
-        <div class="row mb-3">
-          <div class="col-3">
-            <select id="operationPayloadShape" name="operationPayloadShape" class="form-select" [(ngModel)]="operation.payloadShape">
-              <option [ngValue]="undefined">Object</option>
-              <option ngValue="map">Map</option>
-              <option ngValue="array">Array</option>
-              <option ngValue="mime">Content-Type</option>
-            </select>
-          </div>
-          <div class="col-9">
-            <select *ngIf="operation.payloadShape !== 'mime'" id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
-              <optgroup label="self">
-                <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-              </optgroup>
-              <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-                <ng-container *ngFor="let parentType of include.types">
-                  <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-                </ng-container>
-              </optgroup>
-            </select>
-            <select *ngIf="operation.payloadShape === 'mime'" id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
-              <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
-            </select>
+    @if (operation.httpMethod === 'POST' || operation.httpMethod === 'PUT' || operation.httpMethod === 'PATCH') {
+      <div class="mb-3 row">
+        <label for="operationPayload" class="col-sm-2 col-form-label fw-bold">Payload</label>
+        <div class="col-sm-10">
+          <div class="row mb-3">
+            <div class="col-3">
+              <select id="operationPayloadShape" name="operationPayloadShape" class="form-select" [(ngModel)]="operation.payloadShape">
+                <option [ngValue]="undefined">Object</option>
+                <option ngValue="map">Map</option>
+                <option ngValue="array">Array</option>
+                <option ngValue="mime">Content-Type</option>
+              </select>
+            </div>
+            <div class="col-9">
+              @if (operation.payloadShape !== 'mime') {
+                <select id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
+                  <optgroup label="self">
+                    @for (refType of specification.types; track $index) {
+                      <option [ngValue]="refType.name">{{ refType.name }}</option>
+                    }
+                  </optgroup>
+                  @for (include of specification.imports; track include.alias) {
+                    <optgroup label="{{ include.alias }}">
+                      @for (parentType of include.types; track $index) {
+                        @if (parentType.name != type.name) {
+                          <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                        }
+                      }
+                    </optgroup>
+                  }
+                </select>
+              }
+              @if (operation.payloadShape === 'mime') {
+                <select id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
+                  @for (contentType of contentTypes; track contentType.value) {
+                    <option [ngValue]="contentType.value">{{ contentType.name }}</option>
+                  }
+                </select>
+              }
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    }
     <div class="mb-3 row">
       <label for="operationThrows" class="col-sm-2 col-form-label fw-bold">Throws</label>
       <div class="col-sm-10">
         <typeschema-throws [data]="operation.throws" [specification]="specification" [contentTypes]="contentTypes" (dataChange)="operation.throws = $event"></typeschema-throws>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="operation.httpCode !== 204">
-      <label for="operationReturn" class="col-sm-2 col-form-label fw-bold">Return</label>
-      <div class="col-sm-10">
-        <div class="row mb-3">
-          <div class="col-3">
-            <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="operation.returnShape">
-              <option [ngValue]="undefined">Object</option>
-              <option ngValue="map">Map</option>
-              <option ngValue="array">Array</option>
-              <option ngValue="mime">Content-Type</option>
-            </select>
-          </div>
-          <div class="col-9">
-            <select *ngIf="operation.returnShape !== 'mime'" id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
-              <optgroup label="self">
-                <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-              </optgroup>
-              <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-                <ng-container *ngFor="let parentType of include.types">
-                  <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-                </ng-container>
-              </optgroup>
-            </select>
-            <select *ngIf="operation.returnShape === 'mime'" id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
-              <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
-            </select>
+    @if (operation.httpCode !== 204) {
+      <div class="mb-3 row">
+        <label for="operationReturn" class="col-sm-2 col-form-label fw-bold">Return</label>
+        <div class="col-sm-10">
+          <div class="row mb-3">
+            <div class="col-3">
+              <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="operation.returnShape">
+                <option [ngValue]="undefined">Object</option>
+                <option ngValue="map">Map</option>
+                <option ngValue="array">Array</option>
+                <option ngValue="mime">Content-Type</option>
+              </select>
+            </div>
+            <div class="col-9">
+              @if (operation.returnShape !== 'mime') {
+                <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+                  <optgroup label="self">
+                    @for (refType of specification.types; track $index) {
+                      <option [ngValue]="refType.name">{{ refType.name }}</option>
+                    }
+                  </optgroup>
+                  @for (include of specification.imports; track include.alias) {
+                    <optgroup label="{{ include.alias }}">
+                      @for (parentType of include.types; track $index) {
+                        @if (parentType.name != type.name) {
+                          <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                        }
+                      }
+                    </optgroup>
+                  }
+                </select>
+              }
+              @if (operation.returnShape === 'mime') {
+                <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
+                  @for (contentType of contentTypes; track contentType.value) {
+                    <option [ngValue]="contentType.value">{{ contentType.name }}</option>
+                  }
+                </select>
+              }
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    }
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
@@ -273,93 +301,113 @@
         <input id="typeDescription" name="typeDescription" class="form-control" [(ngModel)]="type.description">
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct'">
-      <label for="typeBase" class="col-sm-2 col-form-label fw-bold">Abstract</label>
-      <div class="col-sm-10">
-        <div class="form-check form-switch mt-2">
-          <input class="form-check-input" type="checkbox" role="switch" id="typeBase" [(ngModel)]="type.base">
-        </div>
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct'">
-      <label for="typeParent" class="col-sm-2 col-form-label fw-bold">Parent</label>
-      <div class="col-sm-10">
-        <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent" (ngModelChange)="updateGenerics()">
-          <option [ngValue]="undefined">No parent</option>
-          <optgroup label="Self">
-            <ng-container *ngFor="let parentType of specification.types">
-              <option [ngValue]="parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-          <optgroup label="{{include.alias}}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.base">
-      <label for="typeDiscriminator" class="col-sm-2 col-form-label fw-bold">Discriminator</label>
-      <div class="col-sm-10">
-        <select id="typeDiscriminator" name="typeDiscriminator" class="form-select" [(ngModel)]="type.discriminator" (ngModelChange)="updateDiscriminator()">
-          <option [ngValue]="undefined">No discriminator</option>
-          <ng-container *ngFor="let property of type.properties">
-            <option [ngValue]="property.name">{{ property.name }}</option>
-          </ng-container>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.discriminator && type.mapping && (type.mapping | keyvalue)?.length">
-      <label class="col-sm-2 col-form-label fw-bold">Mapping</label>
-      <div class="col-sm-10">
-        <div *ngFor="let child of children">
-          <div class="input-group mb-3">
-            <input id="typeMapping-{{ child }}" name="typeMapping-{{ child }}" type="text" class="form-control" [(ngModel)]="type.mapping[child]" placeholder="Value of the discriminator property">
-            <span class="input-group-text">{{ child }}</span>
+    @if (type.type === 'struct') {
+      <div class="mb-3 row">
+        <label for="typeBase" class="col-sm-2 col-form-label fw-bold">Abstract</label>
+        <div class="col-sm-10">
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" role="switch" id="typeBase" [(ngModel)]="type.base">
           </div>
         </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.type === 'struct' && type.template && (type.template | keyvalue)?.length">
-      <label class="col-sm-2 col-form-label fw-bold">Template</label>
-      <div class="col-sm-10">
-        <div *ngFor="let generic of generics">
-          <div class="input-group mb-3">
-            <select id="typeTemplate-{{ generic }}" name="typeTemplate-{{ generic }}" class="form-select" [(ngModel)]="type.template[generic]">
-              <option>No type</option>
-              <ng-container *ngFor="let type of specification.types">
-                <option [ngValue]="type.name">{{ type.name }}</option>
-              </ng-container>
+      <div class="mb-3 row">
+        <label for="typeParent" class="col-sm-2 col-form-label fw-bold">Parent</label>
+        <div class="col-sm-10">
+          <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent" (ngModelChange)="updateGenerics()">
+            <option [ngValue]="undefined">No parent</option>
+            <optgroup label="Self">
+              @for (parentType of specification.types; track $index) {
+                @if (parentType.name != type.name) {
+                  <option [ngValue]="parentType.name">{{ parentType.name }}</option>
+                }
+              }
+            </optgroup>
+            @for (include of specification.imports; track include.alias) {
+              <optgroup label="{{include.alias}}">
+                @for (parentType of include.types; track $index) {
+                  <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        </div>
+      </div>
+      @if (type.base) {
+        <div class="mb-3 row">
+          <label for="typeDiscriminator" class="col-sm-2 col-form-label fw-bold">Discriminator</label>
+          <div class="col-sm-10">
+            <select id="typeDiscriminator" name="typeDiscriminator" class="form-select" [(ngModel)]="type.discriminator" (ngModelChange)="updateDiscriminator()">
+              <option [ngValue]="undefined">No discriminator</option>
+              @for (property of type.properties; track property.name) {
+                <option [ngValue]="property.name">{{ property.name }}</option>
+              }
             </select>
-            <span class="input-group-text">{{ generic }}</span>
           </div>
         </div>
+      }
+      @if (type.discriminator && type.mapping && (type.mapping | keyvalue)?.length) {
+        <div class="mb-3 row">
+          <label class="col-sm-2 col-form-label fw-bold">Mapping</label>
+          <div class="col-sm-10">
+            @for (child of children; track $index) {
+              <div class="input-group mb-3">
+                <input id="typeMapping-{{ child }}" name="typeMapping-{{ child }}" type="text" class="form-control" [(ngModel)]="type.mapping[child]" placeholder="Value of the discriminator property">
+                <span class="input-group-text">{{ child }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @if (type.template && (type.template | keyvalue)?.length) {
+        <div class="mb-3 row">
+          <label class="col-sm-2 col-form-label fw-bold">Template</label>
+          <div class="col-sm-10">
+            @for (generic of generics; track $index) {
+              <div class="input-group mb-3">
+                <select id="typeTemplate-{{ generic }}" name="typeTemplate-{{ generic }}" class="form-select" [(ngModel)]="type.template[generic]">
+                  <option>No type</option>
+                  @for (type of specification.types; track type.name) {
+                    <option [ngValue]="type.name">{{ type.name }}</option>
+                  }
+                </select>
+                <span class="input-group-text">{{ generic }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+    @if (type.type === 'map') {
+      <div class="mb-3 row">
+        <label for="typeReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+        <div class="col-sm-10">
+          <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.reference">
+            <optgroup label="scalar">
+              <option ngValue="string">String</option>
+              <option ngValue="integer">Integer</option>
+              <option ngValue="number">Number</option>
+              <option ngValue="boolean">Boolean</option>
+              <option ngValue="any">Any</option>
+              <option ngValue="generic">Generic</option>
+            </optgroup>
+            <optgroup label="self">
+              @for (refType of specification.types; track $index) {
+                <option [ngValue]="refType.name">{{ refType.name }}</option>
+              }
+            </optgroup>
+            @for (include of specification.imports; track include.alias) {
+              <optgroup label="{{ include.alias }}">
+                @for (parentType of include.types; track $index) {
+                  @if (parentType.name != type.name) {
+                    <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                  }
+                }
+              </optgroup>
+            }
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="type.type === 'map'">
-      <label for="typeReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
-      <div class="col-sm-10">
-        <select id="typeReference" name="typeReference" class="form-select" [(ngModel)]="type.reference">
-          <optgroup label="scalar">
-            <option ngValue="string">String</option>
-            <option ngValue="integer">Integer</option>
-            <option ngValue="number">Number</option>
-            <option ngValue="boolean">Boolean</option>
-            <option ngValue="any">Any</option>
-            <option ngValue="generic">Generic</option>
-          </optgroup>
-          <optgroup label="self">
-            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-          </optgroup>
-          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
-      </div>
-    </div>
+    }
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
@@ -420,79 +468,89 @@
         </select>
       </div>
     </div>
-    <div class="mb-3 row" *ngIf="property.type == 'string'">
-      <label for="propertyFormat" class="col-sm-2 col-form-label fw-bold">Format</label>
-      <div class="col-sm-10">
-        <select id="propertyFormat" name="propertyFormat" class="form-select" [(ngModel)]="property.format">
-          <option [ngValue]="undefined">No Format</option>
-          <option *ngIf="property.type == 'string'" ngValue="date">Date</option>
-          <option *ngIf="property.type == 'string'" ngValue="date-time">Date-Time</option>
-          <option *ngIf="property.type == 'string'" ngValue="time">Time</option>
-        </select>
+    @if (property.type == 'string') {
+      <div class="mb-3 row">
+        <label for="propertyFormat" class="col-sm-2 col-form-label fw-bold">Format</label>
+        <div class="col-sm-10">
+          <select id="propertyFormat" name="propertyFormat" class="form-select" [(ngModel)]="property.format">
+            <option [ngValue]="undefined">No Format</option>
+            @if (property.type == 'string') {
+              <option ngValue="date">Date</option>
+              <option ngValue="date-time">Date-Time</option>
+              <option ngValue="time">Time</option>
+            }
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'string'">
-      <label for="propertyDefault" class="col-sm-2 col-form-label fw-bold">Default</label>
-      <div class="col-sm-10">
-        <input id="propertyDefault" name="propertyDefault" class="form-control" [(ngModel)]="property.default">
+      <div class="mb-3 row">
+        <label for="propertyDefault" class="col-sm-2 col-form-label fw-bold">Default</label>
+        <div class="col-sm-10">
+          <input id="propertyDefault" name="propertyDefault" class="form-control" [(ngModel)]="property.default">
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'generic'">
-      <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
-      <div class="col-sm-10">
-        <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
+    }
+    @if (property.type == 'generic') {
+      <div class="mb-3 row">
+        <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
+        <div class="col-sm-10">
+          <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type == 'object' || property.type == 'array' || property.type == 'map'">
-      <label for="propertyReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
-      <div class="col-sm-10">
-        <select id="propertyReference" name="propertyReference" class="form-select" [(ngModel)]="property.reference" (ngModelChange)="updatePropertyReference()">
-          <optgroup label="scalar" *ngIf="property.type != 'object'">
-            <option ngValue="string">String</option>
-            <option ngValue="integer">Integer</option>
-            <option ngValue="number">Number</option>
-            <option ngValue="boolean">Boolean</option>
-            <option ngValue="any">Any</option>
-            <option ngValue="generic">Generic</option>
-          </optgroup>
-          <optgroup label="self">
-            <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-          </optgroup>
-          <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-            <ng-container *ngFor="let parentType of include.types">
-              <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-            </ng-container>
-          </optgroup>
-        </select>
+    }
+    @if (property.type == 'object' || property.type == 'array' || property.type == 'map') {
+      <div class="mb-3 row">
+        <label for="propertyReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
+        <div class="col-sm-10">
+          <select id="propertyReference" name="propertyReference" class="form-select" [(ngModel)]="property.reference" (ngModelChange)="updatePropertyReference()">
+            <optgroup label="scalar" *ngIf="property.type != 'object'">
+              <option ngValue="string">String</option>
+              <option ngValue="integer">Integer</option>
+              <option ngValue="number">Number</option>
+              <option ngValue="boolean">Boolean</option>
+              <option ngValue="any">Any</option>
+              <option ngValue="generic">Generic</option>
+            </optgroup>
+            <optgroup label="self">
+              <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+            </optgroup>
+            <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
+              <ng-container *ngFor="let parentType of include.types">
+                <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
+              </ng-container>
+            </optgroup>
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row" *ngIf="property.type != 'generic' && property.reference == 'generic'">
-      <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
-      <div class="col-sm-10">
-        <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
+    }
+    @if (property.type != 'generic' && property.reference == 'generic') {
+      <div class="mb-3 row">
+        <label for="propertyGeneric" class="col-sm-2 col-form-label fw-bold">Generic</label>
+        <div class="col-sm-10">
+          <input id="propertyGeneric" name="propertyGeneric" class="form-control" [(ngModel)]="property.generic">
+        </div>
       </div>
-    </div>
-    <ng-container *ngIf="objectRef && property.type == 'object'">
+    }
+    @if (objectRef && property.type == 'object') {
       <ng-container [ngTemplateOutlet]="objectRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="mapRef && property.type == 'map'">
+    }
+    @if (mapRef && property.type == 'map') {
       <ng-container [ngTemplateOutlet]="mapRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="arrayRef && property.type == 'array'">
+    }
+    @if (arrayRef && property.type == 'array') {
       <ng-container [ngTemplateOutlet]="arrayRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="stringRef && property.type == 'string'">
+    }
+    @if (stringRef && property.type == 'string') {
       <ng-container [ngTemplateOutlet]="stringRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="integerRef && property.type == 'integer'">
+    }
+    @if (integerRef && property.type == 'integer') {
       <ng-container [ngTemplateOutlet]="integerRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="numberRef && property.type == 'number'">
+    }
+    @if (numberRef && property.type == 'number') {
       <ng-container [ngTemplateOutlet]="numberRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
-    <ng-container *ngIf="booleanRef && property.type == 'boolean'">
+    }
+    @if (booleanRef && property.type == 'boolean') {
       <ng-container [ngTemplateOutlet]="booleanRef" [ngTemplateOutletContext]="{$implicit: property}"></ng-container>
-    </ng-container>
+    }
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
@@ -504,59 +562,65 @@
     <h4 class="modal-title">Settings</h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
-  <div class="modal-body" *ngIf="security">
-    <div class="mb-3 row">
-      <label for="settingsBaseUrl" class="col-sm-2 col-form-label fw-bold">Base-URL</label>
-      <div class="col-sm-10">
-        <input [(ngModel)]="baseUrl" id="settingsBaseUrl" name="settingsBaseUrl" class="form-control">
+  @if (security) {
+    <div class="modal-body">
+      <div class="mb-3 row">
+        <label for="settingsBaseUrl" class="col-sm-2 col-form-label fw-bold">Base-URL</label>
+        <div class="col-sm-10">
+          <input [(ngModel)]="baseUrl" id="settingsBaseUrl" name="settingsBaseUrl" class="form-control">
+        </div>
       </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="settingsSecurityType" class="col-sm-2 col-form-label fw-bold">Type</label>
-      <div class="col-sm-10">
-        <select [(ngModel)]="security.type" id="settingsSecurityType" name="settingsSecurityType" class="form-select">
-          <option ngValue="none">None</option>
-          <option ngValue="httpBasic">HTTP-Basic</option>
-          <option ngValue="httpBearer">HTTP-Bearer</option>
-          <option ngValue="apiKey">API-Key</option>
-          <option ngValue="oauth2">OAuth2</option>
-        </select>
+      <div class="mb-3 row">
+        <label for="settingsSecurityType" class="col-sm-2 col-form-label fw-bold">Type</label>
+        <div class="col-sm-10">
+          <select [(ngModel)]="security.type" id="settingsSecurityType" name="settingsSecurityType" class="form-select">
+            <option ngValue="none">None</option>
+            <option ngValue="httpBasic">HTTP-Basic</option>
+            <option ngValue="httpBearer">HTTP-Bearer</option>
+            <option ngValue="apiKey">API-Key</option>
+            <option ngValue="oauth2">OAuth2</option>
+          </select>
+        </div>
       </div>
+      @if (security.type == 'apiKey') {
+        <div class="mb-3 row">
+          <label for="settingsSecurityName" class="col-sm-2 col-form-label fw-bold">Name</label>
+          <div class="col-sm-10">
+            <input [(ngModel)]="security.name" id="settingsSecurityName" name="settingsSecurityName" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label for="settingsSecurityIn" class="col-sm-2 col-form-label fw-bold">In</label>
+          <div class="col-sm-10">
+            <select [(ngModel)]="security.in" id="settingsSecurityIn" name="settingsSecurityIn" class="form-select">
+              <option ngValue="header">Header</option>
+              <option ngValue="query">Query</option>
+            </select>
+          </div>
+        </div>
+      }
+      @if (security.type == 'oauth2') {
+        <div class="mb-3 row">
+          <label for="settingsSecurityTokenUrl" class="col-sm-2 col-form-label fw-bold">Token-URL</label>
+          <div class="col-sm-10">
+            <input [(ngModel)]="security.tokenUrl" id="settingsSecurityTokenUrl" name="settingsSecurityTokenUrl" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label for="settingsSecurityAuthorizationUrl" class="col-sm-2 col-form-label fw-bold">Authorization-URL</label>
+          <div class="col-sm-10">
+            <input [(ngModel)]="security.authorizationUrl" id="settingsSecurityAuthorizationUrl" name="settingsSecurityAuthorizationUrl" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3 row">
+          <label for="settingsSecurityScopes" class="col-sm-2 col-form-label fw-bold">Scopes</label>
+          <div class="col-sm-10">
+            <input [(ngModel)]="security.scopes" id="settingsSecurityScopes" name="settingsSecurityScopes" class="form-control">
+          </div>
+        </div>
+      }
     </div>
-    <div class="mb-3 row" *ngIf="security.type == 'apiKey'">
-      <label for="settingsSecurityName" class="col-sm-2 col-form-label fw-bold">Name</label>
-      <div class="col-sm-10">
-        <input [(ngModel)]="security.name" id="settingsSecurityName" name="settingsSecurityName" class="form-control">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="security.type == 'apiKey'">
-      <label for="settingsSecurityIn" class="col-sm-2 col-form-label fw-bold">In</label>
-      <div class="col-sm-10">
-        <select [(ngModel)]="security.in" id="settingsSecurityIn" name="settingsSecurityIn" class="form-select">
-          <option ngValue="header">Header</option>
-          <option ngValue="query">Query</option>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
-      <label for="settingsSecurityTokenUrl" class="col-sm-2 col-form-label fw-bold">Token-URL</label>
-      <div class="col-sm-10">
-        <input [(ngModel)]="security.tokenUrl" id="settingsSecurityTokenUrl" name="settingsSecurityTokenUrl" class="form-control">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
-      <label for="settingsSecurityAuthorizationUrl" class="col-sm-2 col-form-label fw-bold">Authorization-URL</label>
-      <div class="col-sm-10">
-        <input [(ngModel)]="security.authorizationUrl" id="settingsSecurityAuthorizationUrl" name="settingsSecurityAuthorizationUrl" class="form-control">
-      </div>
-    </div>
-    <div class="mb-3 row" *ngIf="security.type == 'oauth2'">
-      <label for="settingsSecurityScopes" class="col-sm-2 col-form-label fw-bold">Scopes</label>
-      <div class="col-sm-10">
-        <input [(ngModel)]="security.scopes" id="settingsSecurityScopes" name="settingsSecurityScopes" class="form-control">
-      </div>
-    </div>
-  </div>
+  }
   <div class="modal-footer">
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
   </div>
@@ -568,6 +632,9 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
+    @if (includeResponse && includeResponse.success === false) {
+      <ngb-alert type="danger">{{ includeResponse.message }}</ngb-alert>
+    }
     <table class="table table table-striped mb-3">
       <colgroup>
         <col class="w-25">
@@ -582,36 +649,44 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let include of specification.imports; index as includeIndex">
-        <td><span class="editor-import-alias">{{ include.alias }}</span></td>
-        <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
-        <td>
-          <div class="btn-group float-end" role="group" *ngIf="!readonly">
-            <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
-          </div>
-        </td>
-      </tr>
+      @for (include of specification.imports; track include.alias; let includeIndex = $index) {
+        <tr>
+          <td><span class="editor-import-alias">{{ include.alias }}</span></td>
+          <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
+          <td>
+            @if (!readonly) {
+              <div class="btn-group float-end" role="group">
+                <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
+              </div>
+            }
+          </td>
+        </tr>
+      }
       </tbody>
     </table>
-    <div class="mb-3 row">
-      <label for="includeAlias" class="col-sm-2 col-form-label fw-bold">Alias</label>
-      <div class="col-sm-10">
-        <input id="includeAlias" name="includeAlias" class="form-control" [(ngModel)]="include.alias">
-      </div>
-    </div>
-    <div class="mb-3 row">
-      <label for="includeUrl" class="col-sm-2 col-form-label fw-bold">Url</label>
-      <div class="col-sm-10">
-        <input id="includeUrl" name="includeUrl" type="url" class="form-control" [(ngModel)]="include.url" aria-describedby="includeUrlHelpBlock" />
-        <div id="includeUrlHelpBlock" class="form-text">
-          Url to a specification, this can be either a url <code>https://typeschema.org/specification.json</code>
-          or a document from the <a href="https://typehub.cloud/">TypeHub</a> platform <code>typehub://apioo:developer&#64;1.0.1</code>.
+    @if (!readonly) {
+      <div class="mb-3 row">
+        <label for="includeAlias" class="col-sm-2 col-form-label fw-bold">Alias</label>
+        <div class="col-sm-10">
+          <input id="includeAlias" name="includeAlias" class="form-control" [(ngModel)]="include.alias">
         </div>
       </div>
-    </div>
+      <div class="mb-3 row">
+        <label for="includeUrl" class="col-sm-2 col-form-label fw-bold">Url</label>
+        <div class="col-sm-10">
+          <input id="includeUrl" name="includeUrl" type="url" class="form-control" [(ngModel)]="include.url" aria-describedby="includeUrlHelpBlock" />
+          <div id="includeUrlHelpBlock" class="form-text">
+            Url to a specification, this can be either a url <code>https://typeschema.org/specification.json</code>
+            or a document from the <a href="https://typehub.cloud/">TypeHub</a> platform <code>typehub://apioo:developer&#64;1.0.1</code>.
+          </div>
+        </div>
+      </div>
+    }
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-success" (click)="addInclude(include)">Add</button>
+    @if (!readonly) {
+      <button type="button" class="btn btn-success" (click)="addInclude(include)">Add</button>
+    }
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Close</button>
   </div>
 </ng-template>
