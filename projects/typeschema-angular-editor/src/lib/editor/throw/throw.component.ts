@@ -1,10 +1,14 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Specification} from "../../model/Specification";
 import {Throw} from "../../model/Throw";
+import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'typeschema-throws',
   templateUrl: './throw.component.html',
+  imports: [
+    FormsModule
+  ],
   styleUrls: ['./throw.component.css']
 })
 export class ThrowComponent implements OnInit {

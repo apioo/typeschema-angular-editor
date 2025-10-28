@@ -1,43 +1,57 @@
-<div class="row mb-3" *ngFor="let row of result;">
-  <div class="col-3">
-    <input type="text" [id]="'name_' + row.name" [name]="'name_' + row.name" [(ngModel)]="row.name" (ngModelChange)="changeValue()" class="form-control">
-  </div>
-  <div class="col-3">
-    <select [id]="'in_' + row.in" [name]="'in_' + row.in" [(ngModel)]="row.in" class="form-select">
-      <option *ngFor="let in_ of ins" [ngValue]="in_.key">{{in_.value}}</option>
-    </select>
-  </div>
-  <div class="col-6">
-    <div class="input-group">
-      <select [id]="'type_' + row.name" [name]="'type_' + row.name" [(ngModel)]="row.type" class="form-select">
-        <optgroup label="scalar">
-          <option ngValue="string">String</option>
-          <option ngValue="integer">Integer</option>
-          <option ngValue="number">Number</option>
-          <option ngValue="boolean">Boolean</option>
-        </optgroup>
-        <ng-container *ngIf="row.in === 'query'">
-        <optgroup label="self">
-          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-        </optgroup>
-        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-          <ng-container *ngFor="let parentType of include.types">
-            <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != row.name">{{ parentType.name }}</option>
-          </ng-container>
-        </optgroup>
-        </ng-container>
+
+@for (row of result; track row.name) {
+  <div class="row mb-3">
+    <div class="col-3">
+      <input type="text" [id]="'name_' + row.name" [name]="'name_' + row.name" [(ngModel)]="row.name" (ngModelChange)="changeValue()" class="form-control">
+    </div>
+    <div class="col-3">
+      <select [id]="'in_' + row.in" [name]="'in_' + row.in" [(ngModel)]="row.in" class="form-select">
+        @for (in_ of ins; track in_.key) {
+          <option [ngValue]="in_.key">{{in_.value}}</option>
+        }
       </select>
-      <button class="btn btn-outline-secondary" (click)="remove(row.name); changeValue()"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="col-6">
+      <div class="input-group">
+        <select [id]="'type_' + row.name" [name]="'type_' + row.name" [(ngModel)]="row.type" class="form-select">
+          <optgroup label="scalar">
+            <option ngValue="string">String</option>
+            <option ngValue="integer">Integer</option>
+            <option ngValue="number">Number</option>
+            <option ngValue="boolean">Boolean</option>
+          </optgroup>
+          @if (row.in === 'query') {
+            <optgroup label="self">
+              @for (refType of specification.types; track refType.name) {
+                <option [ngValue]="refType.name">{{ refType.name }}</option>
+              }
+            </optgroup>
+            @for (include of specification.imports; track include.alias) {
+              <optgroup label="{{ include.alias }}">
+                @for (parentType of include.types; track parentType.name) {
+                  @if (parentType.name != row.name) {
+                    <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                  }
+                }
+              </optgroup>
+            }
+          }
+        </select>
+        <button class="btn btn-outline-secondary" (click)="remove(row.name); changeValue()"><i class="bi bi-x"></i></button>
+      </div>
     </div>
   </div>
-</div>
+}
+
 <div class="row">
   <div class="col-3">
     <input type="text" id="newArgumentName" name="newArgumentName" [(ngModel)]="newName" (ngModelChange)="changeValue()" class="form-control">
   </div>
   <div class="col-3">
     <select id="newArgumentIn" name="newArgumentIn" [(ngModel)]="newIn" class="form-select">
-      <option *ngFor="let in_ of ins" [ngValue]="in_.key">{{in_.value}}</option>
+      @for (in_ of ins; track in_.key) {
+        <option [ngValue]="in_.key">{{in_.value}}</option>
+      }
     </select>
   </div>
   <div class="col-6">

@@ -11,17 +11,17 @@ import {TypeComponent} from "./editor/type/type.component";
 
 @NgModule({
   declarations: [
-    ArgumentComponent,
-    OperationComponent,
-    TypeComponent,
-    ImportComponent,
-    ThrowComponent,
     EditorComponent
   ],
   imports: [
     NgbModule,
     CommonModule,
-    FormsModule
+    FormsModule,
+    ArgumentComponent,
+    OperationComponent,
+    TypeComponent,
+    ImportComponent,
+    ThrowComponent,
   ],
   exports: [
     EditorComponent

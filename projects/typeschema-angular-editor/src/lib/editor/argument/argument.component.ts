@@ -1,10 +1,14 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Argument} from "../../model/Argument";
 import {Specification} from "../../model/Specification";
+import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'typeschema-arguments',
   templateUrl: './argument.component.html',
+  imports: [
+    FormsModule
+  ],
   styleUrls: ['./argument.component.css']
 })
 export class ArgumentComponent implements OnInit {

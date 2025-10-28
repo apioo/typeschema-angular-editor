@@ -1,9 +1,14 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Type} from "../../model/Type";
+import {KeyValuePipe, NgClass} from "@angular/common";
 
 @Component({
   selector: 'typeschema-type',
   templateUrl: './type.component.html',
+  imports: [
+    NgClass,
+    KeyValuePipe
+  ],
   styleUrls: ['./type.component.css']
 })
 export class TypeComponent implements OnInit {

@@ -1,7 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {ViewportScroller} from "@angular/common";
 import {Operation} from "../../model/Operation";
-import {Specification} from "../../model/Specification";
 
 @Component({
   selector: 'typeschema-operation',

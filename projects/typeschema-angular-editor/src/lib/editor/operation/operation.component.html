@@ -10,115 +10,153 @@
         <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
       </div>
     </div>
-    <div class="text-secondary editor-operation-description mt-2" *ngIf="operation.description">{{ operation.description }}</div>
+    @if (operation.description) {
+      <div class="text-secondary editor-operation-description mt-2">{{ operation.description }}</div>
+    }
   </div>
   <div class="card-body">
-    <table class="table table-striped" *ngIf="operation.arguments.length > 0 || operation.payload">
-      <colgroup>
-        <col style="width:35%">
-        <col style="width:35%">
-        <col style="width:50px">
-      </colgroup>
-      <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th></th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let argument of operation.arguments; index as argumentIndex">
-        <td>
-          <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
-        </td>
-        <td>
+    @if (operation.arguments.length > 0 || operation.payload) {
+      <table class="table table-striped">
+        <colgroup>
+          <col style="width:35%">
+          <col style="width:35%">
+          <col style="width:50px">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (argument of operation.arguments; track argument.name; let argumentIndex = $index) {
+          <tr>
+            <td>
+              <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
+            </td>
+            <td>
           <span class="badge text-bg-primary">
             <a (click)="selectType(argument.type)" role="button" class="text-white text-decoration-none">{{ argument.type }}</a>
           </span>
-          <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
-        </td>
-        <td>
-          <div class="btn-group float-end" role="group" *ngIf="!readonly">
-            <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
-            <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
-            <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)"><span class="codicon codicon-close"></span></button>
-          </div>
-        </td>
-      </tr>
-      <tr *ngIf="operation.payload">
-        <td>
-          <span class="editor-operation-argument-name font-monospace">payload</span>
-        </td>
-        <td>
+              <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
+            </td>
+            <td>
+              @if (!readonly) {
+                <div class="btn-group float-end" role="group">
+                  <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
+                  <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
+                  <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)"><span class="codicon codicon-close"></span></button>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+        @if (operation.payload) {
+          <tr>
+            <td>
+              <span class="editor-operation-argument-name font-monospace">payload</span>
+            </td>
+            <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.payloadShape === 'array'">Array&lt;<a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape === 'map'">Map&lt;string, <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;</ng-container>
-              <ng-container *ngIf="operation.payloadShape === 'mime'">{{ operation.payload }}</ng-container>
-              <ng-container *ngIf="operation.payloadShape !== 'array' && operation.payloadShape !== 'map' && operation.payloadShape !== 'mime'"><a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a></ng-container>
+              @if (operation.payloadShape === 'array') {
+                Array&lt;<a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
+              } @else if (operation.payloadShape === 'map') {
+                Map&lt;string, <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
+              } @else if (operation.payloadShape === 'mime') {
+                {{ operation.payload }}
+              } @else {
+                <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>
+              }
             </span>
-          <span class="badge text-bg-secondary ms-1">body</span>
-        </td>
-        <td></td>
-      </tr>
-      </tbody>
-    </table>
-    <table class="table table-striped" *ngIf="operation.httpCode || operation.throws.length > 0">
-      <colgroup>
-        <col style="width:35%">
-        <col style="width:35%">
-        <col style="width:50px">
-      </colgroup>
-      <thead>
-      <tr>
-        <th>Code</th>
-        <th>Type</th>
-        <th></th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngIf="operation.httpCode === 204">
-        <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-        <td><span class="badge text-bg-secondary">-</span></td>
-        <td></td>
-      </tr>
-      <tr *ngIf="operation.httpCode && operation.return">
-        <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-        <td>
+              <span class="badge text-bg-secondary ms-1">body</span>
+            </td>
+            <td></td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+
+    @if (operation.httpCode || operation.throws.length > 0) {
+      <table class="table table-striped">
+        <colgroup>
+          <col style="width:35%">
+          <col style="width:35%">
+          <col style="width:50px">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Code</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (operation.httpCode === 204) {
+          <tr>
+            <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+            <td><span class="badge text-bg-secondary">-</span></td>
+            <td></td>
+          </tr>
+        }
+        @if (operation.httpCode && operation.return) {
+          <tr>
+            <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+            <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="operation.returnShape === 'array'">Array&lt;<a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape === 'map'">Map&lt;string, <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;</ng-container>
-              <ng-container *ngIf="operation.returnShape === 'mime'">{{ operation.return }}</ng-container>
-              <ng-container *ngIf="operation.returnShape !== 'array' && operation.returnShape !== 'map' && operation.returnShape !== 'mime'"><a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a></ng-container>
+              @if (operation.returnShape === 'array') {
+                Array&lt;<a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
+              } @else if (operation.returnShape === 'map') {
+                Map&lt;string, <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
+              } @else if (operation.returnShape === 'mime') {
+                {{ operation.return }}
+              } @else {
+                <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>
+              }
             </span>
-        </td>
-        <td></td>
-      </tr>
-      <tr *ngFor="let throw_ of operation.throws; index as throwIndex">
-        <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
-        <td>
+            </td>
+            <td></td>
+          </tr>
+        }
+        @for (throw_ of operation.throws; track throw_.code; let throwIndex = $index) {
+          <tr>
+            <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
+            <td>
             <span class="badge text-bg-primary">
-              <ng-container *ngIf="throw_.typeShape === 'array'">Array&lt;<a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape === 'map'">Map&lt;string, <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;</ng-container>
-              <ng-container *ngIf="throw_.typeShape === 'mime'">{{ throw_.type }}</ng-container>
-              <ng-container *ngIf="throw_.typeShape !== 'array' && throw_.typeShape !== 'map' && throw_.typeShape !== 'mime'"><a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a></ng-container>
+              @if (throw_.typeShape === 'array') {
+                Array&lt;<a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
+              } @else if (throw_.typeShape === 'map') {
+                Map&lt;string, <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
+              } @else if (throw_.typeShape === 'mime') {
+                {{ throw_.type }}
+              } @else {
+                <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>
+              }
             </span>
-        </td>
-        <td>
-          <div class="btn-group float-end" role="group" *ngIf="!readonly">
-            <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
-            <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
-            <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)"><span class="codicon codicon-close"></span></button>
-          </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+            </td>
+            <td>
+              @if (!readonly) {
+                <div class="btn-group float-end" role="group">
+                  <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
+                  <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
+                  <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)"><span class="codicon codicon-close"></span></button>
+                </div>
+              }
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
   </div>
-  <div class="card-footer" *ngIf="!readonly">
-    <div class="btn-group" role="group">
-      <button type="button" class="btn btn-primary" (click)="editOperation(operationIndex)"><span class="codicon codicon-edit"></span></button>
-      <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
-      <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
+  @if (!readonly) {
+    <div class="card-footer">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-primary" (click)="editOperation(operationIndex)"><span class="codicon codicon-edit"></span></button>
+        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
+        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
+      </div>
     </div>
-  </div>
+  }
 </div>

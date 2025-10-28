@@ -13,8 +13,8 @@
   "license": "MIT",
   "homepage": "https://typehub.cloud/",
   "peerDependencies": {
-    "@angular/common": "^18.2.0",
-    "@angular/core": "^18.2.0",
+    "@angular/common": "^20.3.0",
+    "@angular/core": "^20.3.0",
     "fuse.js": "^7.1.0",
     "typehub-javascript-sdk": "^1.2.0",
     "typeapi-model": "^0.1.1",

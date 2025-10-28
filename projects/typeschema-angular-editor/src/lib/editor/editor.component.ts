@@ -13,6 +13,7 @@ import {ResolverService} from "../resolver.service";
 import Fuse, {FuseResult} from "fuse.js";
 
 @Component({
+  standalone: false,
   selector: 'typeschema-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css']

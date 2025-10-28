@@ -6,128 +6,157 @@
         <i class="bi bi-disc"></i>
         {{ type.name }}
       </span>
-      <span *ngIf="type.parent" class="float-end text-end">
-        <span class="badge text-bg-primary">
-          <a (click)="selectType(type.parent)" role="button" class="text-white text-decoration-none">{{ type.parent }}</a>
+      @if (type.parent) {
+        <span class="float-end text-end">
+          <span class="badge text-bg-primary">
+            <a (click)="selectType(type.parent)" role="button" class="text-white text-decoration-none">{{ type.parent }}</a>
+          </span>
         </span>
-      </span>
+      }
     </div>
-    <div class="text-secondary editor-type-description mt-2" *ngIf="type.description">{{ type.description }}</div>
+    @if (type.description) {
+      <div class="text-secondary editor-type-description mt-2">{{ type.description }}</div>
+    }
   </div>
   <div class="card-body">
-    <div [ngSwitch]="type.type">
-      <ng-container *ngSwitchCase="'map'">
-        <table class="table table table-striped editor-type-properties">
-          <colgroup>
-            <col style="width:35%">
-            <col style="width:35%">
-            <col style="width:50px">
-          </colgroup>
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td><div class="editor-type-property-name font-monospace">*</div></td>
-            <td>
-              <span class="badge text-bg-primary" *ngIf="type.reference">
+    @if (type.type === 'map') {
+      <table class="table table table-striped editor-type-properties">
+        <colgroup>
+          <col style="width:35%">
+          <col style="width:35%">
+          <col style="width:50px">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td><div class="editor-type-property-name font-monospace">*</div></td>
+          <td>
+            @if (type.reference) {
+              <span class="badge text-bg-primary">
                 <a (click)="selectType(type.reference)" role="button" class="text-white text-decoration-none">{{ type.reference }}</a>
               </span>
-            </td>
-            <td></td>
-          </tr>
-          </tbody>
-        </table>
-      </ng-container>
-      <ng-container *ngSwitchDefault>
-        <div *ngIf="type.discriminator">
+            }
+          </td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
+    } @else {
+      @if (type.discriminator) {
+        <div>
           <div>Discriminator: <span class="badge text-bg-primary">{{ type.discriminator }}</span></div>
-          <table class="table table table-striped editor-type-properties" *ngIf="type.mapping">
-            <colgroup>
-              <col style="width:35%">
-              <col style="width:35%">
-              <col style="width:50px">
-            </colgroup>
-            <thead>
-            <tr>
-              <th>Value</th>
-              <th>Type</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let mapping of type.mapping|keyvalue">
-              <td><code>{{ mapping.value }}</code></td>
-              <td>
-                <div class="editor-type-property-name">
+          @if (type.mapping) {
+            <table class="table table table-striped editor-type-properties">
+              <colgroup>
+                <col style="width:35%">
+                <col style="width:35%">
+                <col style="width:50px">
+              </colgroup>
+              <thead>
+              <tr>
+                <th>Value</th>
+                <th>Type</th>
+                <th></th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (mapping of type.mapping|keyvalue; track mapping.key) {
+                  <tr>
+                    <td><code>{{ mapping.value }}</code></td>
+                    <td>
+                      <div class="editor-type-property-name">
                   <span class="badge text-bg-primary">
                     <a (click)="selectType(mapping.key)" role="button" class="text-white text-decoration-none">{{ mapping.key }}</a>
                   </span>
-                </div>
+                      </div>
+                    </td>
+                    <td>
+                      @if (!readonly) {
+                        <div class="btn-group float-end" role="group">
+                          <button type="button" class="btn btn-danger" (click)="deleteMapping(typeIndex, mapping.key)"><span class="codicon codicon-close"></span></button>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+      <table class="table table table-striped editor-type-properties">
+        <colgroup>
+          <col style="width:35%">
+          <col style="width:35%">
+          <col style="width:50px">
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (property of type.properties; track property.name; let propertyIndex = $index) {
+            <tr>
+              <td>
+                <div class="editor-type-property-name font-monospace">{{ property.name }}</div>
+                @if (property.description) {
+                  <div class="editor-type-property-description text-secondary mt-2">{{ property.description }}</div>
+                }
               </td>
               <td>
-                <div class="btn-group float-end" role="group" *ngIf="!readonly">
-                  <button type="button" class="btn btn-danger" (click)="deleteMapping(typeIndex, mapping.key)"><span class="codicon codicon-close"></span></button>
-                </div>
+                <span class="badge text-bg-primary">{{ property.type }}</span>
+                @if (property.reference) {
+                  <span class="badge text-bg-secondary ms-1">
+                    <a (click)="selectType(property.reference)" role="button" class="text-white text-decoration-none">{{ property.reference }}</a>
+                  </span>
+                }
+                @if (property.generic) {
+                  <span class="badge text-bg-secondary ms-1">{{ property.generic }}</span>
+                }
+                @if (property.format) {
+                  <span class="badge text-bg-secondary ms-1">{{ property.format }}</span>
+                }
+              </td>
+              <td>
+                @if (!readonly) {
+                  <div class="btn-group float-end" role="group">
+                    <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
+                    <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
+                    <button type="button" class="btn btn-primary" (click)="editProperty(typeIndex, propertyIndex)"><span class="codicon codicon-edit"></span></button>
+                    <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)"><span class="codicon codicon-close"></span></button>
+                  </div>
+                }
               </td>
             </tr>
-            </tbody>
-          </table>
-        </div>
-        <table class="table table table-striped editor-type-properties">
-          <colgroup>
-            <col style="width:35%">
-            <col style="width:35%">
-            <col style="width:50px">
-          </colgroup>
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let property of type.properties; index as propertyIndex">
-            <td>
-              <div class="editor-type-property-name font-monospace">{{ property.name }}</div>
-              <div class="editor-type-property-description text-secondary mt-2" *ngIf="property.description">{{ property.description }}</div>
-            </td>
-            <td>
-              <span class="badge text-bg-primary">{{ property.type }}</span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.reference">
-                <a (click)="selectType(property.reference)" role="button" class="text-white text-decoration-none">{{ property.reference }}</a>
-              </span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.generic">{{ property.generic }}</span>
-              <span class="badge text-bg-secondary ms-1" *ngIf="property.format">{{ property.format }}</span>
-            </td>
-            <td>
-              <div class="btn-group float-end" role="group" *ngIf="!readonly">
-                <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
-                <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
-                <button type="button" class="btn btn-primary" (click)="editProperty(typeIndex, propertyIndex)"><span class="codicon codicon-edit"></span></button>
-                <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)"><span class="codicon codicon-close"></span></button>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-        <div class="btn-group" role="group" *ngIf="!readonly">
+          }
+        </tbody>
+      </table>
+      @if (!readonly) {
+        <div class="btn-group" role="group">
           <a class="btn btn-success" (click)="newProperty(typeIndex)">New Property</a>
         </div>
-      </ng-container>
-    </div>
+      }
+    }
   </div>
-  <div class="card-footer" *ngIf="!readonly">
-    <div class="btn-group" role="group">
-      <button type="button" class="btn btn-primary" (click)="editType(typeIndex)"><span class="codicon codicon-edit"></span></button>
-      <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
-      <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>
-      <button *ngIf="root !== typeIndex" type="button" class="btn btn-secondary" (click)="selectRoot(typeIndex)">Primary</button>
+  @if (!readonly) {
+    <div class="card-footer">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-primary" (click)="editType(typeIndex)"><span class="codicon codicon-edit"></span></button>
+        <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
+        <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>
+        @if (root !== typeIndex) {
+          <button type="button" class="btn btn-secondary" (click)="selectRoot(typeIndex)">Primary</button>
+        }
+      </div>
     </div>
-  </div>
+  }
 </div>

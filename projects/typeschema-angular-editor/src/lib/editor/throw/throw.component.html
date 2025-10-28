@@ -1,53 +1,75 @@
-<div class="row mb-3" *ngFor="let row of result; index as throwIndex">
-  <div class="col-3">
-    <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" [disabled]="true" class="form-select">
-      <option *ngFor="let code of errorStatusCodes" [ngValue]="code.key">{{code.value}}</option>
-    </select>
-  </div>
-  <div class="col-3">
-    <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="row.typeShape">
-      <option [ngValue]="undefined">Object</option>
-      <option ngValue="map">Map</option>
-      <option ngValue="array">Array</option>
-      <option ngValue="mime">Content-Type</option>
-    </select>
-  </div>
-  <div class="col-6">
-    <div class="input-group">
-      <select *ngIf="row.typeShape !== 'mime'" [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
-        <optgroup label="self">
-          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
-        </optgroup>
-        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-          <ng-container *ngFor="let parentType of include.types">
-            <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-          </ng-container>
-        </optgroup>
+
+@for (row of result; track row.code; let throwIndex = $index) {
+  <div class="row mb-3">
+    <div class="col-3">
+      <select [id]="'throwCode_' + row.code" [name]="'throwCode_' + row.code" [(ngModel)]="row.code" [disabled]="true" class="form-select">
+        @for (code of errorStatusCodes; track code) {
+          <option [ngValue]="code.key">{{code.value}}</option>
+        }
       </select>
-      <select *ngIf="row.typeShape === 'mime'" [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
-        <option *ngFor="let contentType of contentTypes" [ngValue]="contentType.value">{{ contentType.name }}</option>
+    </div>
+    <div class="col-3">
+      <select id="operationReturnShape" name="operationReturnShape" class="form-select" [(ngModel)]="row.typeShape">
+        <option [ngValue]="undefined">Object</option>
+        <option ngValue="map">Map</option>
+        <option ngValue="array">Array</option>
+        <option ngValue="mime">Content-Type</option>
       </select>
-      <button class="btn btn-outline-secondary" (click)="removeByIndex(throwIndex); changeValue()"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="col-6">
+      <div class="input-group">
+        @if (row.typeShape !== 'mime') {
+          <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
+            <optgroup label="self">
+              @for (refType of specification.types; track refType.name) {
+                <option [ngValue]="refType.name">{{ refType.name }}</option>
+              }
+            </optgroup>
+            @for (include of specification.imports; track include.alias) {
+              <optgroup label="{{ include.alias }}">
+                @for (parentType of include.types; track parentType.name) {
+                  <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        }
+        @else {
+          <select [id]="'throwType_' + row.code" [name]="'throwType_' + row.code" class="form-select" [(ngModel)]="row.type">
+            @for (contentType of contentTypes; track contentType.name) {
+              <option [ngValue]="contentType.value">{{ contentType.name }}</option>
+            }
+          </select>
+        }
+        <button class="btn btn-outline-secondary" (click)="removeByIndex(throwIndex); changeValue()"><i class="bi bi-x"></i></button>
+      </div>
     </div>
   </div>
-</div>
+}
+
 <div class="row">
   <div class="col-3">
     <select id="newThrowCode" name="newThrowCode" [(ngModel)]="newCode" class="form-select">
-      <option *ngFor="let code of getNotUsedCodes()" [ngValue]="code.key">{{code.value}}</option>
+      @for (code of getNotUsedCodes(); track code) {
+        <option [ngValue]="code.key">{{code.value}}</option>
+      }
     </select>
   </div>
   <div class="col-9">
     <div class="input-group">
       <select id="newThrowType" name="newThrowType" class="form-select" [(ngModel)]="newType">
         <optgroup label="self">
-          <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+          @for (refType of specification.types; track refType.name) {
+            <option [ngValue]="refType.name">{{ refType.name }}</option>
+          }
         </optgroup>
-        <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-          <ng-container *ngFor="let parentType of include.types">
-            <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
-          </ng-container>
-        </optgroup>
+        @for (include of specification.imports; track include.alias) {
+          <optgroup label="{{ include.alias }}">
+            @for (parentType of include.types; track parentType.name) {
+              <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+            }
+          </optgroup>
+        }
       </select>
       <button class="btn btn-outline-secondary" (click)="add(); changeValue()"><i class="bi bi-plus"></i></button>
     </div>
