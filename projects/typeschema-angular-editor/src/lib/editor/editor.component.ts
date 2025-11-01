@@ -1,4 +1,14 @@
-import {Component, ElementRef, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild} from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  signal,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Message} from "typehub-javascript-sdk";
 import {Specification} from "../model/Specification";
@@ -62,6 +72,7 @@ export class EditorComponent implements OnInit {
     discriminator: '',
     mapping: {},
   };
+
   children: Array<string> = [];
   generics: Array<string> = [];
 
@@ -75,20 +86,20 @@ export class EditorComponent implements OnInit {
   importType: SchemaType = 'internal';
   export: string = '';
 
-  search: string = '';
-  searchList: Array<FuseResult<Operation|Type>> = [];
+  search = signal<string>('');
+  searchList = signal<Array<FuseResult<Operation|Type>>>([]);
 
   historyBack: Array<string> = [];
   historyForward: Array<string> = [];
 
-  selected?: Operation|Type;
-  selectedIndex?: number;
+  selected = signal<Operation|Type|undefined>(undefined);
+  selectedIndex = signal<number|undefined>(undefined);
 
   openModal: boolean = false;
   loading: boolean = false;
   dirty: boolean = false;
-  response?: Message;
-  includeResponse?: Message;
+  response = signal<Message|undefined>(undefined);
+  includeResponse = signal<Message|undefined>(undefined);
 
   baseUrl?: string;
   security?: Security;
@@ -148,8 +159,9 @@ export class EditorComponent implements OnInit {
     this.doChange();
     this.doSearch();
 
-    if (this.searchList.length > 0) {
-      this.selectByName(this.searchList[0].item.name);
+    const list = this.searchList();
+    if (list.length > 0) {
+      this.selectByName(list[0].item.name);
     }
   }
 
@@ -176,7 +188,8 @@ export class EditorComponent implements OnInit {
       allList.push(type);
     });
 
-    if (this.search) {
+    const searchTerm = this.search();
+    if (searchTerm) {
       const fuse = new Fuse(allList, {
         keys: [
           'name',
@@ -189,15 +202,18 @@ export class EditorComponent implements OnInit {
         ]
       });
 
-      this.searchList = fuse.search(this.search);
+      this.searchList.set(fuse.search(searchTerm));
     } else {
-      this.searchList = [];
+      const result: Array<FuseResult<Operation|Type>> = [];
+
       allList.forEach((item, refIndex) => {
-        this.searchList.push({
+        result.push({
           item: item,
           refIndex: refIndex,
         });
       });
+
+      this.searchList.set(result);
     }
   }
 
@@ -208,8 +224,8 @@ export class EditorComponent implements OnInit {
         this.historyForward.push(this.selected.name);
       }
 
-      this.selectedIndex = undefined;
-      this.selected = undefined;
+      this.selectedIndex.set(undefined);
+      this.selected.set(undefined);
       this.selectByName(name);
     }
   }
@@ -221,8 +237,8 @@ export class EditorComponent implements OnInit {
         this.historyBack.push(this.selected.name);
       }
 
-      this.selectedIndex = undefined;
-      this.selected = undefined;
+      this.selectedIndex.set(undefined);
+      this.selected.set(undefined);
       this.selectByName(name);
     }
   }
@@ -260,18 +276,18 @@ export class EditorComponent implements OnInit {
       const operation = Object.assign({}, this.operation);
 
       if (!operation.name.match(this.operationValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Operation name must match the regular expression: ' + this.operationValidator.source
-        };
+        });
         return;
       }
 
       if (this.findOperationIndexByName(operation.name) !== -1) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Operation name already exists, please select a different name'
-        };
+        });
         return;
       }
 
@@ -302,10 +318,10 @@ export class EditorComponent implements OnInit {
       }
 
       if (!operation.name.match(this.operationValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Operation name must match the regular expression: ' + this.operationValidator.source
-        };
+        });
         return;
       }
 
@@ -349,18 +365,18 @@ export class EditorComponent implements OnInit {
       type.properties = [];
 
       if (!type.name.match(this.typeValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Type name must match the regular expression: ' + this.typeValidator.source
-        };
+        });
         return;
       }
 
       if (this.findTypeIndexByName(type.name) !== -1) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Type name already exists, please select a different name'
-        };
+        });
         return;
       }
 
@@ -391,10 +407,10 @@ export class EditorComponent implements OnInit {
       }
 
       if (!type.name.match(this.typeValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Type name must match the regular expression: ' + this.typeValidator.source
-        };
+        });
         return;
       }
 
@@ -445,14 +461,14 @@ export class EditorComponent implements OnInit {
 
     const operationIndex = this.findOperationIndexByName(name);
     if (operationIndex !== -1) {
-      this.selectedIndex = operationIndex;
-      this.selected = this.specification.operations[operationIndex];
+      this.selectedIndex.set(operationIndex);
+      this.selected.set(this.specification.operations[operationIndex]);
     }
 
     const typeIndex = this.findTypeIndexByName(name);
     if (typeIndex !== -1) {
-      this.selectedIndex = typeIndex;
-      this.selected = this.specification.types[typeIndex];
+      this.selectedIndex.set(typeIndex);
+      this.selected.set(this.specification.types[typeIndex]);
     }
   }
 
@@ -774,10 +790,10 @@ export class EditorComponent implements OnInit {
       const property = Object.assign({}, this.property);
 
       if (!property.name.match(this.propertyValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Property name must match the regular expression: ' + this.propertyValidator.source
-        };
+        });
         return;
       }
 
@@ -812,10 +828,10 @@ export class EditorComponent implements OnInit {
       const property = Object.assign({}, this.property);
 
       if (!property.name.match(this.propertyValidator)) {
-        this.response = {
+        this.response.set({
           success: false,
           message: 'Property name must match the regular expression: ' + this.propertyValidator.source
-        };
+        });
         return;
       }
 
@@ -869,7 +885,7 @@ export class EditorComponent implements OnInit {
 
   openInclude(content: any): void {
     this.openModal = true;
-    this.includeResponse = undefined;
+    this.includeResponse.set(undefined);
     this.include = {
       alias: '',
       url: '',
@@ -900,10 +916,10 @@ export class EditorComponent implements OnInit {
 
       this.doChange();
     } catch (error) {
-      this.includeResponse = {
+      this.includeResponse.set({
         success: false,
         message: 'Could not include document: ' + error
-      };
+      });
     }
   }
 

@@ -1,10 +1,10 @@
 
 @if (!readonly) {
-  @if (response && response.success === false) {
-    <ngb-alert type="danger">{{ response.message }}</ngb-alert>
+  @if (response()?.success === false) {
+    <ngb-alert type="danger">{{ response()?.message }}</ngb-alert>
   }
-  @if (response && response.success === true) {
-    <ngb-alert type="success">{{ response.message }}</ngb-alert>
+  @if (response()?.success === true) {
+    <ngb-alert type="success">{{ response()?.message }}</ngb-alert>
   }
 
   <div class="btn-group mb-3 sticky-top" role="group">
@@ -49,8 +49,8 @@
       <div class="editor-sidebar">
         <div class="list-group">
           <input type="text" id="search" name="search" [(ngModel)]="search" (ngModelChange)="doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
-          @for (result of searchList; track result.refIndex) {
-            <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected && selected.name === result.item.name}">
+          @for (result of searchList(); track result.refIndex) {
+            <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected()?.name === result.item.name}">
               <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>
               @if (result.item.description) {
                 <br>
@@ -72,9 +72,9 @@
       </div>
     </div>
     <div class="mb-3 overflow-auto d-lg-none">
-      @if (searchList.length > 0) {
-        <select [(ngModel)]="selected" (ngModelChange)="select(selected)" class="form-select">
-        @for (result of searchList; track result.refIndex) {
+      @if (searchList().length > 0) {
+        <select [ngModel]="selected()" (ngModelChange)="select($event)" class="form-select">
+        @for (result of searchList(); track result.refIndex) {
           <option [ngValue]="result.item">{{ result.item.name }}</option>
         }
         </select>
@@ -82,42 +82,45 @@
     </div>
   </div>
   <div class="col-lg-9">
-    @if (operationEnabled && selected && isOperation(selected)) {
-      <typeschema-operation
-        [operation]="selected"
-        [operationIndex]="findOperationIndexByName(selected.name)"
-        [readonly]="readonly"
-        (argumentUp)="upArgument($event.operationIndex, $event.argumentIndex)"
-        (argumentDown)="downArgument($event.operationIndex, $event.argumentIndex)"
-        (argumentDelete)="deleteArgument($event.operationIndex, $event.argumentIndex)"
-        (throwUp)="upThrow($event.operationIndex, $event.throwIndex)"
-        (throwDown)="downThrow($event.operationIndex, $event.throwIndex)"
-        (throwDelete)="deleteThrow($event.operationIndex, $event.throwIndex)"
-        (operationEdit)="editOperation(operationModal, $event)"
-        (operationDelete)="deleteOperation($event)"
-        (operationCopy)="copyOperation($event)"
-        (typeSelect)="selectTypeByName($event)"
-      >
-      </typeschema-operation>
-    } @else if (selected && isType(selected)) {
-      <typeschema-type
-        [type]="selected"
-        [typeIndex]="findTypeIndexByName(selected.name)"
-        [readonly]="readonly"
-        [root]="specification.root"
-        (propertyUp)="upProperty($event.typeIndex, $event.propertyIndex)"
-        (propertyDown)="downProperty($event.typeIndex, $event.propertyIndex)"
-        (propertyNew)="openProperty(propertyModal, $event)"
-        (propertyEdit)="editProperty(propertyModal, $event.typeIndex, $event.propertyIndex)"
-        (propertyDelete)="deleteProperty($event.typeIndex, $event.propertyIndex)"
-        (typeEdit)="editType(typeModal, $event)"
-        (typeDelete)="deleteType($event)"
-        (typeCopy)="copyType($event)"
-        (typeSelect)="selectTypeByName($event)"
-        (rootSelect)="setRoot($event)"
-        (mappingDelete)="deleteTypeMapping($event.typeIndex, $event.mappingKey)"
-      >
-      </typeschema-type>
+    @if (selected(); as selectedObject) {
+      @if (operationEnabled && isOperation(selectedObject)) {
+        <typeschema-operation
+          [operation]="selectedObject"
+          [operationIndex]="findOperationIndexByName(selectedObject.name)"
+          [readonly]="readonly"
+          (argumentUp)="upArgument($event.operationIndex, $event.argumentIndex)"
+          (argumentDown)="downArgument($event.operationIndex, $event.argumentIndex)"
+          (argumentDelete)="deleteArgument($event.operationIndex, $event.argumentIndex)"
+          (throwUp)="upThrow($event.operationIndex, $event.throwIndex)"
+          (throwDown)="downThrow($event.operationIndex, $event.throwIndex)"
+          (throwDelete)="deleteThrow($event.operationIndex, $event.throwIndex)"
+          (operationEdit)="editOperation(operationModal, $event)"
+          (operationDelete)="deleteOperation($event)"
+          (operationCopy)="copyOperation($event)"
+          (typeSelect)="selectTypeByName($event)"
+        >
+        </typeschema-operation>
+      } @else if (isType(selectedObject)) {
+        <typeschema-type
+          [type]="selectedObject"
+          [typeIndex]="findTypeIndexByName(selectedObject.name)"
+          [readonly]="readonly"
+          [root]="specification.root"
+          (propertyUp)="upProperty($event.typeIndex, $event.propertyIndex)"
+          (propertyDown)="downProperty($event.typeIndex, $event.propertyIndex)"
+          (propertyNew)="openProperty(propertyModal, $event)"
+          (propertyEdit)="editProperty(propertyModal, $event.typeIndex, $event.propertyIndex)"
+          (propertyDelete)="deleteProperty($event.typeIndex, $event.propertyIndex)"
+          (typeEdit)="editType(typeModal, $event)"
+          (typeDelete)="deleteType($event)"
+          (typeCopy)="copyType($event)"
+          (typeSelect)="selectTypeByName($event)"
+          (rootSelect)="setRoot($event)"
+          (mappingDelete)="deleteTypeMapping($event.typeIndex, $event.mappingKey)"
+        >
+        </typeschema-type>
+      } @else {
+      }
     } @else {
     }
   </div>
@@ -634,8 +637,8 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    @if (includeResponse && includeResponse.success === false) {
-      <ngb-alert type="danger">{{ includeResponse.message }}</ngb-alert>
+    @if (includeResponse()?.success === false) {
+      <ngb-alert type="danger">{{ includeResponse()?.message }}</ngb-alert>
     }
     <table class="table table table-striped mb-3">
       <colgroup>
