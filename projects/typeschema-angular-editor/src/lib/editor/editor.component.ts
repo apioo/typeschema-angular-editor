@@ -1,9 +1,10 @@
 import {
   Component,
+  effect,
   ElementRef,
   EventEmitter,
+  input,
   Input,
-  OnInit,
   Output,
   signal,
   TemplateRef,
@@ -21,6 +22,7 @@ import {Security} from "../model/Security";
 import {BCLayerService} from "../bclayer.service";
 import {ResolverService} from "../resolver.service";
 import Fuse, {FuseResult} from "fuse.js";
+import {Throw} from "../model/Throw";
 
 @Component({
   standalone: false,
@@ -28,17 +30,13 @@ import Fuse, {FuseResult} from "fuse.js";
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css']
 })
-export class EditorComponent implements OnInit {
+export class EditorComponent {
 
-  @Input() specification: Specification = {
-    imports: [],
-    operations: [],
-    types: [],
-  };
-  @Input() operationEnabled: boolean = false;
-  @Input() importEnabled: boolean = true;
-  @Input() readonly: boolean = false;
-  @Input() id: string = '';
+  specification = input.required<Specification>();
+  operationEnabled = input<boolean>(false);
+  importEnabled = input<boolean>(true);
+  readonly = input<boolean>(false);
+  id = input<string>('');
 
   @Input() objectRef?: TemplateRef<any>;
   @Input() arrayRef?: TemplateRef<any>;
@@ -53,6 +51,12 @@ export class EditorComponent implements OnInit {
 
   @ViewChild('operationModal') operationModalRef!: ElementRef;
   @ViewChild('typeModal') typeModalRef!: ElementRef;
+
+  spec = signal<Specification>({
+    imports: [],
+    operations: [],
+    types: [],
+  });
 
   operation: Operation = {
     name: '',
@@ -96,8 +100,9 @@ export class EditorComponent implements OnInit {
   selectedIndex = signal<number|undefined>(undefined);
 
   openModal: boolean = false;
-  loading: boolean = false;
   dirty: boolean = false;
+
+  loading = signal<boolean>(false);
   response = signal<Message|undefined>(undefined);
   includeResponse = signal<Message|undefined>(undefined);
 
@@ -134,57 +139,60 @@ export class EditorComponent implements OnInit {
   typeValidator = /^[A-Za-z0-9_]{1,128}$/;
   propertyValidator = /^[A-Za-z0-9_.$]{1,128}$/;
 
-  constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal) { }
+  constructor(private importService: ImportService, private resolverService: ResolverService, private bcLayerService: BCLayerService, private modalService: NgbModal) {
+    effect(async () => {
+      const specification = this.specification();
+      if (!Array.isArray(specification.operations)) {
+        specification.operations = [];
+      }
 
-  async ngOnInit(): Promise<void> {
-    if (!Array.isArray(this.specification.operations)) {
-      this.specification.operations = [];
-    }
-
-    if (!this.readonly && this.specification.imports.length > 0) {
-      for (let i = 0; i < this.specification.imports.length; i++) {
-        const include = this.specification.imports[i];
-        if (include && !include.types) {
-          this.specification.imports[i].types = await this.resolverService.resolveIncludeTypes(include);
+      if (!this.readonly() && specification.imports.length > 0) {
+        for (let i = 0; i < specification.imports.length; i++) {
+          const include = specification.imports[i];
+          if (include && !include.types) {
+            specification.imports[i].types = await this.resolverService.resolveIncludeTypes(include);
+          }
         }
       }
-    }
 
-    this.specification = this.bcLayerService.transform(this.specification);
+      this.spec.set(this.bcLayerService.transform(specification));
 
-    this.doInitialize();
+      this.doInitialize();
+    });
   }
 
   doInitialize(): void {
     this.doChange();
     this.doSearch();
 
-    const list = this.searchList();
-    if (list.length > 0) {
-      this.selectByName(list[0].item.name);
+    if (this.selected() === undefined) {
+      const list = this.searchList();
+      if (list.length > 0) {
+        this.selectByName(list[0].item.name);
+      }
     }
   }
 
   doSave(): void {
-    this.save.emit(this.specification);
+    this.save.emit(this.spec());
     this.dirty = false;
   }
 
   doChange(): void {
     this.saveToLocalStorage();
-    this.change.emit(this.specification);
+    this.change.emit(this.spec());
   }
 
   doSearch(): void {
     const allList: Array<Operation|Type> = [];
 
-    if (this.operationEnabled) {
-      this.specification.operations.forEach((operation) => {
+    if (this.operationEnabled()) {
+      this.spec().operations.forEach((operation) => {
         allList.push(operation);
       });
     }
 
-    this.specification.types.forEach((type) => {
+    this.spec().types.forEach((type) => {
       allList.push(type);
     });
 
@@ -220,8 +228,9 @@ export class EditorComponent implements OnInit {
   doHistoryBack() {
     const name = this.historyBack.pop();
     if (name) {
-      if (this.selected) {
-        this.historyForward.push(this.selected.name);
+      const selected = this.selected();
+      if (selected && selected.name) {
+        this.historyForward.push(selected.name);
       }
 
       this.selectedIndex.set(undefined);
@@ -233,8 +242,9 @@ export class EditorComponent implements OnInit {
   doHistoryForward() {
     const name = this.historyForward.pop();
     if (name) {
-      if (this.selected) {
-        this.historyBack.push(this.selected.name);
+      const selected = this.selected();
+      if (selected && selected.name) {
+        this.historyBack.push(selected.name);
       }
 
       this.selectedIndex.set(undefined);
@@ -244,16 +254,23 @@ export class EditorComponent implements OnInit {
   }
 
   setRoot(typeIndex: number) {
-    this.specification.root = typeIndex;
+    this.spec.update((spec) => {
+      spec.root = typeIndex;
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   orderOperations() {
-    this.specification.operations.sort((left: Operation, right: Operation) => {
-      return left.name.localeCompare(right.name);
-    });
+    this.spec.update((spec) => {
+      spec.operations.sort((left: Operation, right: Operation) => {
+        return left.name.localeCompare(right.name);
+      });
+      return spec;
+    })
   }
 
   openOperation(content: any): void {
@@ -291,7 +308,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.specification.operations.push(operation);
+      this.spec.update((spec) => {
+        spec.operations.push(operation);
+        return spec;
+      });
+
       this.dirty = true;
       this.openModal = false;
 
@@ -306,7 +327,7 @@ export class EditorComponent implements OnInit {
 
   editOperation(content: any, operationIndex: number): void {
     this.openModal = true;
-    this.operation = Object.assign({}, this.specification.operations[operationIndex]);
+    this.operation = Object.assign({}, this.spec().operations[operationIndex]);
 
     this.modalService.open(content, {size: 'lg'}).result.then((result) => {
       const operation = Object.assign({}, this.operation);
@@ -325,7 +346,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.specification.operations[operationIndex] = operation;
+      this.spec.update((spec) => {
+        spec.operations[operationIndex] = operation;
+        return spec;
+      });
+
       this.dirty = true;
       this.openModal = false;
 
@@ -347,8 +372,11 @@ export class EditorComponent implements OnInit {
   }
 
   orderTypes() {
-    this.specification.types.sort((left: Type, right: Type) => {
-      return left.name.localeCompare(right.name);
+    this.spec.update((spec) => {
+      spec.types.sort((left: Type, right: Type) => {
+        return left.name.localeCompare(right.name);
+      });
+      return spec;
     });
   }
 
@@ -380,7 +408,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.specification.types.push(type);
+      this.spec.update((spec) => {
+        spec.types.push(type);
+        return spec;
+      });
+
       this.dirty = true;
       this.openModal = false;
 
@@ -395,7 +427,7 @@ export class EditorComponent implements OnInit {
 
   editType(content: any, typeIndex: number): void {
     this.openModal = true;
-    this.type = Object.assign({}, this.specification.types[typeIndex]);
+    this.type = Object.assign({}, this.spec().types[typeIndex]);
 
     this.updateMapping();
     this.updateGenerics();
@@ -414,7 +446,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.specification.types[typeIndex] = type;
+      this.spec.update((spec) => {
+        spec.types[typeIndex] = type;
+        return spec;
+      });
+
       this.dirty = true;
       this.openModal = false;
 
@@ -428,20 +464,24 @@ export class EditorComponent implements OnInit {
   }
 
   deleteTypeMapping(typeIndex: number, mappingKey: string): void {
-    if (!this.specification.types[typeIndex]) {
+    if (!this.spec().types[typeIndex]) {
       return;
     }
 
-    const mapping = this.specification.types[typeIndex].mapping;
-    if (!mapping) {
-      return;
-    }
+    this.spec.update((spec) => {
+      const mapping = spec.types[typeIndex].mapping;
+      if (!mapping) {
+        return spec;
+      }
 
-    if (!mapping[mappingKey]) {
-      return;
-    }
+      if (!mapping[mappingKey]) {
+        return spec;
+      }
 
-    delete mapping[mappingKey];
+      delete mapping[mappingKey];
+
+      return spec;
+    });
   }
 
   select(object: Operation|Type|undefined): void {
@@ -454,21 +494,22 @@ export class EditorComponent implements OnInit {
   }
 
   selectByName(name: string) {
-    if (this.selected) {
+    const selected = this.selected();
+    if (selected && selected.name) {
       // in case we have already a selection add to history
-      this.historyBack.push(this.selected.name);
+      this.historyBack.push(selected.name);
     }
 
     const operationIndex = this.findOperationIndexByName(name);
     if (operationIndex !== -1) {
       this.selectedIndex.set(operationIndex);
-      this.selected.set(this.specification.operations[operationIndex]);
+      this.selected.set(this.spec().operations[operationIndex]);
     }
 
     const typeIndex = this.findTypeIndexByName(name);
     if (typeIndex !== -1) {
       this.selectedIndex.set(typeIndex);
-      this.selected.set(this.specification.types[typeIndex]);
+      this.selected.set(this.spec().types[typeIndex]);
     }
   }
 
@@ -502,8 +543,8 @@ export class EditorComponent implements OnInit {
   }
 
   findOperationIndexByName(operationName: string): number {
-    for (let i = 0; i < this.specification.operations.length; i++) {
-      if (this.specification.operations[i].name === operationName) {
+    for (let i = 0; i < this.spec().operations.length; i++) {
+      if (this.spec().operations[i].name === operationName) {
         return i;
       }
     }
@@ -512,9 +553,9 @@ export class EditorComponent implements OnInit {
   }
 
   findTypeByName(typeName: string): Type|null {
-    for (let i = 0; i < this.specification.types.length; i++) {
-      if (this.specification.types[i].name === typeName) {
-        return this.specification.types[i];
+    for (let i = 0; i < this.spec().types.length; i++) {
+      if (this.spec().types[i].name === typeName) {
+        return this.spec().types[i];
       }
     }
 
@@ -526,12 +567,12 @@ export class EditorComponent implements OnInit {
     const namespace = parts[0];
     const name = parts[1];
 
-    for (let i = 0; i < this.specification.imports.length; i++) {
-      if (this.specification.imports[i].alias !== namespace) {
+    for (let i = 0; i < this.spec().imports.length; i++) {
+      if (this.spec().imports[i].alias !== namespace) {
         continue;
       }
 
-      const types = this.specification.imports[i].types;
+      const types = this.spec().imports[i].types;
       if (!types) {
         continue;
       }
@@ -547,8 +588,8 @@ export class EditorComponent implements OnInit {
   }
 
   findTypeIndexByName(typeName: string): number {
-    for (let i = 0; i < this.specification.types.length; i++) {
-      if (this.specification.types[i].name === typeName) {
+    for (let i = 0; i < this.spec().types.length; i++) {
+      if (this.spec().types[i].name === typeName) {
         return i;
       }
     }
@@ -562,8 +603,8 @@ export class EditorComponent implements OnInit {
     }
 
     let result: Array<string> = [];
-    for (let i = 0; i < this.specification.types.length; i++) {
-      const type = this.specification?.types[i];
+    for (let i = 0; i < this.spec().types.length; i++) {
+      const type = this.spec()?.types[i];
       if (type?.parent === parent.name) {
         if (type?.base) {
           const mapping = type?.mapping;
@@ -611,12 +652,15 @@ export class EditorComponent implements OnInit {
   }
 
   deleteOperation(operationIndex: number): void {
-    const operation = this.specification.operations[operationIndex];
-    if (!operation) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations.splice(operationIndex, 1);
+    this.spec.update((spec) => {
+      spec.operations.splice(operationIndex, 1);
+      return spec;
+    });
+
     this.dirty = true;
 
     this.orderOperations();
@@ -625,11 +669,11 @@ export class EditorComponent implements OnInit {
   }
 
   copyOperation(operationIndex: number): void {
-    if (!this.specification.operations[operationIndex]) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    let newOperation = JSON.parse(JSON.stringify(this.specification.operations[operationIndex]));
+    let newOperation = JSON.parse(JSON.stringify(this.spec().operations[operationIndex]));
     let newName = newOperation.name + '_copy';
     let i = 0;
     while (this.findOperationIndexByName(newName) !== -1) {
@@ -638,7 +682,11 @@ export class EditorComponent implements OnInit {
     }
     newOperation.name = newName;
 
-    this.specification.operations.push(newOperation);
+    this.spec.update((spec) => {
+      spec.operations.push(newOperation);
+      return spec;
+    });
+
     this.dirty = true;
 
     this.selectByName(newOperation.name);
@@ -647,82 +695,133 @@ export class EditorComponent implements OnInit {
   }
 
   upArgument(operationIndex: number, argumentIndex: number): void {
-    const property = this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].arguments?.splice(argumentIndex - 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.operations[operationIndex].arguments?.splice(argumentIndex - 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   downArgument(operationIndex: number, argumentIndex: number): void {
-    const property = this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].arguments?.splice(argumentIndex + 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.operations[operationIndex].arguments?.splice(argumentIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.operations[operationIndex].arguments?.splice(argumentIndex + 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   deleteArgument(operationIndex: number, argumentIndex: number): void {
-    if (!this.specification.operations[operationIndex]) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].arguments?.splice(argumentIndex, 1);
+    this.spec.update((spec) => {
+      spec.operations[operationIndex].arguments?.splice(argumentIndex, 1);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   upThrow(operationIndex: number, throwIndex: number): void {
-    const property = this.specification.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].throws?.splice(throwIndex - 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.operations[operationIndex].throws?.splice(throwIndex - 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   downThrow(operationIndex: number, throwIndex: number): void {
-    const property = this.specification.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].throws?.splice(throwIndex + 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.operations[operationIndex].throws?.splice(throwIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.operations[operationIndex].throws?.splice(throwIndex + 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   deleteThrow(operationIndex: number, throwIndex: number): void {
-    if (!this.specification.operations[operationIndex]) {
+    if (!this.spec().operations[operationIndex]) {
       return;
     }
 
-    this.specification.operations[operationIndex].throws?.splice(throwIndex, 1);
+    this.spec.update((spec) => {
+      spec.operations[operationIndex].throws?.splice(throwIndex, 1);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   deleteType(typeIndex: number): void {
-    const type = this.specification.types[typeIndex];
+    const type = this.spec().types[typeIndex];
     if (!type) {
       return;
     }
 
-    this.specification.types.splice(typeIndex, 1);
+    this.spec.update((spec) => {
+      spec.types.splice(typeIndex, 1);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.orderTypes();
@@ -731,11 +830,11 @@ export class EditorComponent implements OnInit {
   }
 
   copyType(typeIndex: number): void {
-    if (!this.specification.types[typeIndex]) {
+    if (!this.spec().types[typeIndex]) {
       return;
     }
 
-    let newType = JSON.parse(JSON.stringify(this.specification.types[typeIndex]));
+    let newType = JSON.parse(JSON.stringify(this.spec().types[typeIndex]));
     let newName = newType.name + '_copy';
     let i = 0;
     while (this.findTypeIndexByName(newName) !== -1) {
@@ -744,7 +843,12 @@ export class EditorComponent implements OnInit {
     }
     newType.name = newName;
 
-    this.specification.types.push(newType);
+    this.spec.update((spec) => {
+      spec.types.push(newType);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.selectByName(newType.name);
@@ -753,24 +857,42 @@ export class EditorComponent implements OnInit {
   }
 
   upProperty(typeIndex: number, propertyIndex: number): void {
-    const property = this.specification.types[typeIndex].properties?.splice(propertyIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().types[typeIndex]) {
       return;
     }
 
-    this.specification.types[typeIndex].properties?.splice(propertyIndex - 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.types[typeIndex].properties?.splice(propertyIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.types[typeIndex].properties?.splice(propertyIndex - 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
   }
 
   downProperty(typeIndex: number, propertyIndex: number): void {
-    const property = this.specification.types[typeIndex].properties?.splice(propertyIndex, 1)[0];
-    if (!property) {
+    if (!this.spec().types[typeIndex]) {
       return;
     }
 
-    this.specification.types[typeIndex].properties?.splice(propertyIndex + 1, 0, property);
+    this.spec.update((spec) => {
+      const property = spec.types[typeIndex].properties?.splice(propertyIndex, 1)[0];
+      if (!property) {
+        return spec;
+      }
+
+      spec.types[typeIndex].properties?.splice(propertyIndex + 1, 0, property);
+
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
@@ -797,7 +919,11 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      this.specification.types[typeIndex].properties?.push(property);
+      this.spec.update((spec) => {
+        spec.types[typeIndex].properties?.push(property);
+        return spec;
+      });
+
       this.dirty = true;
       this.openModal = false;
 
@@ -808,7 +934,7 @@ export class EditorComponent implements OnInit {
   }
 
   editProperty(content: any, typeIndex: number, propertyIndex: number): void {
-    const props = this.specification.types[typeIndex].properties;
+    const props = this.spec().types[typeIndex].properties;
     if (!props) {
       return;
     }
@@ -835,7 +961,15 @@ export class EditorComponent implements OnInit {
         return;
       }
 
-      props[propertyIndex] = property;
+      this.spec.update((spec) => {
+        const props = spec.types[typeIndex].properties;
+        if (!props) {
+          return spec;
+        }
+
+        props[propertyIndex] = property;
+        return spec;
+      });
 
       this.dirty = true;
       this.openModal = false;
@@ -847,11 +981,15 @@ export class EditorComponent implements OnInit {
   }
 
   deleteProperty(typeIndex: number, propertyIndex: number): void {
-    if (!this.specification.types[typeIndex]) {
+    if (!this.spec().types[typeIndex]) {
       return;
     }
 
-    this.specification.types[typeIndex].properties?.splice(propertyIndex, 1);
+    this.spec.update((spec) => {
+      spec.types[typeIndex].properties?.splice(propertyIndex, 1);
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
@@ -859,20 +997,24 @@ export class EditorComponent implements OnInit {
 
   openSettings(content: any): void {
     this.openModal = true;
-    this.baseUrl = this.specification.baseUrl || '';
-    this.security = this.specification.security || {
+    this.baseUrl = this.spec().baseUrl || '';
+    this.security = this.spec().security || {
       type: 'none'
     };
 
     this.modalService.open(content, {size: 'lg'}).result.then(async (result) => {
-      this.specification.baseUrl = this.baseUrl;
+      this.spec.update((spec) => {
+        spec.baseUrl = this.baseUrl;
 
-      const availableType = ['httpBasic', 'httpBearer', 'apiKey', 'oauth2'];
-      if (this.security?.type && availableType.includes(this.security?.type)) {
-        this.specification.security = this.security;
-      } else {
-        this.specification.security = undefined;
-      }
+        const availableType = ['httpBasic', 'httpBearer', 'apiKey', 'oauth2'];
+        if (this.security?.type && availableType.includes(this.security?.type)) {
+          spec.security = this.security;
+        } else {
+          spec.security = undefined;
+        }
+
+        return spec;
+      });
 
       this.dirty = true;
       this.openModal = false;
@@ -910,7 +1052,11 @@ export class EditorComponent implements OnInit {
 
     try {
       newInclude.types = await this.resolverService.resolveIncludeTypes(newInclude);
-      this.specification.imports.push(newInclude);
+
+      this.spec.update((spec) => {
+        spec.imports.push(newInclude);
+        return spec;
+      });
 
       this.dirty = true;
 
@@ -924,7 +1070,11 @@ export class EditorComponent implements OnInit {
   }
 
   deleteInclude(includeIndex: number): void {
-    this.specification.imports.splice(includeIndex, 1);
+    this.spec.update((spec) => {
+      spec.imports.splice(includeIndex, 1);
+      return spec;
+    });
+
     this.dirty = true;
 
     this.doChange();
@@ -935,16 +1085,19 @@ export class EditorComponent implements OnInit {
     this.import = '';
 
     this.modalService.open(content).result.then(async (result) => {
-      this.loading = true;
+      this.loading.set(true);
 
-      const spec = await this.importService.transform(this.importType, this.import);
+      const specImport = await this.importService.transform(this.importType, this.import);
 
-      this.specification.imports = spec.imports;
-      this.specification.operations = spec.operations;
-      this.specification.types = spec.types;
-      this.specification.root = spec.root;
+      this.spec.update((spec) => {
+        spec.imports = specImport.imports;
+        spec.operations = specImport.operations;
+        spec.types = specImport.types;
+        spec.root = specImport.root;
+        return spec;
+      });
 
-      this.loading = false;
+      this.loading.set(false);
       this.dirty = true;
       this.openModal = false;
       this.import = '';
@@ -957,7 +1110,7 @@ export class EditorComponent implements OnInit {
 
   openExport(content: any): void {
     this.openModal = true;
-    this.export = JSON.stringify(this.specification, null, 2);
+    this.export = JSON.stringify(this.spec(), null, 2);
 
     this.modalService.open(content).result.then((result) => {
       this.openModal = false;
@@ -967,9 +1120,18 @@ export class EditorComponent implements OnInit {
   }
 
   loadFromLocalStorage() {
-    let spec = localStorage.getItem(this.getLocalStorageName());
-    if (spec) {
-      this.specification = JSON.parse(spec);
+    let data = localStorage.getItem(this.getLocalStorageName());
+    if (data) {
+      const specImport = JSON.parse(data);
+
+      this.spec.update((spec) => {
+        spec.imports = specImport.imports;
+        spec.operations = specImport.operations;
+        spec.types = specImport.types;
+        spec.root = specImport.root;
+        return spec;
+      });
+
       this.dirty = true;
 
       this.doInitialize();
@@ -978,7 +1140,7 @@ export class EditorComponent implements OnInit {
 
   saveToLocalStorage() {
     if (!this.isEmptySpecification()) {
-      localStorage.setItem(this.getLocalStorageName(), JSON.stringify(this.specification));
+      localStorage.setItem(this.getLocalStorageName(), JSON.stringify(this.spec()));
     }
   }
 
@@ -987,6 +1149,6 @@ export class EditorComponent implements OnInit {
   }
 
   private isEmptySpecification(): boolean {
-    return this.specification.imports.length === 0 && this.specification.operations.length === 0 && this.specification.types.length === 0;
+    return this.spec().imports.length === 0 && this.spec().operations.length === 0 && this.spec().types.length === 0;
   }
 }

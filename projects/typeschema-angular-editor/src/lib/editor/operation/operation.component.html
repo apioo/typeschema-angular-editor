@@ -1,162 +1,164 @@
 
-<div class="card editor-type mb-3" id="operation-{{ operation.name }}">
-  <div class="card-header">
-    <div class="editor-operation-name font-monospace">
+@if (operation(); as operation) {
+  <div class="card editor-type mb-3" id="operation-{{ operation.name }}">
+    <div class="card-header">
+      <div class="editor-operation-name font-monospace">
       <span class="text-nowrap">
         <i class="bi bi-box"></i>
         {{ operation.name }}
       </span>
-      <div class="float-end text-end">
-        <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
+        <div class="float-end text-end">
+          <code>{{ operation.httpMethod }} {{ operation.httpPath }}</code>
+        </div>
       </div>
+      @if (operation.description) {
+        <div class="text-secondary editor-operation-description mt-2">{{ operation.description }}</div>
+      }
     </div>
-    @if (operation.description) {
-      <div class="text-secondary editor-operation-description mt-2">{{ operation.description }}</div>
-    }
-  </div>
-  <div class="card-body">
-    @if (operation.arguments.length > 0 || operation.payload) {
-      <table class="table table-striped">
-        <colgroup>
-          <col style="width:35%">
-          <col style="width:35%">
-          <col style="width:50px">
-        </colgroup>
-        <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @for (argument of operation.arguments; track argument.name; let argumentIndex = $index) {
+    <div class="card-body">
+      @if (operation.arguments.length > 0 || operation.payload) {
+        <table class="table table-striped">
+          <colgroup>
+            <col style="width:35%">
+            <col style="width:35%">
+            <col style="width:50px">
+          </colgroup>
+          <thead>
           <tr>
-            <td>
-              <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
-            </td>
-            <td>
-              <span class="badge text-bg-primary">
-                <a (click)="selectType(argument.type)" role="button" class="text-white text-decoration-none">{{ argument.type }}</a>
-              </span>
-              <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
-            </td>
-            <td>
-              @if (!readonly) {
-                <div class="btn-group float-end" role="group">
-                  <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-up"></i></button>
-                  <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex, argumentIndex)"><i class="bi bi-arrow-down"></i></button>
-                  <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex, argumentIndex)"><span class="codicon codicon-close"></span></button>
-                </div>
-              }
-            </td>
+            <th>Name</th>
+            <th>Type</th>
+            <th></th>
           </tr>
-        }
-        @if (operation.payload) {
-          <tr>
-            <td>
-              <span class="editor-operation-argument-name font-monospace">payload</span>
-            </td>
-            <td>
-            <span class="badge text-bg-primary">
-              @if (operation.payloadShape === 'array') {
-                Array&lt;<a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
-              } @else if (operation.payloadShape === 'map') {
-                Map&lt;string, <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
-              } @else if (operation.payloadShape === 'mime') {
-                {{ operation.payload }}
-              } @else {
-                <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>
-              }
-            </span>
-              <span class="badge text-bg-secondary ms-1">body</span>
-            </td>
-            <td></td>
-          </tr>
-        }
-        </tbody>
-      </table>
-    }
+          </thead>
+          <tbody>
+            @for (argument of operation.arguments; track argument.name; let argumentIndex = $index) {
+              <tr>
+                <td>
+                  <span class="editor-operation-argument-name font-monospace">{{ argument.name }}</span>
+                </td>
+                <td>
+                  <span class="badge text-bg-primary">
+                    <a (click)="selectType(argument.type)" role="button" class="text-white text-decoration-none">{{ argument.type }}</a>
+                  </span>
+                  <span class="badge text-bg-secondary ms-1">{{ argument.in }}</span>
+                </td>
+                <td>
+                  @if (!readonly()) {
+                    <div class="btn-group float-end" role="group">
+                      <button type="button" class="btn btn-secondary" (click)="upArgument(operationIndex(), argumentIndex)"><i class="bi bi-arrow-up"></i></button>
+                      <button type="button" class="btn btn-secondary" (click)="downArgument(operationIndex(), argumentIndex)"><i class="bi bi-arrow-down"></i></button>
+                      <button type="button" class="btn btn-danger" (click)="deleteArgument(operationIndex(), argumentIndex)"><span class="codicon codicon-close"></span></button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+            @if (operation.payload) {
+              <tr>
+                <td>
+                  <span class="editor-operation-argument-name font-monospace">payload</span>
+                </td>
+                <td>
+                  <span class="badge text-bg-primary">
+                    @if (operation.payloadShape === 'array') {
+                      Array&lt;<a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
+                    } @else if (operation.payloadShape === 'map') {
+                      Map&lt;string, <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>&gt;
+                    } @else if (operation.payloadShape === 'mime') {
+                      {{ operation.payload }}
+                    } @else {
+                      <a (click)="selectType(operation.payload)" role="button" class="text-white text-decoration-none">{{ operation.payload }}</a>
+                    }
+                  </span>
+                  <span class="badge text-bg-secondary ms-1">body</span>
+                </td>
+                <td></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
 
-    @if (operation.httpCode || operation.throws.length > 0) {
-      <table class="table table-striped">
-        <colgroup>
-          <col style="width:35%">
-          <col style="width:35%">
-          <col style="width:50px">
-        </colgroup>
-        <thead>
-        <tr>
-          <th>Code</th>
-          <th>Type</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @if (operation.httpCode === 204) {
+      @if (operation.httpCode || operation.throws.length > 0) {
+        <table class="table table-striped">
+          <colgroup>
+            <col style="width:35%">
+            <col style="width:35%">
+            <col style="width:50px">
+          </colgroup>
+          <thead>
           <tr>
-            <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-            <td><span class="badge text-bg-secondary">-</span></td>
-            <td></td>
+            <th>Code</th>
+            <th>Type</th>
+            <th></th>
           </tr>
-        }
-        @if (operation.httpCode && operation.return) {
-          <tr>
-            <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
-            <td>
-            <span class="badge text-bg-primary">
-              @if (operation.returnShape === 'array') {
-                Array&lt;<a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
-              } @else if (operation.returnShape === 'map') {
-                Map&lt;string, <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
-              } @else if (operation.returnShape === 'mime') {
-                {{ operation.return }}
-              } @else {
-                <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>
-              }
-            </span>
-            </td>
-            <td></td>
-          </tr>
-        }
-        @for (throw_ of operation.throws; track throw_.code; let throwIndex = $index) {
-          <tr>
-            <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
-            <td>
-            <span class="badge text-bg-primary">
-              @if (throw_.typeShape === 'array') {
-                Array&lt;<a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
-              } @else if (throw_.typeShape === 'map') {
-                Map&lt;string, <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
-              } @else if (throw_.typeShape === 'mime') {
-                {{ throw_.type }}
-              } @else {
-                <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>
-              }
-            </span>
-            </td>
-            <td>
-              @if (!readonly) {
-                <div class="btn-group float-end" role="group">
-                  <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-up"></i></button>
-                  <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex, throwIndex)"><i class="bi bi-arrow-down"></i></button>
-                  <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex, throwIndex)"><span class="codicon codicon-close"></span></button>
-                </div>
-              }
-            </td>
-          </tr>
-        }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @if (operation.httpCode === 204) {
+              <tr>
+                <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+                <td><span class="badge text-bg-secondary">-</span></td>
+                <td></td>
+              </tr>
+            }
+            @if (operation.httpCode && operation.return) {
+              <tr>
+                <td><span class="badge text-bg-success">{{ operation.httpCode }}</span></td>
+                <td>
+                  <span class="badge text-bg-primary">
+                    @if (operation.returnShape === 'array') {
+                      Array&lt;<a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
+                    } @else if (operation.returnShape === 'map') {
+                      Map&lt;string, <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>&gt;
+                    } @else if (operation.returnShape === 'mime') {
+                      {{ operation.return }}
+                    } @else {
+                      <a (click)="selectType(operation.return)" role="button" class="text-white text-decoration-none">{{ operation.return }}</a>
+                    }
+                  </span>
+                </td>
+                <td></td>
+              </tr>
+            }
+            @for (throw_ of operation.throws; track throw_.code; let throwIndex = $index) {
+              <tr>
+                <td><span class="badge text-bg-danger">{{ throw_.code }}</span></td>
+                <td>
+                  <span class="badge text-bg-primary">
+                    @if (throw_.typeShape === 'array') {
+                      Array&lt;<a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
+                    } @else if (throw_.typeShape === 'map') {
+                      Map&lt;string, <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>&gt;
+                    } @else if (throw_.typeShape === 'mime') {
+                      {{ throw_.type }}
+                    } @else {
+                      <a (click)="selectType(throw_.type)" role="button" class="text-white text-decoration-none">{{ throw_.type }}</a>
+                    }
+                  </span>
+                </td>
+                <td>
+                  @if (!readonly()) {
+                    <div class="btn-group float-end" role="group">
+                      <button type="button" class="btn btn-secondary" (click)="upThrow(operationIndex(), throwIndex)"><i class="bi bi-arrow-up"></i></button>
+                      <button type="button" class="btn btn-secondary" (click)="downThrow(operationIndex(), throwIndex)"><i class="bi bi-arrow-down"></i></button>
+                      <button type="button" class="btn btn-danger" (click)="deleteThrow(operationIndex(), throwIndex)"><span class="codicon codicon-close"></span></button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+    @if (!readonly()) {
+      <div class="card-footer">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-primary" (click)="editOperation(operationIndex())"><span class="codicon codicon-edit"></span></button>
+          <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex())"><span class="codicon codicon-close"></span></button>
+          <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex())"><span class="codicon codicon-copy"></span></button>
+        </div>
+      </div>
     }
   </div>
-  @if (!readonly) {
-    <div class="card-footer">
-      <div class="btn-group" role="group">
-        <button type="button" class="btn btn-primary" (click)="editOperation(operationIndex)"><span class="codicon codicon-edit"></span></button>
-        <button type="button" class="btn btn-danger" (click)="deleteOperation(operationIndex)"><span class="codicon codicon-close"></span></button>
-        <button type="button" class="btn btn-secondary" (click)="copyOperation(operationIndex)"><span class="codicon codicon-copy"></span></button>
-      </div>
-    </div>
-  }
-</div>
+}

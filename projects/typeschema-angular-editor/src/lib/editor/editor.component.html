@@ -1,5 +1,5 @@
 
-@if (!readonly) {
+@if (!readonly()) {
   @if (response()?.success === false) {
     <ngb-alert type="danger">{{ response()?.message }}</ngb-alert>
   }
@@ -11,13 +11,13 @@
     @if (save.observed) {
       <button type="button" class="btn btn-primary" (click)="doSave()">Save</button>
     }
-    @if (operationEnabled) {
+    @if (operationEnabled()) {
       <button type="button" class="btn btn-success" (click)="openOperation(operationModal)" title="New Operation"><i class="bi bi-box"></i></button>
     }
     <button type="button" class="btn btn-success" (click)="openType(typeModal)" title="New Type"><i class="bi bi-disc"></i></button>
     <button type="button" class="btn btn-light" (click)="doHistoryBack()" title="Back"><i class="bi bi-arrow-left"></i></button>
     <button type="button" class="btn btn-light" (click)="doHistoryForward()" title="Forward"><i class="bi bi-arrow-right"></i></button>
-    @if (importEnabled) {
+    @if (importEnabled()) {
       <button type="button" class="btn btn-light" (click)="openSettings(settingsModal)" title="Settings"><i class="bi bi-gear"></i></button>
       <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" title="Include"><i class="bi bi-cloud-arrow-down"></i></button>
     }
@@ -27,7 +27,7 @@
   </div>
 }
 
-@if (readonly) {
+@if (readonly()) {
   <div class="btn-group mb-3" role="group">
     <button type="button" class="btn btn-light" (click)="doHistoryBack()" title="Back"><i class="bi bi-arrow-left"></i></button>
     <button type="button" class="btn btn-light" (click)="doHistoryForward()" title="Forward"><i class="bi bi-arrow-right"></i></button>
@@ -35,7 +35,7 @@
   </div>
 }
 
-@if (loading) {
+@if (loading()) {
   <div class="text-center mt-5">
     <div class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
@@ -48,7 +48,7 @@
     <div class="mb-3 d-none d-lg-block">
       <div class="editor-sidebar">
         <div class="list-group">
-          <input type="text" id="search" name="search" [(ngModel)]="search" (ngModelChange)="doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
+          <input type="text" id="search" name="search" [ngModel]="search()" (ngModelChange)="search.set($event);doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
           @for (result of searchList(); track result.refIndex) {
             <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected()?.name === result.item.name}">
               <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>
@@ -63,10 +63,10 @@
       <div class="mb-3 mt-2">
         <small class="text-muted font-monospace">
           <ul class="list-unstyled">
-            @if (operationEnabled) {
-              <li><i class="bi bi-box"></i> Operations: {{specification.operations.length}}</li>
+            @if (operationEnabled()) {
+              <li><i class="bi bi-box"></i> Operations: {{spec().operations.length}}</li>
             }
-            <li><i class="bi bi-disc"></i> Types: {{specification.types.length}}</li>
+            <li><i class="bi bi-disc"></i> Types: {{spec().types.length}}</li>
           </ul>
         </small>
       </div>
@@ -83,11 +83,11 @@
   </div>
   <div class="col-lg-9">
     @if (selected(); as selectedObject) {
-      @if (operationEnabled && isOperation(selectedObject)) {
+      @if (operationEnabled() && isOperation(selectedObject)) {
         <typeschema-operation
           [operation]="selectedObject"
           [operationIndex]="findOperationIndexByName(selectedObject.name)"
-          [readonly]="readonly"
+          [readonly]="readonly()"
           (argumentUp)="upArgument($event.operationIndex, $event.argumentIndex)"
           (argumentDown)="downArgument($event.operationIndex, $event.argumentIndex)"
           (argumentDelete)="deleteArgument($event.operationIndex, $event.argumentIndex)"
@@ -104,8 +104,8 @@
         <typeschema-type
           [type]="selectedObject"
           [typeIndex]="findTypeIndexByName(selectedObject.name)"
-          [readonly]="readonly"
-          [root]="specification.root"
+          [readonly]="readonly()"
+          [root]="spec().root"
           (propertyUp)="upProperty($event.typeIndex, $event.propertyIndex)"
           (propertyDown)="downProperty($event.typeIndex, $event.propertyIndex)"
           (propertyNew)="openProperty(propertyModal, $event)"
@@ -176,7 +176,7 @@
     <div class="mb-3 row">
       <label for="operationArguments" class="col-sm-2 col-form-label fw-bold">Arguments</label>
       <div class="col-sm-10">
-        <typeschema-arguments [data]="operation.arguments" [specification]="specification" (dataChange)="operation.arguments = $event"></typeschema-arguments>
+        <typeschema-arguments [data]="operation.arguments" [specification]="spec()" (dataChange)="operation.arguments = $event"></typeschema-arguments>
       </div>
     </div>
     @if (operation.httpMethod === 'POST' || operation.httpMethod === 'PUT' || operation.httpMethod === 'PATCH') {
@@ -196,11 +196,11 @@
               @if (operation.payloadShape !== 'mime') {
                 <select id="operationPayload" name="operationPayload" class="form-select" [(ngModel)]="operation.payload">
                   <optgroup label="self">
-                    @for (refType of specification.types; track $index) {
+                    @for (refType of spec().types; track $index) {
                       <option [ngValue]="refType.name">{{ refType.name }}</option>
                     }
                   </optgroup>
-                  @for (include of specification.imports; track include.alias) {
+                  @for (include of spec().imports; track include.alias) {
                     <optgroup label="{{ include.alias }}">
                       @for (parentType of include.types; track $index) {
                         @if (parentType.name != type.name) {
@@ -226,7 +226,7 @@
     <div class="mb-3 row">
       <label for="operationThrows" class="col-sm-2 col-form-label fw-bold">Throws</label>
       <div class="col-sm-10">
-        <typeschema-throws [data]="operation.throws" [specification]="specification" [contentTypes]="contentTypes" (dataChange)="operation.throws = $event"></typeschema-throws>
+        <typeschema-throws [data]="operation.throws" [specification]="spec()" [contentTypes]="contentTypes" (dataChange)="operation.throws = $event"></typeschema-throws>
       </div>
     </div>
     @if (operation.httpCode !== 204) {
@@ -246,11 +246,11 @@
               @if (operation.returnShape !== 'mime') {
                 <select id="operationReturn" name="operationReturn" class="form-select" [(ngModel)]="operation.return">
                   <optgroup label="self">
-                    @for (refType of specification.types; track $index) {
+                    @for (refType of spec().types; track $index) {
                       <option [ngValue]="refType.name">{{ refType.name }}</option>
                     }
                   </optgroup>
-                  @for (include of specification.imports; track include.alias) {
+                  @for (include of spec().imports; track include.alias) {
                     <optgroup label="{{ include.alias }}">
                       @for (parentType of include.types; track $index) {
                         @if (parentType.name != type.name) {
@@ -321,13 +321,13 @@
           <select id="typeParent" name="typeParent" class="form-select" [(ngModel)]="type.parent" (ngModelChange)="updateGenerics()">
             <option [ngValue]="undefined">No parent</option>
             <optgroup label="Self">
-              @for (parentType of specification.types; track $index) {
+              @for (parentType of spec().types; track $index) {
                 @if (parentType.name != type.name) {
                   <option [ngValue]="parentType.name">{{ parentType.name }}</option>
                 }
               }
             </optgroup>
-            @for (include of specification.imports; track include.alias) {
+            @for (include of spec().imports; track include.alias) {
               <optgroup label="{{include.alias}}">
                 @for (parentType of include.types; track $index) {
                   <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
@@ -371,7 +371,7 @@
               <div class="input-group mb-3">
                 <select id="typeTemplate-{{ generic }}" name="typeTemplate-{{ generic }}" class="form-select" [(ngModel)]="type.template[generic]">
                   <option>No type</option>
-                  @for (type of specification.types; track type.name) {
+                  @for (type of spec().types; track type.name) {
                     <option [ngValue]="type.name">{{ type.name }}</option>
                   }
                 </select>
@@ -396,11 +396,11 @@
               <option ngValue="generic">Generic</option>
             </optgroup>
             <optgroup label="self">
-              @for (refType of specification.types; track $index) {
+              @for (refType of spec().types; track $index) {
                 <option [ngValue]="refType.name">{{ refType.name }}</option>
               }
             </optgroup>
-            @for (include of specification.imports; track include.alias) {
+            @for (include of spec().imports; track include.alias) {
               <optgroup label="{{ include.alias }}">
                 @for (parentType of include.types; track $index) {
                   @if (parentType.name != type.name) {
@@ -507,22 +507,30 @@
         <label for="propertyReference" class="col-sm-2 col-form-label fw-bold">Reference</label>
         <div class="col-sm-10">
           <select id="propertyReference" name="propertyReference" class="form-select" [(ngModel)]="property.reference" (ngModelChange)="updatePropertyReference()">
-            <optgroup label="scalar" *ngIf="property.type != 'object'">
-              <option ngValue="string">String</option>
-              <option ngValue="integer">Integer</option>
-              <option ngValue="number">Number</option>
-              <option ngValue="boolean">Boolean</option>
-              <option ngValue="any">Any</option>
-              <option ngValue="generic">Generic</option>
-            </optgroup>
+            @if (property.type != 'object') {
+              <optgroup label="scalar">
+                <option ngValue="string">String</option>
+                <option ngValue="integer">Integer</option>
+                <option ngValue="number">Number</option>
+                <option ngValue="boolean">Boolean</option>
+                <option ngValue="any">Any</option>
+                <option ngValue="generic">Generic</option>
+              </optgroup>
+            }
             <optgroup label="self">
-              <option *ngFor="let refType of specification.types" [ngValue]="refType.name">{{ refType.name }}</option>
+              @for (refType of spec().types; track $index) {
+                <option [ngValue]="refType.name">{{ refType.name }}</option>
+              }
             </optgroup>
-            <optgroup label="{{ include.alias }}" *ngFor="let include of specification.imports">
-              <ng-container *ngFor="let parentType of include.types">
-                <option [ngValue]="include.alias + ':' + parentType.name" *ngIf="parentType.name != type.name">{{ parentType.name }}</option>
-              </ng-container>
-            </optgroup>
+            @for (include of spec().imports; track $index) {
+              <optgroup label="{{ include.alias }}">
+                @for (parentType of include.types; track $index) {
+                  @if (parentType.name != type.name) {
+                    <option [ngValue]="include.alias + ':' + parentType.name">{{ parentType.name }}</option>
+                  }
+                }
+              </optgroup>
+            }
           </select>
         </div>
       </div>
@@ -654,12 +662,12 @@
       </tr>
       </thead>
       <tbody>
-      @for (include of specification.imports; track include.alias; let includeIndex = $index) {
+      @for (include of spec().imports; track include.alias; let includeIndex = $index) {
         <tr>
           <td><span class="editor-import-alias">{{ include.alias }}</span></td>
           <td><span class="editor-import-url"><typeschema-import [url]="include.url"></typeschema-import></span></td>
           <td>
-            @if (!readonly) {
+            @if (!readonly()) {
               <div class="btn-group float-end" role="group">
                 <a class="btn btn-danger" (click)="deleteInclude(includeIndex)"><span class="codicon codicon-close"></span></a>
               </div>
@@ -669,7 +677,7 @@
       }
       </tbody>
     </table>
-    @if (!readonly) {
+    @if (!readonly()) {
       <div class="mb-3 row">
         <label for="includeAlias" class="col-sm-2 col-form-label fw-bold">Alias</label>
         <div class="col-sm-10">
@@ -689,7 +697,7 @@
     }
   </div>
   <div class="modal-footer">
-    @if (!readonly) {
+    @if (!readonly()) {
       <button type="button" class="btn btn-success" (click)="addInclude(include)">Add</button>
     }
     <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Close</button>

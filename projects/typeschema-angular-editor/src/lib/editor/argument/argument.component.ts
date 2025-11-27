@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, effect, input, output, signal} from '@angular/core';
 import {Argument} from "../../model/Argument";
 import {Specification} from "../../model/Specification";
 import {FormsModule} from "@angular/forms";
@@ -11,17 +11,17 @@ import {FormsModule} from "@angular/forms";
   ],
   styleUrls: ['./argument.component.css']
 })
-export class ArgumentComponent implements OnInit {
+export class ArgumentComponent {
 
-  @Input() data: Array<Argument> = [];
-  @Input() specification!: Specification;
-  @Output() dataChange= new EventEmitter<Array<Argument>>();
+  data = input<Array<Argument>>([]);
+  specification = input.required<Specification>();
+  dataChange= output<Array<Argument>>();
 
-  result: Array<Argument> = [];
+  result = signal<Array<Argument>>([]);
 
-  newName?: string;
-  newIn?: 'path' | 'query' | 'header';
-  newType?: string = 'string';
+  newName = signal<string|undefined>(undefined);
+  newIn = signal<'path'|'query'|'header'|undefined>(undefined);
+  newType = signal<string|undefined>('string');
 
   types = [
     {key: 'string', value: 'String'},
@@ -36,39 +36,72 @@ export class ArgumentComponent implements OnInit {
     {key: 'header', value: 'Header'},
   ];
 
-  ngOnInit() {
-    if (this.data) {
-      this.result = [];
-      this.data.forEach((entry) => {
-        this.result.push(entry);
-      });
-    }
+  constructor() {
+    effect(() => {
+      const data = this.data();
+      if (data) {
+        const result: Array<Argument> = [];
+        data.forEach((entry) => {
+          result.push(entry);
+        });
+        this.result.set(result);
+      }
+    });
   }
 
   add() {
-    if (!this.newName || !this.newIn || !this.newType) {
+    const newName = this.newName();
+    const newIn = this.newIn();
+    const newType = this.newType();
+    if (!newName || !newIn || !newType) {
       return;
     }
 
-    this.result.push({
-      name: this.newName,
-      in: this.newIn,
-      type: this.newType,
-    })
+    this.result.update((entries) => {
+      entries.push({
+        name: newName,
+        in: newIn,
+        type: newType,
+      });
+      return entries;
+    });
 
-    this.newName = undefined;
-    this.newIn = undefined;
-    this.newType = 'string';
+    this.newName.set(undefined);
+    this.newIn.set(undefined);
+    this.newType.set('string');
+  }
+
+  setName(index: number, name: string) {
+    this.result.update((entries) => {
+      entries[index].name = name;
+      return entries;
+    });
+  }
+
+  setIn(index: number, in_: 'path' | 'query' | 'header' | 'body') {
+    this.result.update((entries) => {
+      entries[index].in = in_;
+      return entries;
+    });
+  }
+
+  setType(index: number, type: string) {
+    this.result.update((entries) => {
+      entries[index].type = type;
+      return entries;
+    });
   }
 
   remove(name?: string) {
-    this.result = this.result.filter((row) => {
-      return row.name !== name;
+    this.result.update((entries) => {
+      return entries.filter((row) => {
+        return row.name !== name;
+      });
     });
   }
 
   changeValue() {
-    this.dataChange.emit(this.result);
+    this.dataChange.emit(this.result());
   }
 
 }

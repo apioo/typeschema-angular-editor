@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, input, Output} from '@angular/core';
 import {Operation} from "../../model/Operation";
 
 @Component({
@@ -6,11 +6,11 @@ import {Operation} from "../../model/Operation";
   templateUrl: './operation.component.html',
   styleUrls: ['./operation.component.css']
 })
-export class OperationComponent implements OnInit {
+export class OperationComponent {
 
-  @Input() operation!: Operation;
-  @Input() operationIndex!: number;
-  @Input() readonly!: boolean;
+  operation = input.required<Operation>();
+  operationIndex = input.required<number>();
+  readonly = input.required<boolean>();
 
   @Output() argumentUp = new EventEmitter<{operationIndex: number, argumentIndex: number}>();
   @Output() argumentDown = new EventEmitter<{operationIndex: number, argumentIndex: number}>();
@@ -22,9 +22,6 @@ export class OperationComponent implements OnInit {
   @Output() operationDelete = new EventEmitter<number>();
   @Output() operationCopy = new EventEmitter<number>();
   @Output() typeSelect = new EventEmitter<string>();
-
-  ngOnInit(): void {
-  }
 
   upArgument(operationIndex: number, argumentIndex: number) {
     this.argumentUp.emit({

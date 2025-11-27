@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, effect, EventEmitter, input, Input, OnInit, output, Output, signal} from '@angular/core';
 import {Specification} from "../../model/Specification";
 import {Throw} from "../../model/Throw";
 import {FormsModule} from "@angular/forms";
@@ -11,17 +11,17 @@ import {FormsModule} from "@angular/forms";
   ],
   styleUrls: ['./throw.component.css']
 })
-export class ThrowComponent implements OnInit {
+export class ThrowComponent {
 
-  @Input() data: Array<Throw> = [];
-  @Input() specification!: Specification;
-  @Input() contentTypes!: Array<{name: string, value: string}>;
-  @Output() dataChange = new EventEmitter<Array<Throw>>();
+  data = input<Array<Throw>>([]);
+  specification = input.required<Specification>();
+  contentTypes = input.required<Array<{name: string, value: string}>>();
+  dataChange = output<Array<Throw>>();
 
-  result: Array<Throw> = [];
+  result = signal<Array<Throw>>([]);
 
-  newCode?: number;
-  newType?: string;
+  newCode = signal<number|undefined>(undefined);
+  newType = signal<string|undefined>(undefined);
 
   errorStatusCodes = [
     {key: 0, value: ''},
@@ -51,40 +51,73 @@ export class ThrowComponent implements OnInit {
     {key: 999, value: 'Any Error'},
   ]
 
-  ngOnInit() {
-    if (this.data) {
-      this.result = [];
-      this.data.forEach((entry) => {
-        this.result.push(entry);
-      })
-    }
+  constructor() {
+    effect(() => {
+      const data = this.data();
+      if (data) {
+        const result: Array<Throw> = [];
+        data.forEach((entry) => {
+          result.push(entry);
+        });
+        this.result.set(result);
+      }
+    });
   }
 
   add() {
-    if (!this.newCode || !this.newType) {
+    const newCode = this.newCode();
+    const newType = this.newType();
+    if (!newCode || !newType) {
       return;
     }
 
-    this.result.push({
-      code: this.newCode,
-      type: this.newType
-    })
+    this.result.update((entries) => {
+      entries.push({
+        code: newCode,
+        type: newType
+      });
+      return entries;
+    });
 
-    this.newCode = undefined;
-    this.newType = undefined;
+    this.newCode.set(undefined);
+    this.newType.set(undefined);
   }
 
   removeByIndex(throwIndex: number) {
-    if (!this.result[throwIndex]) {
+    if (!this.result()[throwIndex]) {
       return;
     }
 
-    this.result.splice(throwIndex, 1);
+    this.result.update((entries) => {
+      entries.splice(throwIndex, 1);
+      return entries;
+    });
+  }
+
+  setCode(index: number, code: number) {
+    this.result.update((entries) => {
+      entries[index].code = code;
+      return entries;
+    });
+  }
+
+  setType(index: number, type: string) {
+    this.result.update((entries) => {
+      entries[index].type = type;
+      return entries;
+    });
+  }
+
+  setTypeShape(index: number, typeShape?: string) {
+    this.result.update((entries) => {
+      entries[index].typeShape = typeShape;
+      return entries;
+    });
   }
 
   getNotUsedCodes() {
     return this.errorStatusCodes.filter((code) => {
-      const selected = this.result.find((row) => {
+      const selected = this.result().find((row) => {
         return row.code === code.key;
       });
       return !selected;
@@ -93,7 +126,7 @@ export class ThrowComponent implements OnInit {
 
   changeValue() {
     const result: Array<Throw> = [];
-    this.result.forEach((row) => {
+    this.result().forEach((row) => {
       result.push(row);
     });
 
