@@ -48,7 +48,7 @@
     <div class="mb-3 d-none d-lg-block">
       <div class="editor-sidebar">
         <div class="list-group">
-          <input type="text" id="search" name="search" [ngModel]="search()" (ngModelChange)="search.set($event);doSearch()" placeholder="Search operation or type ..." class="list-group-item list-group-item-action">
+          <input type="text" id="search" name="search" [ngModel]="search()" (ngModelChange)="search.set($event);doSearch()" [placeholder]="searchPlaceholder()" class="list-group-item list-group-item-action">
           @for (result of searchList(); track result.refIndex) {
             <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected()?.name === result.item.name}">
               <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>

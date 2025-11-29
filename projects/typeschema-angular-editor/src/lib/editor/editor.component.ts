@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   ElementRef,
   EventEmitter,
@@ -91,6 +92,10 @@ export class EditorComponent {
 
   search = signal<string>('');
   searchList = signal<Array<FuseResult<Operation|Type>>>([]);
+
+  searchPlaceholder = computed(() => {
+    return this.operationEnabled() ? 'Search operation or type ...' : 'Search type ...';
+  });
 
   historyBack: Array<string> = [];
   historyForward: Array<string> = [];
