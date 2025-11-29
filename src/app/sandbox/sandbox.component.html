@@ -1,4 +1,30 @@
 
-<div class="m-3">
+<div class="container-fluid mt-3 mb-5">
+  <div class="float-end">
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" id="debugSwitch" title="Debug on/off" [ngModel]="debug()" (ngModelChange)="debug.set($event)">
+      <label class="form-check-label" for="debugSwitch">Debug</label>
+    </div>
+  </div>
   <typeschema-editor [specification]="spec" [operationEnabled]="true" (change)="change($event)"></typeschema-editor>
+  @if (debug()) {
+    <div class="row">
+      <div class="col-6">
+        <div class="card mb-3">
+          <div class="card-header">Internal</div>
+          <div class="card-body">
+            <pre>{{internal()}}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="card mb-3">
+          <div class="card-header">TypeSchema</div>
+          <div class="card-body">
+            <pre>{{external()}}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

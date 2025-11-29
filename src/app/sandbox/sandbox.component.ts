@@ -1,13 +1,16 @@
-import {Component} from '@angular/core';
+import {Component, signal} from '@angular/core';
 import {ExportService} from "../../../projects/typeschema-angular-editor/src/lib/export.service";
 import {Specification} from "../../../projects/typeschema-angular-editor/src/lib/model/Specification";
 import {TypeschemaEditorModule} from "../../../projects/typeschema-angular-editor/src/lib/typeschema-editor.module";
+import {ImportService} from "../../../projects/typeschema-angular-editor/src/lib/import.service";
+import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-sandbox',
   templateUrl: './sandbox.component.html',
   imports: [
-    TypeschemaEditorModule
+    TypeschemaEditorModule,
+    FormsModule
   ],
   styleUrls: ['./sandbox.component.css']
 })
@@ -19,12 +22,23 @@ export class SandboxComponent {
     types: [],
   };
 
-  preview?: string
+  debug = signal<boolean>(false);
 
-  constructor(private exportService: ExportService) { }
+  internal = signal<string>('');
+  external = signal<string>('');
 
-  change(spec: Specification) {
-    this.preview = JSON.stringify(this.exportService.transform(spec), null, 2);
+  constructor(private exportService: ExportService, private importService: ImportService) { }
+
+  async change(spec: Specification) {
+    if (this.debug()) {
+      const external = JSON.stringify(this.exportService.transform(spec), null, 2);
+
+      this.external.set(external);
+
+      const internal = await this.importService.transform('typeschema', external);
+
+      this.internal.set(JSON.stringify(internal, null, 2));
+    }
   }
 
 }
