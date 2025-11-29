@@ -177,6 +177,7 @@ export class TypeSchema implements TransformerInterface {
           try {
             type.properties.push(await this.transformProperty(key, value as Record<string, any>));
           } catch (error) {
+            console.error(error);
           }
         }
       }
@@ -214,10 +215,18 @@ export class TypeSchema implements TransformerInterface {
       ref = anonymousName;
     } else if (typeName === 'map' || typeName === 'array') {
       type = typeName;
-      ref = this.parseRef(data['additionalProperties']);
+      if (this.isset(data['schema'])) {
+        ref = this.parseRef(data['schema']);
+      } else {
+        throw new Error('Could not resolve inner type of collection: ' + JSON.stringify(data));
+      }
     } else if (typeName === 'reference') {
       type = 'object';
-      ref = data['target'];
+      if (this.isset(data['target'])) {
+        ref = data['target'];
+      } else {
+        throw new Error('Could not target of reference: ' + JSON.stringify(data));
+      }
     } else if (typeName === 'string') {
       type = 'string';
       if (this.isset(data['format'])) {
