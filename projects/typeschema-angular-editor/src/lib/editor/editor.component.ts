@@ -22,7 +22,6 @@ import {Security} from "../model/Security";
 import {BCLayerService} from "../bclayer.service";
 import {ResolverService} from "../resolver.service";
 import Fuse, {FuseResult} from "fuse.js";
-import {Throw} from "../model/Throw";
 
 @Component({
   standalone: false,
@@ -174,11 +173,19 @@ export class EditorComponent {
   }
 
   doSave(): void {
+    if (this.readonly()) {
+      return;
+    }
+
     this.save.emit(this.spec());
     this.dirty = false;
   }
 
   doChange(): void {
+    if (this.readonly()) {
+      return;
+    }
+
     this.saveToLocalStorage();
     this.change.emit(this.spec());
   }
