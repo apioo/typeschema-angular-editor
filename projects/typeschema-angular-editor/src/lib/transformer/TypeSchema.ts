@@ -83,11 +83,10 @@ export class TypeSchema implements TransformerInterface {
         properties: data['properties'],
       }));
       typeNames.push(key);
-      spec.root = spec.types.length - 1;
     }
 
     const root = this.get(data, ['root', '$ref']);
-    if (root === 'string') {
+    if (typeof root === 'string') {
       const index = typeNames.indexOf(root);
       if (index !== -1) {
         spec.root = index;
