@@ -12,6 +12,7 @@
   "author": "Christoph Kappestein",
   "license": "MIT",
   "homepage": "https://typehub.cloud/",
+  "repository": "github:apioo/typeschema-angular-editor",
   "peerDependencies": {
     "@angular/common": "^21.1.0",
     "@angular/core": "^21.1.0",
