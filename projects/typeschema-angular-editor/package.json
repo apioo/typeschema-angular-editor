@@ -1,6 +1,6 @@
 {
   "name": "ngx-typeschema-editor",
-  "version": "4.0.4",
+  "version": "5.0.0",
   "description": "Editor to model and design a TypeAPI/TypeSchema specification",
   "keywords": [
     "TypeAPI",
@@ -13,8 +13,8 @@
   "license": "MIT",
   "homepage": "https://typehub.cloud/",
   "peerDependencies": {
-    "@angular/common": "^20.3.0",
-    "@angular/core": "^20.3.0",
+    "@angular/common": "^21.1.0",
+    "@angular/core": "^21.1.0",
     "fuse.js": "^7.1.0",
     "typehub-javascript-sdk": "^1.2.0",
     "typeapi-model": "^0.1.1",
