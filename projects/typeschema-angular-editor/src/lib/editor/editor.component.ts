@@ -1157,7 +1157,7 @@ export class EditorComponent {
   }
 
   private getLocalStorageName(): string {
-    return 'typeschema_editor_' + this.id;
+    return 'typeschema_editor_' + this.id();
   }
 
   private isEmptySpecification(): boolean {
