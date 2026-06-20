@@ -685,7 +685,6 @@ export class EditorComponent {
 
     this.spec.update((spec) => {
       spec.operations.splice(operationIndex, 1);
-
       return { ...spec };
     });
 
@@ -846,7 +845,6 @@ export class EditorComponent {
 
     this.spec.update((spec) => {
       spec.types.splice(typeIndex, 1);
-
       return { ...spec };
     });
 
