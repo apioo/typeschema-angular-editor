@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, input, Input, OnInit, Output} from '@angular/core';
 import {Type} from "../../model/Type";
 import {KeyValuePipe, NgClass} from "@angular/common";
 
@@ -13,10 +13,10 @@ import {KeyValuePipe, NgClass} from "@angular/common";
 })
 export class TypeComponent implements OnInit {
 
-  @Input() type!: Type;
-  @Input() typeIndex!: number;
-  @Input() readonly!: boolean;
-  @Input() root?: number;
+  type = input.required<Type>();
+  typeIndex = input.required<number>();
+  readonly = input.required<boolean>();
+  root = input.required<number|undefined>();
 
   @Output() propertyUp = new EventEmitter<{typeIndex: number, propertyIndex: number}>();
   @Output() propertyDown = new EventEmitter<{typeIndex: number, propertyIndex: number}>();

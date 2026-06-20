@@ -1,25 +1,25 @@
 
-<div class="card editor-type mb-3" [ngClass]="{'border-primary': root === typeIndex}" id="type-{{ type.name }}">
+<div class="card editor-type mb-3" [ngClass]="{'border-primary': root() === typeIndex()}" id="type-{{ type().name }}">
   <div class="card-header">
     <div class="editor-type-name font-monospace">
       <span class="text-nowrap">
         <i class="bi bi-disc"></i>
-        {{ type.name }}
+        {{ type().name }}
       </span>
-      @if (type.parent) {
+      @if (type().parent; as parent) {
         <span class="float-end text-end">
           <span class="badge text-bg-primary">
-            <a (click)="selectType(type.parent)" role="button" class="text-white text-decoration-none">{{ type.parent }}</a>
+            <a (click)="selectType(parent)" role="button" class="text-white text-decoration-none">{{ parent }}</a>
           </span>
         </span>
       }
     </div>
-    @if (type.description) {
-      <div class="text-secondary editor-type-description mt-2">{{ type.description }}</div>
+    @if (type().description) {
+      <div class="text-secondary editor-type-description mt-2">{{ type().description }}</div>
     }
   </div>
   <div class="card-body">
-    @if (type.type === 'map') {
+    @if (type().type === 'map') {
       <table class="table table table-striped editor-type-properties">
         <colgroup>
           <col style="width:35%">
@@ -37,9 +37,9 @@
         <tr>
           <td><div class="editor-type-property-name font-monospace">*</div></td>
           <td>
-            @if (type.reference) {
+            @if (type().reference; as reference) {
               <span class="badge text-bg-primary">
-                <a (click)="selectType(type.reference)" role="button" class="text-white text-decoration-none">{{ type.reference }}</a>
+                <a (click)="selectType(reference)" role="button" class="text-white text-decoration-none">{{ reference }}</a>
               </span>
             }
           </td>
@@ -48,10 +48,10 @@
         </tbody>
       </table>
     } @else {
-      @if (type.discriminator) {
+      @if (type().discriminator) {
         <div>
-          <div>Discriminator: <span class="badge text-bg-primary">{{ type.discriminator }}</span></div>
-          @if (type.mapping) {
+          <div>Discriminator: <span class="badge text-bg-primary">{{ type().discriminator }}</span></div>
+          @if (type().mapping) {
             <table class="table table table-striped editor-type-properties">
               <colgroup>
                 <col style="width:35%">
@@ -66,7 +66,7 @@
               </tr>
               </thead>
               <tbody>
-                @for (mapping of type.mapping|keyvalue; track mapping.key) {
+                @for (mapping of type().mapping|keyvalue; track mapping.key) {
                   <tr>
                     <td><code>{{ mapping.value }}</code></td>
                     <td>
@@ -77,9 +77,9 @@
                       </div>
                     </td>
                     <td>
-                      @if (!readonly) {
+                      @if (!readonly()) {
                         <div class="btn-group float-end" role="group">
-                          <button type="button" class="btn btn-danger" (click)="deleteMapping(typeIndex, mapping.key)"><span class="codicon codicon-close"></span></button>
+                          <button type="button" class="btn btn-danger" (click)="deleteMapping(typeIndex(), mapping.key)"><span class="codicon codicon-close"></span></button>
                         </div>
                       }
                     </td>
@@ -104,7 +104,7 @@
         </tr>
         </thead>
         <tbody>
-          @for (property of type.properties; track property.name; let propertyIndex = $index) {
+          @for (property of type().properties; track property.name; let propertyIndex = $index) {
             <tr>
               <td>
                 <div class="editor-type-property-name font-monospace">{{ property.name }}</div>
@@ -127,12 +127,12 @@
                 }
               </td>
               <td>
-                @if (!readonly) {
+                @if (!readonly()) {
                   <div class="btn-group float-end" role="group">
-                    <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-up"></i></button>
-                    <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex, propertyIndex)"><i class="bi bi-arrow-down"></i></button>
-                    <button type="button" class="btn btn-primary" (click)="editProperty(typeIndex, propertyIndex)"><span class="codicon codicon-edit"></span></button>
-                    <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex, propertyIndex)"><span class="codicon codicon-close"></span></button>
+                    <button type="button" class="btn btn-secondary" (click)="upProperty(typeIndex(), propertyIndex)"><i class="bi bi-arrow-up"></i></button>
+                    <button type="button" class="btn btn-secondary" (click)="downProperty(typeIndex(), propertyIndex)"><i class="bi bi-arrow-down"></i></button>
+                    <button type="button" class="btn btn-primary" (click)="editProperty(typeIndex(), propertyIndex)"><span class="codicon codicon-edit"></span></button>
+                    <button type="button" class="btn btn-danger" (click)="deleteProperty(typeIndex(), propertyIndex)"><span class="codicon codicon-close"></span></button>
                   </div>
                 }
               </td>
@@ -140,21 +140,21 @@
           }
         </tbody>
       </table>
-      @if (!readonly) {
+      @if (!readonly()) {
         <div class="btn-group" role="group">
-          <a class="btn btn-success" (click)="newProperty(typeIndex)">New Property</a>
+          <a class="btn btn-success" (click)="newProperty(typeIndex())">New Property</a>
         </div>
       }
     }
   </div>
-  @if (!readonly) {
+  @if (!readonly()) {
     <div class="card-footer">
       <div class="btn-group" role="group">
-        <button type="button" class="btn btn-primary" (click)="editType(typeIndex)"><span class="codicon codicon-edit"></span></button>
-        <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex)"><span class="codicon codicon-close"></span></button>
-        <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex)"><span class="codicon codicon-copy"></span></button>
-        @if (root !== typeIndex) {
-          <button type="button" class="btn btn-secondary" (click)="selectRoot(typeIndex)">Primary</button>
+        <button type="button" class="btn btn-primary" (click)="editType(typeIndex())"><span class="codicon codicon-edit"></span></button>
+        <button type="button" class="btn btn-danger" (click)="deleteType(typeIndex())"><span class="codicon codicon-close"></span></button>
+        <button type="button" class="btn btn-secondary" (click)="copyType(typeIndex())"><span class="codicon codicon-copy"></span></button>
+        @if (root() !== typeIndex()) {
+          <button type="button" class="btn btn-secondary" (click)="selectRoot(typeIndex())">Primary</button>
         }
       </div>
     </div>
