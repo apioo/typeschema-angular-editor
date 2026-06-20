@@ -100,8 +100,25 @@ export class EditorComponent {
   historyBack: Array<string> = [];
   historyForward: Array<string> = [];
 
-  selected = signal<Operation|Type|undefined>(undefined);
-  selectedIndex = signal<number|undefined>(undefined);
+  selected = computed<Operation|Type|undefined>(() => {
+    const name = this.selectedName();
+    if (!name) {
+      return undefined;
+    }
+
+    const selectedOperation = this.findOperationByName(name);
+    if (selectedOperation !== null) {
+      return selectedOperation;
+    }
+
+    const selectedType = this.findTypeByName(name);
+    if (selectedType !== null) {
+      return selectedType;
+    }
+
+    return undefined;
+  });
+  selectedName = signal<string|undefined>(undefined);
 
   openModal: boolean = false;
   dirty: boolean = false;
@@ -240,28 +257,22 @@ export class EditorComponent {
   doHistoryBack() {
     const name = this.historyBack.pop();
     if (name) {
-      const selected = this.selected();
-      if (selected && selected.name) {
-        this.historyForward.push(selected.name);
+      const current = this.selectedName();
+      if (current) {
+        this.historyForward.push(current);
       }
-
-      this.selectedIndex.set(undefined);
-      this.selected.set(undefined);
-      this.selectByName(name);
+      this.selectedName.set(name);
     }
   }
 
   doHistoryForward() {
     const name = this.historyForward.pop();
     if (name) {
-      const selected = this.selected();
-      if (selected && selected.name) {
-        this.historyBack.push(selected.name);
+      const current = this.selectedName();
+      if (current) {
+        this.historyBack.push(current);
       }
-
-      this.selectedIndex.set(undefined);
-      this.selected.set(undefined);
-      this.selectByName(name);
+      this.selectedName.set(name);
     }
   }
 
@@ -512,17 +523,7 @@ export class EditorComponent {
       this.historyBack.push(selected.name);
     }
 
-    const operationIndex = this.findOperationIndexByName(name);
-    if (operationIndex !== -1) {
-      this.selectedIndex.set(operationIndex);
-      this.selected.set(this.spec().operations[operationIndex]);
-    }
-
-    const typeIndex = this.findTypeIndexByName(name);
-    if (typeIndex !== -1) {
-      this.selectedIndex.set(typeIndex);
-      this.selected.set(this.spec().types[typeIndex]);
-    }
+    this.selectedName.set(name);
   }
 
   selectTypeByName(name: string) {
@@ -552,6 +553,16 @@ export class EditorComponent {
     }
 
     return result;
+  }
+
+  findOperationByName(operationName: string): Operation|null {
+    for (let i = 0; i < this.spec().operations.length; i++) {
+      if (this.spec().operations[i].name === operationName) {
+        return this.spec().operations[i];
+      }
+    }
+
+    return null;
   }
 
   findOperationIndexByName(operationName: string): number {
