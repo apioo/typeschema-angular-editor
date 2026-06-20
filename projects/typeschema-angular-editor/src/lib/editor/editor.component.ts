@@ -711,7 +711,7 @@ export class EditorComponent {
 
     this.spec.update((spec) => {
       spec.operations.push(newOperation);
-      return spec;
+      return { ...spec };
     });
 
     this.dirty = true;
@@ -871,8 +871,7 @@ export class EditorComponent {
 
     this.spec.update((spec) => {
       spec.types.push(newType);
-
-      return spec;
+      return { ...spec };
     });
 
     this.dirty = true;
