@@ -97,6 +97,10 @@ export class EditorComponent {
     return this.operationEnabled() ? 'Search operation or type ...' : 'Search type ...';
   });
 
+  hasMultiple = computed<boolean>(() => {
+    return (this.spec().operations.length + this.spec().types.length) > 1;
+  });
+
   historyBack: Array<string> = [];
   historyForward: Array<string> = [];
 
@@ -333,7 +337,7 @@ export class EditorComponent {
 
       this.spec.update((spec) => {
         spec.operations.push(operation);
-        return spec;
+        return { ...spec };
       });
 
       this.dirty = true;
@@ -433,7 +437,7 @@ export class EditorComponent {
 
       this.spec.update((spec) => {
         spec.types.push(type);
-        return spec;
+        return { ...spec };
       });
 
       this.dirty = true;
@@ -681,7 +685,8 @@ export class EditorComponent {
 
     this.spec.update((spec) => {
       spec.operations.splice(operationIndex, 1);
-      return spec;
+
+      return { ...spec };
     });
 
     this.dirty = true;
@@ -842,7 +847,7 @@ export class EditorComponent {
     this.spec.update((spec) => {
       spec.types.splice(typeIndex, 1);
 
-      return spec;
+      return { ...spec };
     });
 
     this.dirty = true;

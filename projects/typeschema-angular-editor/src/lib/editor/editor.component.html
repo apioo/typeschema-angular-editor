@@ -17,8 +17,10 @@
     <button type="button" class="btn btn-success" (click)="openType(typeModal)" title="New Type"><i class="bi bi-disc"></i></button>
     <button type="button" class="btn btn-light" (click)="doHistoryBack()" title="Back"><i class="bi bi-arrow-left"></i></button>
     <button type="button" class="btn btn-light" (click)="doHistoryForward()" title="Forward"><i class="bi bi-arrow-right"></i></button>
-    @if (importEnabled()) {
+    @if (operationEnabled()) {
       <button type="button" class="btn btn-light" (click)="openSettings(settingsModal)" title="Settings"><i class="bi bi-gear"></i></button>
+    }
+    @if (importEnabled()) {
       <button type="button" class="btn btn-light" (click)="openInclude(includeModal)" title="Include"><i class="bi bi-cloud-arrow-down"></i></button>
     }
     <button type="button" class="btn btn-light" (click)="openImport(importModal)" title="Import"><i class="bi bi-arrow-down-circle"></i></button>
@@ -44,44 +46,46 @@
 }
 
 <div class="row">
-  <div class="col-lg-3">
-    <div class="mb-3 d-none d-lg-block">
-      <div class="editor-sidebar">
-        <div class="list-group">
-          <input type="text" id="search" name="search" [ngModel]="search()" (ngModelChange)="search.set($event);doSearch()" [placeholder]="searchPlaceholder()" class="list-group-item list-group-item-action">
-          @for (result of searchList(); track result.refIndex) {
-            <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected()?.name === result.item.name}">
-              <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>
-              @if (result.item.description) {
-                <br>
-                <small [title]="result.item.description">{{result.item.description}}</small>
+  @if (hasMultiple()) {
+    <div class="col-lg-3">
+      <div class="mb-3 d-none d-lg-block">
+        <div class="editor-sidebar">
+          <div class="list-group">
+            <input type="text" id="search" name="search" [ngModel]="search()" (ngModelChange)="search.set($event);doSearch()" [placeholder]="searchPlaceholder()" class="list-group-item list-group-item-action">
+            @for (result of searchList(); track result.refIndex) {
+              <a (click)="select(result.item)" role="button" class="editor-action-item list-group-item list-group-item-action" [ngClass]="{'active': selected()?.name === result.item.name}">
+                <span><i class="bi" [ngClass]="{'bi-box': isOperation(result.item), 'bi-disc': isType(result.item)}"></i> {{result.item.name}}</span>
+                @if (result.item.description) {
+                  <br>
+                  <small [title]="result.item.description">{{result.item.description}}</small>
+                }
+              </a>
+            }
+          </div>
+        </div>
+        <div class="mb-3 mt-2">
+          <small class="text-muted font-monospace">
+            <ul class="list-unstyled">
+              @if (operationEnabled()) {
+                <li><i class="bi bi-box"></i> Operations: {{spec().operations.length}}</li>
               }
-            </a>
-          }
+              <li><i class="bi bi-disc"></i> Types: {{spec().types.length}}</li>
+            </ul>
+          </small>
         </div>
       </div>
-      <div class="mb-3 mt-2">
-        <small class="text-muted font-monospace">
-          <ul class="list-unstyled">
-            @if (operationEnabled()) {
-              <li><i class="bi bi-box"></i> Operations: {{spec().operations.length}}</li>
+      <div class="mb-3 overflow-auto d-lg-none">
+        @if (searchList().length > 0) {
+          <select [ngModel]="selected()" (ngModelChange)="select($event)" class="form-select">
+            @for (result of searchList(); track result.refIndex) {
+              <option [ngValue]="result.item">{{ result.item.name }}</option>
             }
-            <li><i class="bi bi-disc"></i> Types: {{spec().types.length}}</li>
-          </ul>
-        </small>
+          </select>
+        }
       </div>
     </div>
-    <div class="mb-3 overflow-auto d-lg-none">
-      @if (searchList().length > 0) {
-        <select [ngModel]="selected()" (ngModelChange)="select($event)" class="form-select">
-        @for (result of searchList(); track result.refIndex) {
-          <option [ngValue]="result.item">{{ result.item.name }}</option>
-        }
-        </select>
-      }
-    </div>
-  </div>
-  <div class="col-lg-9">
+  }
+  <div [ngClass]="{'col-lg-9': hasMultiple(), 'col-lg-12': !hasMultiple()}">
     @if (selected(); as selectedObject) {
       @if (operationEnabled() && isOperation(selectedObject)) {
         <typeschema-operation
