@@ -19,7 +19,7 @@ We use this component in different products:
 You can use the `typeschema-editor` component directly in your template
 
 ```angular2html
-<typeschema-editor [specification]="spec" [importEnabled]="false" (save)="submit($event)" (change)="change($event)"></typeschema-editor>
+<typeschema-editor [specification]="spec()" [importEnabled]="false" (save)="submit($event)" (change)="change($event)"></typeschema-editor>
 ```
 
 In your controller you can then listen on the save or change event:
@@ -27,10 +27,11 @@ In your controller you can then listen on the save or change event:
 ```typescript
 export class DesignerComponent implements OnInit {
 
-  spec: Specification = {
+  spec = signal<Specification>({
     imports: [],
+    operations: [],
     types: []
-  };
+  });
 
   ngOnInit(): void {
   }
